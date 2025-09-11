@@ -47,7 +47,11 @@ class DataRequestsRelationManager extends RelationManager
                 TextColumn::make('responses.status')
                     ->label('Responses')
                     ->badge(),
-                TextColumn::make('assignedTo.name'),
+                TextColumn::make('assignedTo')
+                    ->label('Assigned To')
+                    ->state(function (DataRequest $record) {
+                        return $record->responses->first()?->requestee->name;
+                    }),
                 TextColumn::make('responses')
                     ->label('Due Date')
                     ->date()
