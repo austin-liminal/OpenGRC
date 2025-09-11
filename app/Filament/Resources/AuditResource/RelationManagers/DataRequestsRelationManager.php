@@ -34,12 +34,15 @@ class DataRequestsRelationManager extends RelationManager
                     ->toggledHiddenByDefault()
                     ->label('ID'),
                 TextColumn::make('auditItem.auditable.code')
+                    ->searchable()
                     ->label('Audit Item'),
                 TextColumn::make('code')
+                    ->searchable()
                     ->toggleable()
                     ->label('Request Code'),
                 TextColumn::make('details')
                     ->label('Request Details')
+                    ->searchable()
                     ->wrap(),
                 TextColumn::make('responses.status')
                     ->label('Responses')

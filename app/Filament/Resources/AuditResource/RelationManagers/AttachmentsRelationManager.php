@@ -63,15 +63,18 @@ class AttachmentsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('file_name')
                     ->label('File Name')
+                    ->searchable()
+                    ->sortable()
                     ->description(fn ($record) => $record->description),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Uploaded At')
+                    ->searchable()
+                    ->sortable()
                     ->dateTime(),
                 Tables\Columns\TextColumn::make('uploaded_by')
                     ->label('Uploaded By')
                     ->getStateUsing(function ($record) {
                         $user = User::find($record->uploaded_by);
-
                         return $user ? $user->name : 'Unknown';
                     }),
             ])
