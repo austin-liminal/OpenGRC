@@ -163,15 +163,16 @@ class DataRequestResource extends Resource
                             ->content(function ($record) {
                                 return new HtmlString($record->details ?? '');
                             }),
-                        // ->columnSpanFull(),
                         Placeholder::make('control')
                             ->label('Control')
-                            // ->columnSpanFull()
                             ->content(function ($record) {
                                 return $record->auditItem->auditable->code.' - '.$record->auditItem->auditable->title;
                             }),
                         Placeholder::make('code')
-                            ->label('Request Code'),
+                            ->label('Request Code')
+                            ->content(function ($record) {
+                                return $record->code;
+                            }),
                         Placeholder::make('control_description')
                             ->label('Control Description')
                             ->columnSpanFull()
