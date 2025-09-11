@@ -6,9 +6,12 @@ use App\Enums\Applicability;
 use App\Enums\Effectiveness;
 use App\Enums\WorkflowStatus;
 use App\Models\AuditItem;
+use App\Models\Control;
+use App\Models\Implementation;
 use Filament\Forms;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -195,6 +198,72 @@ class AuditItemRelationManager extends RelationManager
                     ->label('Assess control')
                     ->visible(fn (AuditItem $record): bool => $record->audit->status === WorkflowStatus::INPROGRESS)
                     ->url(fn (AuditItem $record): string => route('filament.app.resources.audit-items.edit', ['record' => $record->id])),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('Add More Items')
+                    ->modalHeading('Associate Existing Control or Implementation')
+                    ->modalSubmitActionLabel('Associate')
+                    ->createAnother(false)
+                    ->form([
+                        Select::make('auditable_type')
+                            ->label('Type')
+                            ->options([
+                                'control' => 'Control',
+                                'implementation' => 'Implementation',
+                            ])
+                            ->required()
+                            ->live()
+                            ->default('control'),
+                        Select::make('auditable_id')
+                            ->label('Control/Implementation')
+                            ->options(function (Forms\Get $get, RelationManager $livewire) {
+                                $type = $get('auditable_type');
+                                $audit = $livewire->ownerRecord;
+                                
+                                // Get already associated auditable IDs for this type
+                                $existingIds = $audit->auditItems()
+                                    ->where('auditable_type', $type === 'control' ? Control::class : Implementation::class)
+                                    ->pluck('auditable_id')
+                                    ->toArray();
+                                
+                                if ($type === 'control') {
+                                    return Control::whereNotIn('id', $existingIds)
+                                        ->get()
+                                        ->mapWithKeys(function ($control) {
+                                            return [$control->id => $control->code . ' - ' . $control->title];
+                                        });
+                                } elseif ($type === 'implementation') {
+                                    return Implementation::whereNotIn('id', $existingIds)
+                                        ->get()
+                                        ->mapWithKeys(function ($implementation) {
+                                            return [$implementation->id => $implementation->code . ' - ' . $implementation->title];
+                                        });
+                                }
+                                return [];
+                            })
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->action(function (array $data, RelationManager $livewire) {
+                        $audit = $livewire->ownerRecord;
+                        
+                        $auditItem = new AuditItem([
+                            'status' => WorkflowStatus::NOTSTARTED,
+                            'applicability' => Applicability::APPLICABLE,
+                            'effectiveness' => Effectiveness::UNKNOWN,
+                            'audit_id' => $audit->id,
+                            'user_id' => $audit->manager_id,
+                        ]);
+
+                        if ($data['auditable_type'] === 'control') {
+                            $auditItem->auditable()->associate(Control::find($data['auditable_id']));
+                        } elseif ($data['auditable_type'] === 'implementation') {
+                            $auditItem->auditable()->associate(Implementation::find($data['auditable_id']));
+                        }
+
+                        $auditItem->save();
+                    }),
             ])
             ->bulkActions([]);
 
