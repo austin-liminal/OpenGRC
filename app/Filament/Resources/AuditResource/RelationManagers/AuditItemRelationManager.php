@@ -17,6 +17,7 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 
 class AuditItemRelationManager extends RelationManager
@@ -175,23 +176,33 @@ class AuditItemRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('type')
+                Tables\Columns\TextColumn::make('auditable.type')                    
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable);
                     }),
-                Tables\Columns\TextColumn::make('code')
+                Tables\Columns\TextColumn::make('code')                    
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable->code);
                     })
-                    ->label('Code'),
+                    ->label('Code')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHasMorph('auditable', ['App\Models\Control', 'App\Models\Implementation'], function (Builder $query, string $type) use ($search) {
+                            $query->where('code', 'like', "%{$search}%");
+                        });
+                    }),
                 Tables\Columns\TextColumn::make('title')
-                    ->wrap()
+                    ->wrap()                    
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable->title);
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHasMorph('auditable', ['App\Models\Control', 'App\Models\Implementation'], function (Builder $query, string $type) use ($search) {
+                            $query->where('title', 'like', "%{$search}%");
+                        });
                     }),
-                Tables\Columns\TextColumn::make('status')->sortable(),
-                Tables\Columns\TextColumn::make('applicability')->sortable(),
-                Tables\Columns\TextColumn::make('effectiveness')->sortable(),
+                Tables\Columns\TextColumn::make('status')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('applicability')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('effectiveness')->sortable()->searchable(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
