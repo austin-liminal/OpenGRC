@@ -6,6 +6,8 @@ use App\Enums\WorkflowStatus;
 use App\Filament\Resources\DataRequestResource;
 use App\Http\Controllers\QueueController;
 use App\Models\DataRequest;
+use App\Models\User;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -142,6 +144,42 @@ class DataRequestsRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('bulk_assign_requestee')
+                        ->label('Bulk Assign Requestee')
+                        ->icon('heroicon-o-user-plus')
+                        ->color('primary')
+                        ->form([
+                            Select::make('requestee_id')
+                                ->label('Assign to User')
+                                ->options(User::pluck('name', 'id')->toArray())
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
+                            $requesteeId = $data['requestee_id'];
+                            $updatedCount = 0;
+                            
+                            foreach ($records as $dataRequest) {
+                                $response = $dataRequest->responses->first();
+                                if ($response) {
+                                    $response->update(['requestee_id' => $requesteeId]);
+                                    $updatedCount++;
+                                }
+                            }
+                            
+                            Notification::make()
+                                ->title('Bulk Assignment Complete')
+                                ->body("Successfully assigned {$updatedCount} data request responses.")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Bulk Assign Requestee')
+                        ->modalDescription('This will assign the selected user as the requestee for the first response of each selected data request.')
+                        ->disabled(function () {
+                            return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
+                        }),
                 ]),
             ]);
     }
