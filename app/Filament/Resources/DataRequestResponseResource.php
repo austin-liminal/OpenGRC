@@ -32,31 +32,36 @@ class DataRequestResponseResource extends Resource
 
     public static function form(Form $form): Form
     {
-        //    dd(config(key: 'filesystems'));
 
         return $form
             ->schema([
                 Section::make('Evidence Requested')
-                    ->columnSpanFull()
+                    ->columns(2)
                     ->schema([
-                        Placeholder::make('request.dataRequest.details')
-                            ->content(fn ($record) => $record->dataRequest->details ?? 'No details available')
-                            ->label('Data Request Details'),
                         Placeholder::make('request.dataRequest.auditItem.audit.name')
                             ->content(fn ($record) => $record->dataRequest->auditItem->audit->title ?? 'No audit name available')
                             ->label('Audit Name'),
+                        Placeholder::make('dataRequest.code')
+                            ->content(fn ($record) => $record->dataRequest->code ?? 'No code')
+                            ->label('Request Code'),
+                        Placeholder::make('request.dataRequest.details')
+                            ->content(fn ($record) => $record->dataRequest->details ?? 'No details available')
+                            ->label('Data Request Details')
+                            ->columnSpanFull(),
                         Placeholder::make('request.dataRequest.auditItem.audit.name')
                             ->content(function ($record) {
                                 return $record->dataRequest->auditItem->auditable->title ?? 'No audit name available';
                             })
                             ->label(function ($record) {
                                 return $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class ? 'Control Name' : 'Implementation Name';
-                            }),
+                            })
+                            ->columnSpanFull(),
                         Placeholder::make('request.dataRequest.auditItem.audit.description')
                             ->content(function ($record) {
                                 return new HtmlString($record->dataRequest->auditItem->auditable->description);
                             })
-                            ->label('Control Description'),
+                            ->label('Control Description')
+                            ->columnSpanFull(),
                     ]),
                 Section::make('Response')
                     ->columnSpanFull()
