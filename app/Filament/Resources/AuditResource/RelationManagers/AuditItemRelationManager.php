@@ -18,6 +18,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\HtmlString;
 
 class AuditItemRelationManager extends RelationManager
@@ -176,11 +177,11 @@ class AuditItemRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('auditable.type')                    
+                Tables\Columns\TextColumn::make('auditable.type')
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable);
                     }),
-                Tables\Columns\TextColumn::make('code')                    
+                Tables\Columns\TextColumn::make('code')
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable->code);
                     })
@@ -191,7 +192,7 @@ class AuditItemRelationManager extends RelationManager
                         });
                     }),
                 Tables\Columns\TextColumn::make('title')
-                    ->wrap()                    
+                    ->wrap()
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable->title);
                     })
@@ -231,26 +232,27 @@ class AuditItemRelationManager extends RelationManager
                             ->options(function (Forms\Get $get, RelationManager $livewire) {
                                 $type = $get('auditable_type');
                                 $audit = $livewire->ownerRecord;
-                                
+
                                 // Get already associated auditable IDs for this type
                                 $existingIds = $audit->auditItems()
                                     ->where('auditable_type', $type === 'control' ? Control::class : Implementation::class)
                                     ->pluck('auditable_id')
                                     ->toArray();
-                                
+
                                 if ($type === 'control') {
                                     return Control::whereNotIn('id', $existingIds)
                                         ->get()
                                         ->mapWithKeys(function ($control) {
-                                            return [$control->id => $control->code . ' - ' . $control->title];
+                                            return [$control->id => $control->code.' - '.$control->title];
                                         });
                                 } elseif ($type === 'implementation') {
                                     return Implementation::whereNotIn('id', $existingIds)
                                         ->get()
                                         ->mapWithKeys(function ($implementation) {
-                                            return [$implementation->id => $implementation->code . ' - ' . $implementation->title];
+                                            return [$implementation->id => $implementation->code.' - '.$implementation->title];
                                         });
                                 }
+
                                 return [];
                             })
                             ->searchable()
@@ -258,7 +260,7 @@ class AuditItemRelationManager extends RelationManager
                     ])
                     ->action(function (array $data, RelationManager $livewire) {
                         $audit = $livewire->ownerRecord;
-                        
+
                         $auditItem = new AuditItem([
                             'status' => WorkflowStatus::NOTSTARTED,
                             'applicability' => Applicability::APPLICABLE,
@@ -276,7 +278,55 @@ class AuditItemRelationManager extends RelationManager
                         $auditItem->save();
                     }),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('bulk_edit_status')
+                        ->label('Update Status')
+                        ->icon('heroicon-o-pencil-square')
+                        ->form([
+                            ToggleButtons::make('status')
+                                ->label('Status')
+                                ->options(WorkflowStatus::class)
+                                ->required()
+                                ->grouped(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each(function (AuditItem $record) use ($data) {
+                                $record->update(['status' => $data['status']]);
+                            });
+                        }),
+                    Tables\Actions\BulkAction::make('bulk_edit_applicability')
+                        ->label('Update Applicability')
+                        ->icon('heroicon-o-check-circle')
+                        ->form([
+                            ToggleButtons::make('applicability')
+                                ->label('Applicability')
+                                ->options(Applicability::class)
+                                ->required()
+                                ->grouped(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each(function (AuditItem $record) use ($data) {
+                                $record->update(['applicability' => $data['applicability']]);
+                            });
+                        }),
+                    Tables\Actions\BulkAction::make('bulk_edit_effectiveness')
+                        ->label('Update Effectiveness')
+                        ->icon('heroicon-o-star')
+                        ->form([
+                            ToggleButtons::make('effectiveness')
+                                ->label('Effectiveness')
+                                ->options(Effectiveness::class)
+                                ->required()
+                                ->grouped(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each(function (AuditItem $record) use ($data) {
+                                $record->update(['effectiveness' => $data['effectiveness']]);
+                            });
+                        }),
+                ]),
+            ]);
 
     }
 }
