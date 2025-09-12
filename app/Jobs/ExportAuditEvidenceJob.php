@@ -12,7 +12,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Jurosh\PDFMerge\PDFMerger;
-use App\Http\Controllers\PdfController;
 use ZipArchive;
 
 class ExportAuditEvidenceJob implements ShouldQueue
@@ -113,10 +112,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
             if (! empty($pdfAttachments)) {
                 $tempMainPath = $tmpDir.'/'.$filenamePrefix.'_temp.pdf';
                 rename($mainPdfPath, $tempMainPath);
-
-                // If PDF, check version and convert if needed
-                PdfController::convertPdfTo14($tempMainPath);
-
                 $this->mergePdfs($tempMainPath, $pdfAttachments, $mainPdfPath, $disk);
                 unlink($tempMainPath);
             }
@@ -130,9 +125,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     $originalExt = pathinfo($attachment->file_name, PATHINFO_EXTENSION);
                     $newFilename = $filenamePrefix.'_'.$attachment->file_name;
                     $localPath = $tmpDir.'/'.$newFilename;
-
-                    // If PDF, check version and convert if needed
-                    PdfController::convertPdfTo14($localPath);
 
                     file_put_contents($localPath, $storage->get($attachment->file_path));
                     $allFiles[] = $localPath;
@@ -226,9 +218,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
         try {
             $merger = new PDFMerger;
 
-            // If PDF, check version and convert if needed
-            PdfController::convertPdfTo14($mainPdfPath);
-
             // Add the main PDF first
             $merger->addPDF($mainPdfPath, 'all');
 
@@ -244,9 +233,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     $tmpFiles[] = $tmpAttachmentPath;
 
                     try {
-                        // If PDF, check version and convert if needed
-                        PdfController::convertPdfTo14($tmpAttachmentPath);
-
                         $merger->addPDF($tmpAttachmentPath, 'all');
                     } catch (\Exception $e) {
                         \Log::warning('[ExportAuditEvidenceJob] Failed to merge PDF attachment', [
