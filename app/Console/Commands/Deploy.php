@@ -41,6 +41,7 @@ class Deploy extends Command
                             {--smtp-password= : SMTP password}
                             {--smtp-encryption=tls : SMTP encryption (tls, ssl, or none)}
                             {--smtp-from= : From email address}
+                            {--lock : Lock storage settings to read-only after deployment}
                             {--accept : Auto-accept deployment without confirmation prompt}';
 
     /**
@@ -222,6 +223,7 @@ class Deploy extends Command
             's3_enabled' => $this->option('s3'),
             'digitalocean_enabled' => $this->option('digitalocean'),
             'smtp_enabled' => $this->option('smtp'),
+            'lock_storage' => $this->option('lock'),
         ];
 
         // Add S3 configuration if enabled
@@ -286,6 +288,7 @@ class Deploy extends Command
             ['S3 Storage', $config['s3_enabled'] ? 'Enabled' : 'Disabled'],
             ['DigitalOcean Storage', $config['digitalocean_enabled'] ? 'Enabled' : 'Disabled'],
             ['SMTP Configuration', $config['smtp_enabled'] ? 'Enabled' : 'Disabled'],
+            ['Lock Storage Settings', $config['lock_storage'] ? 'Yes' : 'No'],
         ]);
 
         $this->table(['Setting', 'Value'], $tableRows);
@@ -641,6 +644,12 @@ class Deploy extends Command
             ]);
             $this->info('[SUCCESS] SMTP settings configured');
         }
+
+        // Set storage lock setting
+        $this->call('settings:set', [
+            'key' => 'storage.locked',
+            'value' => $config['lock_storage'] ? 'true' : 'false',
+        ]);
 
         $this->info('[SUCCESS] Site settings configured');
 

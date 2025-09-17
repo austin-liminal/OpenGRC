@@ -17,8 +17,11 @@ class StorageSchema
 {
     public static function schema(): array
     {
+        $isLocked = setting('storage.locked', 'false') === 'true';
+
         return [
             Section::make('Storage Configuration')
+                ->description($isLocked ? '⚠️ Storage settings are locked and read-only. Contact your administrator to modify these settings.' : null)
                 ->schema([
                     Select::make('storage.driver')
                         ->label('Storage Driver')
@@ -28,7 +31,8 @@ class StorageSchema
                             'digitalocean' => 'DigitalOcean Spaces',
                         ])
                         ->required()
-                        ->live(),
+                        ->live()
+                        ->disabled($isLocked),
 
                     Grid::make(2)
                         ->schema([
@@ -36,6 +40,7 @@ class StorageSchema
                                 ->label('AWS Access Key ID')
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
                                     if (filled($state)) {
@@ -52,6 +57,7 @@ class StorageSchema
                                 ->password()
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
                                     if (filled($state)) {
@@ -67,18 +73,21 @@ class StorageSchema
                                 ->label('AWS Region')
                                 ->placeholder('us-east-1')
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
-                                ->required(fn ($get) => $get('storage.driver') === 's3'),
+                                ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->disabled($isLocked),
 
                             TextInput::make('storage.s3.bucket')
                                 ->label('S3 Bucket Name')
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
-                                ->required(fn ($get) => $get('storage.driver') === 's3'),
+                                ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->disabled($isLocked),
 
                             TextInput::make('storage.digitalocean.key')
                                 ->label('DigitalOcean Spaces Access Key ID')
                                 ->helperText('Your DigitalOcean Spaces access key ID')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
                                     if (filled($state)) {
@@ -96,6 +105,7 @@ class StorageSchema
                                 ->helperText('Your DigitalOcean Spaces secret access key')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
                                     if (filled($state)) {
@@ -112,13 +122,15 @@ class StorageSchema
                                 ->placeholder('nyc3')
                                 ->helperText('DigitalOcean region code (e.g., nyc3, sfo3, fra1) - used for endpoint URL')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
-                                ->required(fn ($get) => $get('storage.driver') === 'digitalocean'),
+                                ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->disabled($isLocked),
 
                             TextInput::make('storage.digitalocean.bucket')
                                 ->label('DigitalOcean Space Name')
                                 ->helperText('The name of your Space - endpoint will be auto-constructed as spacename.region.digitaloceanspaces.com')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
-                                ->required(fn ($get) => $get('storage.driver') === 'digitalocean'),
+                                ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->disabled($isLocked),
 
                         ]),
 
@@ -144,7 +156,7 @@ class StorageSchema
                                         ->send();
                                 }
                             })
-                            ->visible(fn ($get) => $get('storage.driver') === 's3' &&
+                            ->visible(fn ($get) => !$isLocked && $get('storage.driver') === 's3' &&
                                 filled($get('storage.s3.key')) &&
                                 filled($get('storage.s3.secret')) &&
                                 filled($get('storage.s3.region')) &&
@@ -185,7 +197,7 @@ class StorageSchema
                                         ->send();
                                 }
                             })
-                            ->visible(fn ($get) => $get('storage.driver') === 'digitalocean' &&
+                            ->visible(fn ($get) => !$isLocked && $get('storage.driver') === 'digitalocean' &&
                                 filled($get('storage.digitalocean.key')) &&
                                 filled($get('storage.digitalocean.secret')) &&
                                 filled($get('storage.digitalocean.region')) &&
