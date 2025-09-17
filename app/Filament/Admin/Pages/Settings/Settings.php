@@ -9,6 +9,7 @@ use App\Filament\Admin\Pages\Settings\Schemas\MailSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\MailTemplatesSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\ReportSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\SecuritySchema;
+use App\Filament\Admin\Pages\Settings\Schemas\StorageSchema;
 use Closure;
 use Filament\Forms\Components\Tabs;
 use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
@@ -46,6 +47,8 @@ class Settings extends BaseSettings
                 ->schema([
                     Tabs\Tab::make(__('navigation.settings.tabs.general'))
                         ->schema(GeneralSchema::schema()),
+                    Tabs\Tab::make(__('navigation.settings.tabs.storage'))
+                        ->schema(StorageSchema::schema()),
                     Tabs\Tab::make(__('navigation.settings.tabs.mail'))
                         ->columns(3)
                         ->schema(MailSchema::schema()),
@@ -61,5 +64,33 @@ class Settings extends BaseSettings
                         ->schema(AuthenticationSchema::schema()),
                 ]),
         ];
+    }
+
+    protected function afterSave(): void
+    {
+        $driver = setting('storage.driver');
+
+        try {
+            // Update environment variables based on the selected storage driver
+            if ($driver === 'digitalocean') {
+                \Log::info('About to update DigitalOcean environment variables after save');
+                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::updateDigitalOceanEnvVars();
+                \Log::info('Successfully updated DigitalOcean environment variables after save');
+            } else {
+                // For any other driver (private, s3), clear DigitalOcean env vars and set FILESYSTEM_DISK
+                \Log::info('Clearing DigitalOcean environment variables for driver: '.$driver);
+                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::clearDigitalOceanEnvVars();
+
+                // Update the FILESYSTEM_DISK environment variable to match the selected driver
+                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::updateFilesystemDisk($driver);
+                \Log::info('Successfully updated environment variables for driver: '.$driver);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Failed to update environment variables after save: '.$e->getMessage());
+            \Log::error('Exception trace: '.$e->getTraceAsString());
+
+            // Don't break the save process, just log the error
+            // The user's settings will still be saved
+        }
     }
 }
