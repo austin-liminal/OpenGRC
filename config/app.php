@@ -166,6 +166,7 @@ return [
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
+        // App\Providers\DigitalOceanStorageServiceProvider::class, // Replaced with direct env file writing in settings
         App\Providers\EventServiceProvider::class,
         App\Providers\Filament\AppPanelProvider::class,
         App\Providers\Filament\AdminPanelProvider::class,

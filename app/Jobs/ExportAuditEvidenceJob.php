@@ -132,7 +132,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
         }
 
-        if ($disk === 's3') {
+        if ($disk === 's3' || $disk === 'digitalocean') {
             // Create ZIP locally
             $zipLocalPath = $tmpDir."/audit_{$this->auditId}_data_requests.zip";
             $zip = new ZipArchive;
@@ -144,7 +144,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
             // Upload ZIP to S3
             $zipS3Path = $exportDir."audit_{$this->auditId}_data_requests.zip";
-            \Storage::disk('s3')->put($zipS3Path, file_get_contents($zipLocalPath));
+            \Storage::disk($disk)->put($zipS3Path, file_get_contents($zipLocalPath));
 
             // Create or update FileAttachment for the ZIP
             FileAttachment::updateOrCreate(

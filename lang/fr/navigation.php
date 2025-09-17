@@ -33,6 +33,7 @@ return [
         'general_settings' => 'Paramètres Généraux',
         'tabs' => [
             'general' => 'Général',
+            'storage' => 'Paramètres de Stockage',
             'mail' => 'Paramètres de Messagerie',
             'mail_templates' => 'Modèles de Courrier',
             'ai' => 'Paramètres IA',

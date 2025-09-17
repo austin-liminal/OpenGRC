@@ -102,7 +102,7 @@ class DataRequestResponseResource extends Resource
                                     ->openable()
                                     ->deletable()
                                     ->reorderable()
-                                    ->maxSize(10240) // 10MB max
+                                    ->maxSize(10240) // 2MB max (matches PHP upload_max_filesize)
                                     ->getUploadedFileNameForStorageUsing(function ($file) {
                                         $random = Str::random(8);
 

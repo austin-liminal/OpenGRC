@@ -33,6 +33,7 @@ return [
         'general_settings' => 'Opće Postavke',
         'tabs' => [
             'general' => 'Općenito',
+            'storage' => 'Postavke Pohrane',
             'mail' => 'Postavke E-pošte',
             'mail_templates' => 'Predlošci E-pošte',
             'ai' => 'Postavke UI',

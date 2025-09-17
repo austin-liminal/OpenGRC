@@ -33,6 +33,7 @@ return [
         'general_settings' => 'Configuración General',
         'tabs' => [
             'general' => 'General',
+            'storage' => 'Configuración de Almacenamiento',
             'mail' => 'Configuración de Correo',
             'mail_templates' => 'Plantillas de Correo',
             'ai' => 'Configuración de IA',

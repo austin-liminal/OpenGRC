@@ -33,6 +33,7 @@ return [
         'general_settings' => 'General Settings',
         'tabs' => [
             'general' => 'General',
+            'storage' => 'Storage Settings',
             'mail' => 'Mail Settings',
             'mail_templates' => 'Mail Templates',
             'ai' => 'AI Settings',
