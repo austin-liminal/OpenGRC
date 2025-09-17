@@ -534,12 +534,108 @@ class Deploy extends Command
      */
     protected function performUpdateDeployment(array $config): void
     {
-        $this->info('[INFO] Skipping initial setup - performing update deployment...');
+        $this->info('[INFO] Performing update deployment...');
+
+        // Update remaining environment configuration (skip app key generation)
+        $envData = [
+            'APP_NAME' => $config['site_name'],
+            'APP_URL' => $config['site_url'],
+            'APP_ENV' => 'production',
+        ];
+
+        // Configure S3 if enabled
+        if ($config['s3_enabled']) {
+            $this->info('[INFO] Configuring S3 storage...');
+            $envData = array_merge($envData, [
+                'FILESYSTEM_DISK' => 's3',
+                'AWS_BUCKET' => $config['s3_bucket'],
+                'AWS_DEFAULT_REGION' => $config['s3_region'],
+                'AWS_ACCESS_KEY_ID' => $config['s3_key'],
+                'AWS_SECRET_ACCESS_KEY' => $config['s3_secret'],
+            ]);
+            $this->info('[SUCCESS] S3 storage configured');
+        }
+
+        // Configure DigitalOcean Spaces if enabled
+        if ($config['digitalocean_enabled']) {
+            $this->info('[INFO] Configuring DigitalOcean Spaces storage...');
+            $endpoint = 'https://'.strtolower($config['do_region']).'.digitaloceanspaces.com';
+            $envData = array_merge($envData, [
+                'FILESYSTEM_DISK' => 'digitalocean',
+                'DO_SPACES_KEY' => $config['do_key'],
+                'DO_SPACES_SECRET' => $config['do_secret'],
+                'DO_SPACES_REGION' => 'us-east-1', // AWS SDK compatibility
+                'DO_SPACES_BUCKET' => $config['do_bucket'],
+                'DO_SPACES_ENDPOINT' => $endpoint,
+                'DO_SPACES_USE_PATH_STYLE' => 'true',
+            ]);
+            $this->info('[SUCCESS] DigitalOcean Spaces storage configured');
+        }
+
+        $this->updateEnv($envData);
+        $this->info('[SUCCESS] Environment configuration updated');
+
+        // Update app environment config
+        config(['app.env' => 'production']);
 
         // Run migrations (always run these for updates)
         $this->info('[INFO] Running database migrations...');
         $this->call('migrate', ['--force' => true]);
         $this->info('[SUCCESS] Database migrations completed');
+
+        // Configure storage settings
+        if ($config['s3_enabled']) {
+            $this->call('settings:set', [
+                'key' => 'storage.driver',
+                'value' => 's3',
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.s3.bucket',
+                'value' => $config['s3_bucket'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.s3.region',
+                'value' => $config['s3_region'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.s3.key',
+                'value' => Crypt::encryptString($config['s3_key']),
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.s3.secret',
+                'value' => Crypt::encryptString($config['s3_secret']),
+            ]);
+            $this->info('[SUCCESS] S3 storage settings configured');
+        } elseif ($config['digitalocean_enabled']) {
+            $this->call('settings:set', [
+                'key' => 'storage.driver',
+                'value' => 'digitalocean',
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.bucket',
+                'value' => $config['do_bucket'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.region',
+                'value' => $config['do_region'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.key',
+                'value' => Crypt::encryptString($config['do_key']),
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.secret',
+                'value' => Crypt::encryptString($config['do_secret']),
+            ]);
+            $this->info('[SUCCESS] DigitalOcean Spaces storage settings configured');
+        } else {
+            $this->call('settings:set', [
+                'key' => 'storage.driver',
+                'value' => 'local',
+            ]);
+        }
+
+        $this->info('[SUCCESS] Storage settings configured');
 
         $this->performCommonDeploymentSteps();
     }
