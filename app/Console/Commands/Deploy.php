@@ -377,18 +377,20 @@ class Deploy extends Command
             throw new \Exception('Database connection failed: '.$e->getMessage());
         }
 
-        if ($isUpdate) {
-            $this->performUpdateDeployment($config);
-        } else {
-            $this->performFreshDeployment($config);
-        }
+        $this->performMainDeployment($config, $isUpdate);
     }
 
     /**
-     * Perform fresh deployment steps
+     * Perform the main deployment steps
      */
-    protected function performFreshDeployment(array $config): void
+    protected function performMainDeployment(array $config, bool $isUpdate): void
     {
+        if ($isUpdate) {
+            $this->info('[INFO] Performing update deployment...');
+        } else {
+            $this->info('[INFO] Performing fresh deployment...');
+        }
+
         // Generate or set application key
         if ($config['app_key']) {
             $this->info('[INFO] Setting custom application key...');
@@ -443,23 +445,32 @@ class Deploy extends Command
         config(['app.env' => 'production']);
 
         // Run migrations
-        $this->info('[INFO] Creating database tables...');
+        if ($isUpdate) {
+            $this->info('[INFO] Running database migrations...');
+        } else {
+            $this->info('[INFO] Creating database tables...');
+        }
         $this->call('migrate', ['--force' => true]);
-        $this->info('[SUCCESS] Database tables created');
+        $this->info('[SUCCESS] Database migrations completed');
 
-        // Create admin user
-        $this->info('[INFO] Creating admin user...');
-        $this->call('opengrc:create-user', [
-            'email' => $config['admin_email'],
-            'password' => $config['admin_password'],
-        ]);
-        $this->info('[SUCCESS] Admin user created');
+        // Skip user creation and seeding for updates
+        if (!$isUpdate) {
+            // Create admin user
+            $this->info('[INFO] Creating admin user...');
+            $this->call('opengrc:create-user', [
+                'email' => $config['admin_email'],
+                'password' => $config['admin_password'],
+            ]);
+            $this->info('[SUCCESS] Admin user created');
 
-        // Seed database
-        $this->info('[INFO] Seeding database with defaults...');
-        $this->call('db:seed', ['--class' => 'SettingsSeeder']);
-        $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
-        $this->info('[SUCCESS] Database seeded');
+            // Seed database
+            $this->info('[INFO] Seeding database with defaults...');
+            $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+            $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
+            $this->info('[SUCCESS] Database seeded');
+        } else {
+            $this->info('[INFO] Skipping user creation and database seeding for update deployment');
+        }
 
         // Set site configuration
         $this->info('[INFO] Configuring site settings...');
@@ -525,117 +536,6 @@ class Deploy extends Command
         }
 
         $this->info('[SUCCESS] Site settings configured');
-
-        $this->performCommonDeploymentSteps();
-    }
-
-    /**
-     * Perform update deployment steps
-     */
-    protected function performUpdateDeployment(array $config): void
-    {
-        $this->info('[INFO] Performing update deployment...');
-
-        // Update remaining environment configuration (skip app key generation)
-        $envData = [
-            'APP_NAME' => $config['site_name'],
-            'APP_URL' => $config['site_url'],
-            'APP_ENV' => 'production',
-        ];
-
-        // Configure S3 if enabled
-        if ($config['s3_enabled']) {
-            $this->info('[INFO] Configuring S3 storage...');
-            $envData = array_merge($envData, [
-                'FILESYSTEM_DISK' => 's3',
-                'AWS_BUCKET' => $config['s3_bucket'],
-                'AWS_DEFAULT_REGION' => $config['s3_region'],
-                'AWS_ACCESS_KEY_ID' => $config['s3_key'],
-                'AWS_SECRET_ACCESS_KEY' => $config['s3_secret'],
-            ]);
-            $this->info('[SUCCESS] S3 storage configured');
-        }
-
-        // Configure DigitalOcean Spaces if enabled
-        if ($config['digitalocean_enabled']) {
-            $this->info('[INFO] Configuring DigitalOcean Spaces storage...');
-            $endpoint = 'https://'.strtolower($config['do_region']).'.digitaloceanspaces.com';
-            $envData = array_merge($envData, [
-                'FILESYSTEM_DISK' => 'digitalocean',
-                'DO_SPACES_KEY' => $config['do_key'],
-                'DO_SPACES_SECRET' => $config['do_secret'],
-                'DO_SPACES_REGION' => 'us-east-1', // AWS SDK compatibility
-                'DO_SPACES_BUCKET' => $config['do_bucket'],
-                'DO_SPACES_ENDPOINT' => $endpoint,
-                'DO_SPACES_USE_PATH_STYLE' => 'true',
-            ]);
-            $this->info('[SUCCESS] DigitalOcean Spaces storage configured');
-        }
-
-        $this->updateEnv($envData);
-        $this->info('[SUCCESS] Environment configuration updated');
-
-        // Update app environment config
-        config(['app.env' => 'production']);
-
-        // Run migrations (always run these for updates)
-        $this->info('[INFO] Running database migrations...');
-        $this->call('migrate', ['--force' => true]);
-        $this->info('[SUCCESS] Database migrations completed');
-
-        // Configure storage settings
-        if ($config['s3_enabled']) {
-            $this->call('settings:set', [
-                'key' => 'storage.driver',
-                'value' => 's3',
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.s3.bucket',
-                'value' => $config['s3_bucket'],
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.s3.region',
-                'value' => $config['s3_region'],
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.s3.key',
-                'value' => Crypt::encryptString($config['s3_key']),
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.s3.secret',
-                'value' => Crypt::encryptString($config['s3_secret']),
-            ]);
-            $this->info('[SUCCESS] S3 storage settings configured');
-        } elseif ($config['digitalocean_enabled']) {
-            $this->call('settings:set', [
-                'key' => 'storage.driver',
-                'value' => 'digitalocean',
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.digitalocean.bucket',
-                'value' => $config['do_bucket'],
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.digitalocean.region',
-                'value' => $config['do_region'],
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.digitalocean.key',
-                'value' => Crypt::encryptString($config['do_key']),
-            ]);
-            $this->call('settings:set', [
-                'key' => 'storage.digitalocean.secret',
-                'value' => Crypt::encryptString($config['do_secret']),
-            ]);
-            $this->info('[SUCCESS] DigitalOcean Spaces storage settings configured');
-        } else {
-            $this->call('settings:set', [
-                'key' => 'storage.driver',
-                'value' => 'local',
-            ]);
-        }
-
-        $this->info('[SUCCESS] Storage settings configured');
 
         $this->performCommonDeploymentSteps();
     }
