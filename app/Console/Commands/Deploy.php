@@ -29,6 +29,11 @@ class Deploy extends Command
                             {--s3-region= : S3 region}
                             {--s3-key= : S3 access key ID}
                             {--s3-secret= : S3 secret access key}
+                            {--digitalocean : Enable DigitalOcean Spaces storage configuration}
+                            {--do-bucket= : DigitalOcean Space name}
+                            {--do-region= : DigitalOcean region (e.g., nyc3, sfo3, fra1)}
+                            {--do-key= : DigitalOcean Spaces access key ID}
+                            {--do-secret= : DigitalOcean Spaces secret access key}
                             {--accept : Auto-accept deployment without confirmation prompt}';
 
     /**
@@ -127,6 +132,21 @@ class Deploy extends Command
             }
         }
 
+        // Validate DigitalOcean parameters if DigitalOcean is enabled
+        if ($this->option('digitalocean')) {
+            $doRequired = ['do-bucket', 'do-region', 'do-key', 'do-secret'];
+            foreach ($doRequired as $param) {
+                if (! $this->option($param)) {
+                    $errors[] = "DigitalOcean {$param} is required when --digitalocean is enabled";
+                }
+            }
+        }
+
+        // Ensure only one storage type is enabled
+        if ($this->option('s3') && $this->option('digitalocean')) {
+            $errors[] = 'Cannot enable both S3 and DigitalOcean storage. Please choose one.';
+        }
+
         // Validate admin password strength
         $adminPassword = $this->option('admin-password');
         if ($adminPassword && strlen($adminPassword) < 8) {
@@ -171,6 +191,7 @@ class Deploy extends Command
             'site_url' => $this->option('site-url'),
             'app_key' => $this->option('app-key'),
             's3_enabled' => $this->option('s3'),
+            'digitalocean_enabled' => $this->option('digitalocean'),
         ];
 
         // Add S3 configuration if enabled
@@ -179,6 +200,14 @@ class Deploy extends Command
             $config['s3_region'] = $this->option('s3-region');
             $config['s3_key'] = $this->option('s3-key');
             $config['s3_secret'] = $this->option('s3-secret');
+        }
+
+        // Add DigitalOcean configuration if enabled
+        if ($config['digitalocean_enabled']) {
+            $config['do_bucket'] = $this->option('do-bucket');
+            $config['do_region'] = $this->option('do-region');
+            $config['do_key'] = $this->option('do-key');
+            $config['do_secret'] = $this->option('do-secret');
         }
 
         return $config;
@@ -215,6 +244,7 @@ class Deploy extends Command
             ['Site URL', $config['site_url']],
             ['Custom App Key', $config['app_key'] ? 'Yes' : 'Will generate'],
             ['S3 Storage', $config['s3_enabled'] ? 'Enabled' : 'Disabled'],
+            ['DigitalOcean Storage', $config['digitalocean_enabled'] ? 'Enabled' : 'Disabled'],
         ]);
 
         $this->table(['Setting', 'Value'], $tableRows);
@@ -229,6 +259,21 @@ class Deploy extends Command
                     ['S3 Region', $config['s3_region']],
                     ['S3 Access Key', substr($config['s3_key'], 0, 4).str_repeat('*', strlen($config['s3_key']) - 4)],
                     ['S3 Secret Key', str_repeat('*', strlen($config['s3_secret']))],
+                ]
+            );
+        }
+
+        if ($config['digitalocean_enabled']) {
+            $this->info('');
+            $this->info('[INFO] DigitalOcean Spaces Configuration:');
+            $this->table(
+                ['Setting', 'Value'],
+                [
+                    ['Space Name', $config['do_bucket']],
+                    ['Region', $config['do_region']],
+                    ['Access Key', substr($config['do_key'], 0, 4).str_repeat('*', strlen($config['do_key']) - 4)],
+                    ['Secret Key', str_repeat('*', strlen($config['do_secret']))],
+                    ['Endpoint', 'https://'.strtolower($config['do_region']).'.digitaloceanspaces.com'],
                 ]
             );
         }
@@ -302,6 +347,22 @@ class Deploy extends Command
                 'AWS_SECRET_ACCESS_KEY' => $config['s3_secret'],
             ]);
             $this->info('[SUCCESS] S3 storage configured');
+        }
+
+        // Configure DigitalOcean Spaces if enabled
+        if ($config['digitalocean_enabled']) {
+            $this->info('[INFO] Configuring DigitalOcean Spaces storage...');
+            $endpoint = 'https://'.strtolower($config['do_region']).'.digitaloceanspaces.com';
+            $this->updateEnv([
+                'FILESYSTEM_DISK' => 'digitalocean',
+                'DO_SPACES_KEY' => $config['do_key'],
+                'DO_SPACES_SECRET' => $config['do_secret'],
+                'DO_SPACES_REGION' => 'us-east-1', // AWS SDK compatibility
+                'DO_SPACES_BUCKET' => $config['do_bucket'],
+                'DO_SPACES_ENDPOINT' => $endpoint,
+                'DO_SPACES_USE_PATH_STYLE' => 'true',
+            ]);
+            $this->info('[SUCCESS] DigitalOcean Spaces storage configured');
         }
 
         $this->info('[SUCCESS] Environment configuration updated');
@@ -393,6 +454,28 @@ class Deploy extends Command
                 'value' => Crypt::encryptString($config['s3_secret']),
             ]);
             $this->info('[SUCCESS] S3 storage settings configured');
+        } elseif ($config['digitalocean_enabled']) {
+            $this->call('settings:set', [
+                'key' => 'storage.driver',
+                'value' => 'digitalocean',
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.bucket',
+                'value' => $config['do_bucket'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.region',
+                'value' => $config['do_region'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.key',
+                'value' => Crypt::encryptString($config['do_key']),
+            ]);
+            $this->call('settings:set', [
+                'key' => 'storage.digitalocean.secret',
+                'value' => Crypt::encryptString($config['do_secret']),
+            ]);
+            $this->info('[SUCCESS] DigitalOcean Spaces storage settings configured');
         } else {
             $this->call('settings:set', [
                 'key' => 'storage.driver',
