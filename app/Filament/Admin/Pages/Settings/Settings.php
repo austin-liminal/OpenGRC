@@ -46,7 +46,7 @@ class Settings extends BaseSettings
                 ->schema(GeneralSchema::schema()),
         ];
 
-        if (setting('storage.lock') != true) {
+        if (setting('storage.lock') != "true") {
             $tabs[] = Tabs\Tab::make(__('navigation.settings.tabs.storage'))
                 ->schema(StorageSchema::schema());
         }
