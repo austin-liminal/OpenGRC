@@ -34,6 +34,15 @@ class Deploy extends Command
                             {--do-region= : DigitalOcean region (e.g., nyc3, sfo3, fra1)}
                             {--do-key= : DigitalOcean Spaces access key ID}
                             {--do-secret= : DigitalOcean Spaces secret access key}
+                            {--smtp : Enable SMTP configuration}
+                            {--smtp-host= : SMTP server host}
+                            {--smtp-port=587 : SMTP server port}
+                            {--smtp-username= : SMTP username}
+                            {--smtp-password= : SMTP password}
+                            {--smtp-encryption=tls : SMTP encryption (tls, ssl, or none)}
+                            {--smtp-from= : From email address}
+                            {--lock : Lock storage settings to read-only after deployment}
+                            {--skip-migration : Skip database migrations and seeding}
                             {--accept : Auto-accept deployment without confirmation prompt}';
 
     /**
@@ -142,6 +151,28 @@ class Deploy extends Command
             }
         }
 
+        // Validate SMTP parameters if SMTP is enabled
+        if ($this->option('smtp')) {
+            $smtpRequired = ['smtp-host', 'smtp-username', 'smtp-password', 'smtp-from'];
+            foreach ($smtpRequired as $param) {
+                if (! $this->option($param)) {
+                    $errors[] = "SMTP {$param} is required when --smtp is enabled";
+                }
+            }
+
+            // Validate SMTP encryption type
+            $smtpEncryption = $this->option('smtp-encryption');
+            if (! in_array($smtpEncryption, ['tls', 'ssl', 'none'])) {
+                $errors[] = 'SMTP encryption must be "tls", "ssl", or "none"';
+            }
+
+            // Validate SMTP port
+            $smtpPort = $this->option('smtp-port');
+            if (! is_numeric($smtpPort) || $smtpPort < 1 || $smtpPort > 65535) {
+                $errors[] = 'SMTP port must be a valid port number (1-65535)';
+            }
+        }
+
         // Ensure only one storage type is enabled
         if ($this->option('s3') && $this->option('digitalocean')) {
             $errors[] = 'Cannot enable both S3 and DigitalOcean storage. Please choose one.';
@@ -192,6 +223,9 @@ class Deploy extends Command
             'app_key' => $this->option('app-key'),
             's3_enabled' => $this->option('s3'),
             'digitalocean_enabled' => $this->option('digitalocean'),
+            'smtp_enabled' => $this->option('smtp'),
+            'lock_storage' => $this->option('lock'),
+            'skip_migration' => $this->option('skip-migration'),
         ];
 
         // Add S3 configuration if enabled
@@ -208,6 +242,16 @@ class Deploy extends Command
             $config['do_region'] = $this->option('do-region');
             $config['do_key'] = $this->option('do-key');
             $config['do_secret'] = $this->option('do-secret');
+        }
+
+        // Add SMTP configuration if enabled
+        if ($config['smtp_enabled']) {
+            $config['smtp_host'] = $this->option('smtp-host');
+            $config['smtp_port'] = $this->option('smtp-port');
+            $config['smtp_username'] = $this->option('smtp-username');
+            $config['smtp_password'] = $this->option('smtp-password');
+            $config['smtp_encryption'] = $this->option('smtp-encryption');
+            $config['smtp_from'] = $this->option('smtp-from');
         }
 
         return $config;
@@ -245,6 +289,9 @@ class Deploy extends Command
             ['Custom App Key', $config['app_key'] ? 'Yes' : 'Will generate'],
             ['S3 Storage', $config['s3_enabled'] ? 'Enabled' : 'Disabled'],
             ['DigitalOcean Storage', $config['digitalocean_enabled'] ? 'Enabled' : 'Disabled'],
+            ['SMTP Configuration', $config['smtp_enabled'] ? 'Enabled' : 'Disabled'],
+            ['Lock Storage Settings', $config['lock_storage'] ? 'Yes' : 'No'],
+            ['Skip Migrations', $config['skip_migration'] ? 'Yes' : 'No'],
         ]);
 
         $this->table(['Setting', 'Value'], $tableRows);
@@ -274,6 +321,22 @@ class Deploy extends Command
                     ['Access Key', substr($config['do_key'], 0, 4).str_repeat('*', strlen($config['do_key']) - 4)],
                     ['Secret Key', str_repeat('*', strlen($config['do_secret']))],
                     ['Endpoint', 'https://'.strtolower($config['do_region']).'.digitaloceanspaces.com'],
+                ]
+            );
+        }
+
+        if ($config['smtp_enabled']) {
+            $this->info('');
+            $this->info('[INFO] SMTP Configuration:');
+            $this->table(
+                ['Setting', 'Value'],
+                [
+                    ['SMTP Host', $config['smtp_host']],
+                    ['SMTP Port', $config['smtp_port']],
+                    ['SMTP Username', $config['smtp_username']],
+                    ['SMTP Password', str_repeat('*', strlen($config['smtp_password']))],
+                    ['SMTP Encryption', $config['smtp_encryption']],
+                    ['From Address', $config['smtp_from']],
                 ]
             );
         }
@@ -438,38 +501,63 @@ class Deploy extends Command
             $this->info('[SUCCESS] DigitalOcean Spaces storage configured');
         }
 
+        // Configure SMTP if enabled
+        if ($config['smtp_enabled']) {
+            $this->info('[INFO] Configuring SMTP...');
+            $envData = array_merge($envData, [
+                'MAIL_MAILER' => 'smtp',
+                'MAIL_HOST' => $config['smtp_host'],
+                'MAIL_PORT' => $config['smtp_port'],
+                'MAIL_USERNAME' => $config['smtp_username'],
+                'MAIL_PASSWORD' => $config['smtp_password'],
+                'MAIL_ENCRYPTION' => $config['smtp_encryption'] !== 'none' ? $config['smtp_encryption'] : 'null',
+                'MAIL_FROM_ADDRESS' => $config['smtp_from'],
+                'MAIL_FROM_NAME' => $config['site_name'],
+            ]);
+            $this->info('[SUCCESS] SMTP configured');
+        }
+
         $this->updateEnv($envData);
         $this->info('[SUCCESS] Environment configuration updated');
 
         // Update app environment config
         config(['app.env' => 'production']);
 
-        // Run migrations
-        if ($isUpdate) {
-            $this->info('[INFO] Running database migrations...');
+        // Run migrations (skip if --skip-migration is provided)
+        if ($config['skip_migration']) {
+            $this->info('[INFO] Skipping database migrations and seeding (--skip-migration flag provided)');
         } else {
-            $this->info('[INFO] Creating database tables...');
-        }
-        $this->call('migrate', ['--force' => true]);
-        $this->info('[SUCCESS] Database migrations completed');
+            if ($isUpdate) {
+                $this->info('[INFO] Running database migrations...');
+            } else {
+                $this->info('[INFO] Creating database tables...');
+            }
+            $this->call('migrate', ['--force' => true]);
+            $this->info('[SUCCESS] Database migrations completed');
 
-        // Skip user creation and seeding for updates
-        if (!$isUpdate) {
-            // Create admin user
-            $this->info('[INFO] Creating admin user...');
-            $this->call('opengrc:create-user', [
-                'email' => $config['admin_email'],
-                'password' => $config['admin_password'],
-            ]);
-            $this->info('[SUCCESS] Admin user created');
+            // Skip user creation and role seeding for updates, but ensure settings are initialized
+            if (!$isUpdate) {
+                // Create admin user
+                $this->info('[INFO] Creating admin user...');
+                $this->call('opengrc:create-user', [
+                    'email' => $config['admin_email'],
+                    'password' => $config['admin_password'],
+                ]);
+                $this->info('[SUCCESS] Admin user created');
 
-            // Seed database
-            $this->info('[INFO] Seeding database with defaults...');
-            $this->call('db:seed', ['--class' => 'SettingsSeeder']);
-            $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
-            $this->info('[SUCCESS] Database seeded');
-        } else {
-            $this->info('[INFO] Skipping user creation and database seeding for update deployment');
+                // Seed database
+                $this->info('[INFO] Seeding database with defaults...');
+                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+                $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
+                $this->info('[SUCCESS] Database seeded');
+            } else {
+                $this->info('[INFO] Skipping user creation for update deployment');
+
+                // Ensure settings table is properly initialized for updates
+                $this->info('[INFO] Ensuring settings are initialized...');
+                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+                $this->info('[SUCCESS] Settings initialized');
+            }
         }
 
         // Set site configuration
@@ -534,6 +622,41 @@ class Deploy extends Command
                 'value' => 'local',
             ]);
         }
+
+        // Configure SMTP settings if enabled
+        if ($config['smtp_enabled']) {
+            $this->call('settings:set', [
+                'key' => 'mail.host',
+                'value' => $config['smtp_host'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'mail.port',
+                'value' => $config['smtp_port'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'mail.username',
+                'value' => $config['smtp_username'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'mail.password',
+                'value' => $config['smtp_password'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'mail.encryption',
+                'value' => $config['smtp_encryption'],
+            ]);
+            $this->call('settings:set', [
+                'key' => 'mail.from',
+                'value' => $config['smtp_from'],
+            ]);
+            $this->info('[SUCCESS] SMTP settings configured');
+        }
+
+        // Set storage lock setting
+        $this->call('settings:set', [
+            'key' => 'storage.locked',
+            'value' => $config['lock_storage'] ? 'true' : 'false',
+        ]);
 
         $this->info('[SUCCESS] Site settings configured');
 
