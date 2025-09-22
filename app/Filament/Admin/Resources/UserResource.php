@@ -29,7 +29,7 @@ class UserResource extends Resource
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = null;
+    protected static ?string $navigationGroup = "System";
 
     protected static ?int $navigationSort = 10;
 
@@ -40,7 +40,7 @@ class UserResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('navigation.groups.settings');
+        return __('navigation.groups.system');
     }
 
     public static function form(Form $form): Form

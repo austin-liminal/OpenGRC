@@ -1,21 +1,49 @@
 <?php
 
-namespace App\Filament\Admin\Pages\Settings\Schemas;
+namespace App\Filament\Admin\Pages\Settings;
 
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Grid;
+use App\Filament\Admin\Pages\Settings\Schemas\StorageSchema;
+use Closure;
+use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Grid;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
-class StorageSchema
+
+class StorageSettings extends BaseSettings
 {
-    public static function schema(): array
+    protected static ?string $navigationGroup = null;
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
+
+    public static function canAccess(): bool
+    {
+        if (auth()->check() && auth()->user()->can('Manage Preferences') && setting('storage.locked') != "true") {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function getNavigationGroup(): string
+    {
+        return __('navigation.groups.settings');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('navigation.settings.storage_settings');
+    }
+
+    public function schema(): array|Closure
     {
         $isLocked = setting('storage.locked', 'false') === 'true';
 
@@ -133,79 +161,121 @@ class StorageSchema
                                 ->disabled($isLocked),
 
                         ]),
-
-                    Actions::make([
-                        Action::make('testS3Connection')
-                            ->label('Test S3 Connection')
-                            ->color('primary')
-                            ->action(function ($livewire) {
-                                try {
-                                    // Save current form data first
-                                    $livewire->save();
-
-                                    // Then test S3 connection with saved settings
-                                    static::testS3Connection();
-                                } catch (\Exception $e) {
-                                    // Handle any errors during the entire process
-                                    \Log::error('S3 connection test failed during setup: '.$e->getMessage());
-
-                                    Notification::make()
-                                        ->title('S3 connection test failed')
-                                        ->body('Failed to save settings or test connection: '.$e->getMessage())
-                                        ->danger()
-                                        ->send();
-                                }
-                            })
-                            ->visible(fn ($get) => !$isLocked && $get('storage.driver') === 's3' &&
-                                filled($get('storage.s3.key')) &&
-                                filled($get('storage.s3.secret')) &&
-                                filled($get('storage.s3.region')) &&
-                                filled($get('storage.s3.bucket'))
-                            ),
-                        Action::make('testDigitalOceanConnection')
-                            ->label('Test DigitalOcean Connection')
-                            ->color('primary')
-                            ->action(function ($livewire, $get) {
-                                try {
-                                    // Get form data directly without saving
-                                    $key = $get('storage.digitalocean.key');
-                                    $secret = $get('storage.digitalocean.secret');
-                                    $region = $get('storage.digitalocean.region');
-                                    $bucket = $get('storage.digitalocean.bucket');
-
-                                    // Validate that all required fields are filled
-                                    if (empty($key) || empty($secret) || empty($region) || empty($bucket)) {
-                                        Notification::make()
-                                            ->title('DigitalOcean connection test failed')
-                                            ->body('All DigitalOcean fields must be filled to test the connection.')
-                                            ->warning()
-                                            ->send();
-
-                                        return;
-                                    }
-
-                                    // Test connection with current form values
-                                    static::testDigitalOceanConnectionWithCredentials($key, $secret, $region, $bucket);
-                                } catch (\Exception $e) {
-                                    // Handle any errors during the test
-                                    \Log::error('DigitalOcean connection test failed: '.$e->getMessage());
-
-                                    Notification::make()
-                                        ->title('DigitalOcean connection test failed')
-                                        ->body('Connection test failed: '.$e->getMessage())
-                                        ->danger()
-                                        ->send();
-                                }
-                            })
-                            ->visible(fn ($get) => !$isLocked && $get('storage.driver') === 'digitalocean' &&
-                                filled($get('storage.digitalocean.key')) &&
-                                filled($get('storage.digitalocean.secret')) &&
-                                filled($get('storage.digitalocean.region')) &&
-                                filled($get('storage.digitalocean.bucket'))
-                            ),
-                    ]),
                 ]),
         ];
+    }
+
+    protected function getActions(): array
+    {
+        $isLocked = setting('storage.locked', 'false') === 'true';
+
+        if ($isLocked) {
+            return [];
+        }
+
+        return [
+            Action::make('testS3Connection')
+                ->label('Test S3 Connection')
+                ->color('primary')
+                ->action(function () {
+                    try {
+                        // Save current form data first
+                        $this->save();
+
+                        // Then test S3 connection with saved settings
+                        static::testS3Connection();
+                    } catch (\Exception $e) {
+                        // Handle any errors during the entire process
+                        \Log::error('S3 connection test failed during setup: '.$e->getMessage());
+
+                        Notification::make()
+                            ->title('S3 connection test failed')
+                            ->body('Failed to save settings or test connection: '.$e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                })
+                ->visible(function () {
+                    $driver = $this->form->getState()['storage']['driver'] ?? null;
+                    return $driver === 's3' &&
+                           !empty($this->form->getState()['storage']['s3']['key'] ?? null) &&
+                           !empty($this->form->getState()['storage']['s3']['secret'] ?? null) &&
+                           !empty($this->form->getState()['storage']['s3']['region'] ?? null) &&
+                           !empty($this->form->getState()['storage']['s3']['bucket'] ?? null);
+                }),
+            Action::make('testDigitalOceanConnection')
+                ->label('Test DigitalOcean Connection')
+                ->color('primary')
+                ->action(function () {
+                    try {
+                        // Get form data directly without saving
+                        $formState = $this->form->getState();
+                        $key = $formState['storage']['digitalocean']['key'] ?? '';
+                        $secret = $formState['storage']['digitalocean']['secret'] ?? '';
+                        $region = $formState['storage']['digitalocean']['region'] ?? '';
+                        $bucket = $formState['storage']['digitalocean']['bucket'] ?? '';
+
+                        // Validate that all required fields are filled
+                        if (empty($key) || empty($secret) || empty($region) || empty($bucket)) {
+                            Notification::make()
+                                ->title('DigitalOcean connection test failed')
+                                ->body('All DigitalOcean fields must be filled to test the connection.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Test connection with current form values
+                        static::testDigitalOceanConnectionWithCredentials($key, $secret, $region, $bucket);
+                    } catch (\Exception $e) {
+                        // Handle any errors during the test
+                        \Log::error('DigitalOcean connection test failed: '.$e->getMessage());
+
+                        Notification::make()
+                            ->title('DigitalOcean connection test failed')
+                            ->body('Connection test failed: '.$e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                })
+                ->visible(function () {
+                    $driver = $this->form->getState()['storage']['driver'] ?? null;
+                    return $driver === 'digitalocean' &&
+                           !empty($this->form->getState()['storage']['digitalocean']['key'] ?? null) &&
+                           !empty($this->form->getState()['storage']['digitalocean']['secret'] ?? null) &&
+                           !empty($this->form->getState()['storage']['digitalocean']['region'] ?? null) &&
+                           !empty($this->form->getState()['storage']['digitalocean']['bucket'] ?? null);
+                }),
+        ];
+    }
+
+    protected function afterSave(): void
+    {
+        $driver = setting('storage.driver');
+
+        try {
+            // Update environment variables based on the selected storage driver
+            if ($driver === 'digitalocean') {
+                \Log::info('About to update DigitalOcean environment variables after save');
+                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::updateDigitalOceanEnvVars();
+                \Log::info('Successfully updated DigitalOcean environment variables after save');
+            } else {
+                // For any other driver (private, s3), clear DigitalOcean env vars and set FILESYSTEM_DISK
+                \Log::info('Clearing DigitalOcean environment variables for driver: '.$driver);
+                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::clearDigitalOceanEnvVars();
+
+                // Update the FILESYSTEM_DISK environment variable to match the selected driver
+                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::updateFilesystemDisk($driver);
+                \Log::info('Successfully updated environment variables for driver: '.$driver);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Failed to update environment variables after save: '.$e->getMessage());
+            \Log::error('Exception trace: '.$e->getTraceAsString());
+
+            // Don't break the save process, just log the error
+            // The user's settings will still be saved
+        }
     }
 
     protected static function testS3Connection(): void

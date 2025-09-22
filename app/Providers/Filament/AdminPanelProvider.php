@@ -61,6 +61,12 @@ class AdminPanelProvider extends PanelProvider
                 \Outerweb\FilamentSettings\Filament\Plugins\FilamentSettingsPlugin::make()
                     ->pages([
                         \App\Filament\Admin\Pages\Settings\Settings::class,
+                        \App\Filament\Admin\Pages\Settings\StorageSettings::class,
+                        \App\Filament\Admin\Pages\Settings\MailSettings::class,
+                        \App\Filament\Admin\Pages\Settings\AiSettings::class,
+                        \App\Filament\Admin\Pages\Settings\ReportSettings::class,
+                        \App\Filament\Admin\Pages\Settings\SecuritySettings::class,
+                        \App\Filament\Admin\Pages\Settings\AuthenticationSettings::class,
                     ]),
             ])
             ->navigationItems([
