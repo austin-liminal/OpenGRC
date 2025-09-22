@@ -31,6 +31,13 @@ return [
     // Settings Labels
     'settings' => [
         'general_settings' => 'Configuración General',
+        'storage_settings' => 'Configuración de Almacenamiento',
+        'mail_settings' => 'Configuración de Correo',
+        'mail_template_settings' => 'Plantillas',
+        'ai_settings' => 'Configuración de IA',
+        'report_settings' => 'Configuración de Informes',
+        'security_settings' => 'Configuración de Seguridad',
+        'authentication_settings' => 'Configuración de Autenticación',
         'tabs' => [
             'general' => 'General',
             'storage' => 'Configuración de Almacenamiento',

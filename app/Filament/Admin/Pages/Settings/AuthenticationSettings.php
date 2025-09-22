@@ -1,19 +1,47 @@
 <?php
 
-namespace App\Filament\Admin\Pages\Settings\Schemas;
+namespace App\Filament\Admin\Pages\Settings;
 
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
+use App\Filament\Admin\Pages\Settings\Schemas\AuthenticationSchema;
+use Closure;
+use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Illuminate\Support\Facades\Crypt;
 use Spatie\Permission\Models\Role;
 
-class AuthenticationSchema
+class AuthenticationSettings extends BaseSettings
 {
-    public static function schema(): array
+    protected static ?string $navigationGroup = null;
+
+    protected static ?int $navigationSort = 7;
+
+    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
+
+    public static function canAccess(): bool
+    {
+        if (auth()->check() && auth()->user()->can('Manage Preferences')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function getNavigationGroup(): string
+    {
+        return __('navigation.groups.settings');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('navigation.settings.authentication_settings');
+    }
+
+    public function schema(): array|Closure
     {
         return [
             // Azure Authentication

@@ -326,7 +326,6 @@ class Deploy extends Command
         }
 
         if ($config['smtp_enabled']) {
-            $this->info('');
             $this->info('[INFO] SMTP Configuration:');
             $this->table(
                 ['Setting', 'Value'],
@@ -340,8 +339,6 @@ class Deploy extends Command
                 ]
             );
         }
-
-        $this->info('');
     }
 
     /**
@@ -467,10 +464,14 @@ class Deploy extends Command
 
         // Update remaining environment configuration
         $envData = [
-            'APP_NAME' => $config['site_name'],
             'APP_URL' => $config['site_url'],
             'APP_ENV' => 'production',
         ];
+
+        // Only update site name for fresh deployments
+        if (!$isUpdate) {
+            $envData['APP_NAME'] = $config['site_name'];
+        }
 
         // Configure S3 if enabled
         if ($config['s3_enabled']) {
@@ -562,10 +563,15 @@ class Deploy extends Command
 
         // Set site configuration
         $this->info('[INFO] Configuring site settings...');
-        $this->call('settings:set', [
-            'key' => 'general.name',
-            'value' => $config['site_name'],
-        ]);
+
+        // Only update site name for fresh deployments
+        if (!$isUpdate) {
+            $this->call('settings:set', [
+                'key' => 'general.name',
+                'value' => $config['site_name'],
+            ]);
+        }
+
         $this->call('settings:set', [
             'key' => 'general.url',
             'value' => $config['site_url'],

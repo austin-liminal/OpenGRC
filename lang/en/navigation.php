@@ -3,6 +3,7 @@
 return [
     // Navigation Groups
     'groups' => [
+        'system' => 'System',
         'settings' => 'Settings',
         'foundations' => 'Foundations',
     ],
@@ -31,6 +32,13 @@ return [
     // Settings Labels
     'settings' => [
         'general_settings' => 'General Settings',
+        'storage_settings' => 'Storage Settings',
+        'mail_settings' => 'Mail Settings',
+        'mail_template_settings' => 'Templates',
+        'ai_settings' => 'AI Settings',
+        'report_settings' => 'Report Settings',
+        'security_settings' => 'Security Settings',
+        'authentication_settings' => 'Authentication Settings',
         'tabs' => [
             'general' => 'General',
             'storage' => 'Storage Settings',

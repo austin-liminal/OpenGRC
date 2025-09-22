@@ -35,7 +35,7 @@ class BundleResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('navigation.groups.settings');
+        return __('navigation.groups.system');
     }
 
     /**

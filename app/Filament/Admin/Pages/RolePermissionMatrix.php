@@ -20,7 +20,7 @@ class RolePermissionMatrix extends Page
 
     protected static ?string $navigationIcon = 'heroicon-o-key';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = 'System';
 
     protected static ?string $title = 'Role & Permission Matrix';
 
