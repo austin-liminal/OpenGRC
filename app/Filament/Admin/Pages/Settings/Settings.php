@@ -41,28 +41,36 @@ class Settings extends BaseSettings
 
     public function schema(): array|Closure
     {
+        $tabs = [
+            Tabs\Tab::make(__('navigation.settings.tabs.general'))
+                ->schema(GeneralSchema::schema()),
+        ];
+
+        if (setting('storage.lock') != true) {
+            $tabs[] = Tabs\Tab::make(__('navigation.settings.tabs.storage'))
+                ->schema(StorageSchema::schema());
+        }
+
+        $tabs = array_merge($tabs, [
+            Tabs\Tab::make(__('navigation.settings.tabs.mail'))
+                ->columns(3)
+                ->schema(MailSchema::schema()),
+            Tabs\Tab::make(__('navigation.settings.tabs.mail_templates'))
+                ->schema(MailTemplatesSchema::schema()),
+            Tabs\Tab::make(__('navigation.settings.tabs.ai'))
+                ->schema(AiSchema::schema()),
+            Tabs\Tab::make(__('navigation.settings.tabs.report'))
+                ->schema(ReportSchema::schema()),
+            Tabs\Tab::make(__('navigation.settings.tabs.security'))
+                ->schema(SecuritySchema::schema()),
+            Tabs\Tab::make(__('navigation.settings.tabs.authentication'))
+                ->schema(AuthenticationSchema::schema()),
+        ]);
+
         return [
             Tabs::make('Settings')
                 ->columns(2)
-                ->schema([
-                    Tabs\Tab::make(__('navigation.settings.tabs.general'))
-                        ->schema(GeneralSchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.storage'))
-                        ->schema(StorageSchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.mail'))
-                        ->columns(3)
-                        ->schema(MailSchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.mail_templates'))
-                        ->schema(MailTemplatesSchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.ai'))
-                        ->schema(AiSchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.report'))
-                        ->schema(ReportSchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.security'))
-                        ->schema(SecuritySchema::schema()),
-                    Tabs\Tab::make(__('navigation.settings.tabs.authentication'))
-                        ->schema(AuthenticationSchema::schema()),
-                ]),
+                ->schema($tabs),
         ];
     }
 
