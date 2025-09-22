@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:9e616fbf-dd86-4c64-94fb-fb96ccba9056",
+    "serialNumber": "urn:uuid:fe6f99ca-84c4-442e-a4cd-721a19e1950d",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-09-17T13:36:13Z",
+        "timestamp": "2025-09-22T00:16:15Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "f564df8faec7c0519acdabe38d063c8c2cf8e2f7"
+                    "value": "1051072566c7ac1f507a221874b5ca16a8f36219"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "f564df8faec7c0519acdabe38d063c8c2cf8e2f7"
+                    "value": "1051072566c7ac1f507a221874b5ca16a8f36219"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -335,10 +335,10 @@
             ]
         },
         {
-            "bom-ref": "aws/aws-sdk-php-3.356.19.0",
+            "bom-ref": "aws/aws-sdk-php-3.356.22.0",
             "type": "library",
             "name": "aws-sdk-php",
-            "version": "3.356.19",
+            "version": "3.356.22",
             "group": "aws",
             "description": "AWS SDK for PHP - Use Amazon Web Services in your PHP project",
             "author": "Amazon Web Services",
@@ -349,17 +349,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/aws/aws-sdk-php@3.356.19",
+            "purl": "pkg:composer/aws/aws-sdk-php@3.356.22",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/4dbc87e689c4e4a6655d6b7e3d02ce2f4e87aa5c",
-                    "comment": "dist reference: 4dbc87e689c4e4a6655d6b7e3d02ce2f4e87aa5c"
+                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/5b3f65a158a0e822586d110192ee78c6565b4f06",
+                    "comment": "dist reference: 5b3f65a158a0e822586d110192ee78c6565b4f06"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/aws/aws-sdk-php.git",
-                    "comment": "source reference: 4dbc87e689c4e4a6655d6b7e3d02ce2f4e87aa5c"
+                    "comment": "source reference: 5b3f65a158a0e822586d110192ee78c6565b4f06"
                 },
                 {
                     "type": "website",
@@ -378,18 +378,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.19",
+                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.22",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "4dbc87e689c4e4a6655d6b7e3d02ce2f4e87aa5c"
+                    "value": "5b3f65a158a0e822586d110192ee78c6565b4f06"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "4dbc87e689c4e4a6655d6b7e3d02ce2f4e87aa5c"
+                    "value": "5b3f65a158a0e822586d110192ee78c6565b4f06"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1552,10 +1552,10 @@
             ]
         },
         {
-            "bom-ref": "dompdf/dompdf-3.1.0.0",
+            "bom-ref": "dompdf/dompdf-3.1.1.0",
             "type": "library",
             "name": "dompdf",
-            "version": "v3.1.0",
+            "version": "v3.1.1",
             "group": "dompdf",
             "description": "DOMPDF is a CSS 2.1 compliant HTML to PDF converter",
             "author": "The Dompdf Community",
@@ -1566,17 +1566,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/dompdf/dompdf@v3.1.0",
+            "purl": "pkg:composer/dompdf/dompdf@v3.1.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/dompdf/dompdf/zipball/a51bd7a063a65499446919286fb18b518177155a",
-                    "comment": "dist reference: a51bd7a063a65499446919286fb18b518177155a"
+                    "url": "https://api.github.com/repos/dompdf/dompdf/zipball/794ec856134a73d2a69a474c5d4faa47e1e645b1",
+                    "comment": "dist reference: 794ec856134a73d2a69a474c5d4faa47e1e645b1"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/dompdf/dompdf.git",
-                    "comment": "source reference: a51bd7a063a65499446919286fb18b518177155a"
+                    "comment": "source reference: 794ec856134a73d2a69a474c5d4faa47e1e645b1"
                 },
                 {
                     "type": "website",
@@ -1590,18 +1590,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/dompdf/dompdf/tree/v3.1.0",
+                    "url": "https://github.com/dompdf/dompdf/tree/v3.1.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "a51bd7a063a65499446919286fb18b518177155a"
+                    "value": "794ec856134a73d2a69a474c5d4faa47e1e645b1"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "a51bd7a063a65499446919286fb18b518177155a"
+                    "value": "794ec856134a73d2a69a474c5d4faa47e1e645b1"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3484,10 +3484,10 @@
             ]
         },
         {
-            "bom-ref": "laravel/pint-1.25.0.0",
+            "bom-ref": "laravel/pint-1.25.1.0",
             "type": "library",
             "name": "pint",
-            "version": "v1.25.0",
+            "version": "v1.25.1",
             "group": "laravel",
             "description": "An opinionated code formatter for PHP.",
             "author": "Nuno Maduro",
@@ -3498,17 +3498,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/laravel/pint@v1.25.0",
+            "purl": "pkg:composer/laravel/pint@v1.25.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/laravel/pint/zipball/595de38458c6b0ab4cae4bcc769c2e5c5d5b8e96",
-                    "comment": "dist reference: 595de38458c6b0ab4cae4bcc769c2e5c5d5b8e96"
+                    "url": "https://api.github.com/repos/laravel/pint/zipball/5016e263f95d97670d71b9a987bd8996ade6d8d9",
+                    "comment": "dist reference: 5016e263f95d97670d71b9a987bd8996ade6d8d9"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/laravel/pint.git",
-                    "comment": "source reference: 595de38458c6b0ab4cae4bcc769c2e5c5d5b8e96"
+                    "comment": "source reference: 5016e263f95d97670d71b9a987bd8996ade6d8d9"
                 },
                 {
                     "type": "website",
@@ -3529,11 +3529,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "595de38458c6b0ab4cae4bcc769c2e5c5d5b8e96"
+                    "value": "5016e263f95d97670d71b9a987bd8996ade6d8d9"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "595de38458c6b0ab4cae4bcc769c2e5c5d5b8e96"
+                    "value": "5016e263f95d97670d71b9a987bd8996ade6d8d9"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -7407,10 +7407,10 @@
             ]
         },
         {
-            "bom-ref": "psy/psysh-0.12.10.0",
+            "bom-ref": "psy/psysh-0.12.12.0",
             "type": "library",
             "name": "psysh",
-            "version": "v0.12.10",
+            "version": "v0.12.12",
             "group": "psy",
             "description": "An interactive shell for modern PHP.",
             "author": "Justin Hileman",
@@ -7421,17 +7421,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/psy/psysh@v0.12.10",
+            "purl": "pkg:composer/psy/psysh@v0.12.12",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/bobthecow/psysh/zipball/6e80abe6f2257121f1eb9a4c55bf29d921025b22",
-                    "comment": "dist reference: 6e80abe6f2257121f1eb9a4c55bf29d921025b22"
+                    "url": "https://api.github.com/repos/bobthecow/psysh/zipball/cd23863404a40ccfaf733e3af4db2b459837f7e7",
+                    "comment": "dist reference: cd23863404a40ccfaf733e3af4db2b459837f7e7"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/bobthecow/psysh.git",
-                    "comment": "source reference: 6e80abe6f2257121f1eb9a4c55bf29d921025b22"
+                    "comment": "source reference: cd23863404a40ccfaf733e3af4db2b459837f7e7"
                 },
                 {
                     "type": "website",
@@ -7445,18 +7445,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/bobthecow/psysh/tree/v0.12.10",
+                    "url": "https://github.com/bobthecow/psysh/tree/v0.12.12",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "6e80abe6f2257121f1eb9a4c55bf29d921025b22"
+                    "value": "cd23863404a40ccfaf733e3af4db2b459837f7e7"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "6e80abe6f2257121f1eb9a4c55bf29d921025b22"
+                    "value": "cd23863404a40ccfaf733e3af4db2b459837f7e7"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12091,7 +12091,7 @@
             "ref": "aws/aws-crt-php-1.2.7.0"
         },
         {
-            "ref": "aws/aws-sdk-php-3.356.19.0",
+            "ref": "aws/aws-sdk-php-3.356.22.0",
             "dependsOn": [
                 "aws/aws-crt-php-1.2.7.0",
                 "guzzlehttp/guzzle-7.10.0.0",
@@ -12117,7 +12117,7 @@
         {
             "ref": "barryvdh/laravel-dompdf-3.1.1.0",
             "dependsOn": [
-                "dompdf/dompdf-3.1.0.0"
+                "dompdf/dompdf-3.1.1.0"
             ]
         },
         {
@@ -12203,7 +12203,7 @@
             "ref": "doctrine/lexer-3.0.1.0"
         },
         {
-            "ref": "dompdf/dompdf-3.1.0.0",
+            "ref": "dompdf/dompdf-3.1.1.0",
             "dependsOn": [
                 "dompdf/php-font-lib-1.0.1.0",
                 "dompdf/php-svg-lib-1.0.0.0",
@@ -12479,7 +12479,7 @@
             ]
         },
         {
-            "ref": "laravel/pint-1.25.0.0"
+            "ref": "laravel/pint-1.25.1.0"
         },
         {
             "ref": "laravel/prompts-0.3.6.0",
@@ -12515,7 +12515,7 @@
         {
             "ref": "laravel/tinker-2.10.1.0",
             "dependsOn": [
-                "psy/psysh-0.12.10.0",
+                "psy/psysh-0.12.12.0",
                 "symfony/var-dumper-7.3.3.0"
             ]
         },
@@ -12548,7 +12548,7 @@
         {
             "ref": "league/flysystem-aws-s3-v3-3.29.0.0",
             "dependsOn": [
-                "aws/aws-sdk-php-3.356.19.0",
+                "aws/aws-sdk-php-3.356.22.0",
                 "league/flysystem-3.30.0.0",
                 "league/mime-type-detection-1.16.0.0"
             ]
@@ -12859,7 +12859,7 @@
             "ref": "psr/simple-cache-3.0.0.0"
         },
         {
-            "ref": "psy/psysh-0.12.10.0",
+            "ref": "psy/psysh-0.12.12.0",
             "dependsOn": [
                 "nikic/php-parser-5.6.1.0",
                 "symfony/console-7.3.3.0",
@@ -13326,7 +13326,7 @@
                 "fakerphp/faker-1.24.1.0",
                 "larastan/larastan-2.11.2.0",
                 "laravel/dusk-8.3.3.0",
-                "laravel/pint-1.25.0.0",
+                "laravel/pint-1.25.1.0",
                 "laravel/sail-1.45.0.0",
                 "mockery/mockery-1.6.12.0",
                 "nunomaduro/collision-8.5.0.0",

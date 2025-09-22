@@ -42,6 +42,7 @@ class Deploy extends Command
                             {--smtp-encryption=tls : SMTP encryption (tls, ssl, or none)}
                             {--smtp-from= : From email address}
                             {--lock : Lock storage settings to read-only after deployment}
+                            {--skip-migration : Skip database migrations and seeding}
                             {--accept : Auto-accept deployment without confirmation prompt}';
 
     /**
@@ -224,6 +225,7 @@ class Deploy extends Command
             'digitalocean_enabled' => $this->option('digitalocean'),
             'smtp_enabled' => $this->option('smtp'),
             'lock_storage' => $this->option('lock'),
+            'skip_migration' => $this->option('skip-migration'),
         ];
 
         // Add S3 configuration if enabled
@@ -289,6 +291,7 @@ class Deploy extends Command
             ['DigitalOcean Storage', $config['digitalocean_enabled'] ? 'Enabled' : 'Disabled'],
             ['SMTP Configuration', $config['smtp_enabled'] ? 'Enabled' : 'Disabled'],
             ['Lock Storage Settings', $config['lock_storage'] ? 'Yes' : 'No'],
+            ['Skip Migrations', $config['skip_migration'] ? 'Yes' : 'No'],
         ]);
 
         $this->table(['Setting', 'Value'], $tableRows);
@@ -520,37 +523,41 @@ class Deploy extends Command
         // Update app environment config
         config(['app.env' => 'production']);
 
-        // Run migrations
-        if ($isUpdate) {
-            $this->info('[INFO] Running database migrations...');
+        // Run migrations (skip if --skip-migration is provided)
+        if ($config['skip_migration']) {
+            $this->info('[INFO] Skipping database migrations and seeding (--skip-migration flag provided)');
         } else {
-            $this->info('[INFO] Creating database tables...');
-        }
-        $this->call('migrate', ['--force' => true]);
-        $this->info('[SUCCESS] Database migrations completed');
+            if ($isUpdate) {
+                $this->info('[INFO] Running database migrations...');
+            } else {
+                $this->info('[INFO] Creating database tables...');
+            }
+            $this->call('migrate', ['--force' => true]);
+            $this->info('[SUCCESS] Database migrations completed');
 
-        // Skip user creation and role seeding for updates, but ensure settings are initialized
-        if (!$isUpdate) {
-            // Create admin user
-            $this->info('[INFO] Creating admin user...');
-            $this->call('opengrc:create-user', [
-                'email' => $config['admin_email'],
-                'password' => $config['admin_password'],
-            ]);
-            $this->info('[SUCCESS] Admin user created');
+            // Skip user creation and role seeding for updates, but ensure settings are initialized
+            if (!$isUpdate) {
+                // Create admin user
+                $this->info('[INFO] Creating admin user...');
+                $this->call('opengrc:create-user', [
+                    'email' => $config['admin_email'],
+                    'password' => $config['admin_password'],
+                ]);
+                $this->info('[SUCCESS] Admin user created');
 
-            // Seed database
-            $this->info('[INFO] Seeding database with defaults...');
-            $this->call('db:seed', ['--class' => 'SettingsSeeder']);
-            $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
-            $this->info('[SUCCESS] Database seeded');
-        } else {
-            $this->info('[INFO] Skipping user creation for update deployment');
+                // Seed database
+                $this->info('[INFO] Seeding database with defaults...');
+                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+                $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
+                $this->info('[SUCCESS] Database seeded');
+            } else {
+                $this->info('[INFO] Skipping user creation for update deployment');
 
-            // Ensure settings table is properly initialized for updates
-            $this->info('[INFO] Ensuring settings are initialized...');
-            $this->call('db:seed', ['--class' => 'SettingsSeeder']);
-            $this->info('[SUCCESS] Settings initialized');
+                // Ensure settings table is properly initialized for updates
+                $this->info('[INFO] Ensuring settings are initialized...');
+                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+                $this->info('[SUCCESS] Settings initialized');
+            }
         }
 
         // Set site configuration
