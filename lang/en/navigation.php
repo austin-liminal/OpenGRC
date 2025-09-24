@@ -35,6 +35,7 @@ return [
         'storage_settings' => 'Storage Settings',
         'mail_settings' => 'Mail Settings',
         'mail_template_settings' => 'Templates',
+        'templates' => 'Templates',
         'ai_settings' => 'AI Settings',
         'report_settings' => 'Report Settings',
         'security_settings' => 'Security Settings',

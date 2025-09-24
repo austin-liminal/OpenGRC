@@ -34,6 +34,7 @@ return [
         'storage_settings' => 'Paramètres de Stockage',
         'mail_settings' => 'Paramètres de Messagerie',
         'mail_template_settings' => 'Modèles',
+        'templates' => 'Modèles',
         'ai_settings' => 'Paramètres IA',
         'report_settings' => 'Paramètres de Rapport',
         'security_settings' => 'Paramètres de Sécurité',

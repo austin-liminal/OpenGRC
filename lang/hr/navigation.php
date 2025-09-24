@@ -34,6 +34,7 @@ return [
         'storage_settings' => 'Postavke Pohrane',
         'mail_settings' => 'Postavke E-pošte',
         'mail_template_settings' => 'Predlošci',
+        'templates' => 'Predlošci',
         'ai_settings' => 'Postavke UI',
         'report_settings' => 'Postavke Izvještaja',
         'security_settings' => 'Postavke Sigurnosti',
