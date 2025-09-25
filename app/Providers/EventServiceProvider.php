@@ -29,6 +29,15 @@ class EventServiceProvider extends ServiceProvider
             GoogleExtendSocialite::class.'@handle',
             Auth0ExtendSocialite::class.'@handle',
         ],
+        \Illuminate\Auth\Events\Login::class => [
+            \App\Listeners\LogSuccessfulLogin::class,
+        ],
+        \Illuminate\Auth\Events\Logout::class => [
+            \App\Listeners\LogSuccessfulLogout::class,
+        ],
+        \Illuminate\Auth\Events\Failed::class => [
+            \App\Listeners\LogFailedLogin::class,
+        ],
     ];
 
     /**

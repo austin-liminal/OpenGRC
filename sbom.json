@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:fe6f99ca-84c4-442e-a4cd-721a19e1950d",
+    "serialNumber": "urn:uuid:8bbff06b-dd9b-4ef5-a419-69a5b1a076e1",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-09-22T00:16:15Z",
+        "timestamp": "2025-09-25T01:19:36Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "1051072566c7ac1f507a221874b5ca16a8f36219"
+                    "value": "20672c3a8459fbf64bc51f8b033e70a3b6c694b9"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "1051072566c7ac1f507a221874b5ca16a8f36219"
+                    "value": "20672c3a8459fbf64bc51f8b033e70a3b6c694b9"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -7623,6 +7623,64 @@
             ]
         },
         {
+            "bom-ref": "rmsramos/activitylog-2.0.0.0",
+            "type": "library",
+            "name": "activitylog",
+            "version": "v2.0.0",
+            "group": "rmsramos",
+            "description": "This is my package activitylog",
+            "author": "R\u00f4mulo Ramos",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/rmsramos/activitylog@v2.0.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/rmsramos/activitylog/zipball/05b2e2f32c0866d2e914dec08911aaeb214ed54c",
+                    "comment": "dist reference: 05b2e2f32c0866d2e914dec08911aaeb214ed54c"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/rmsramos/activitylog.git",
+                    "comment": "source reference: 05b2e2f32c0866d2e914dec08911aaeb214ed54c"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/rmsramos/activitylog",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/rmsramos/activitylog/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/rmsramos/activitylog/tree/v2.0.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "05b2e2f32c0866d2e914dec08911aaeb214ed54c"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "05b2e2f32c0866d2e914dec08911aaeb214ed54c"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "ryangjchandler/blade-capture-directive-1.1.0.0",
             "type": "library",
             "name": "blade-capture-directive",
@@ -9465,6 +9523,64 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "b920f6411d21df4e8610a138e2e87ae4957d7f63"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "spatie/laravel-activitylog-4.10.2.0",
+            "type": "library",
+            "name": "laravel-activitylog",
+            "version": "4.10.2",
+            "group": "spatie",
+            "description": "A very simple activity logger to monitor the users of your website or application",
+            "author": "Freek Van der Herten, Sebastian De Deyne, Tom Witkowski",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/spatie/laravel-activitylog@4.10.2",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/spatie/laravel-activitylog/zipball/bb879775d487438ed9a99e64f09086b608990c10",
+                    "comment": "dist reference: bb879775d487438ed9a99e64f09086b608990c10"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/spatie/laravel-activitylog.git",
+                    "comment": "source reference: bb879775d487438ed9a99e64f09086b608990c10"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/spatie/activitylog",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/spatie/laravel-activitylog/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/spatie/laravel-activitylog/tree/4.10.2",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "bb879775d487438ed9a99e64f09086b608990c10"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "bb879775d487438ed9a99e64f09086b608990c10"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12880,6 +12996,13 @@
             ]
         },
         {
+            "ref": "rmsramos/activitylog-2.0.0.0",
+            "dependsOn": [
+                "spatie/laravel-activitylog-4.10.2.0",
+                "spatie/laravel-package-tools-1.92.7.0"
+            ]
+        },
+        {
             "ref": "ryangjchandler/blade-capture-directive-1.1.0.0",
             "dependsOn": [
                 "spatie/laravel-package-tools-1.92.7.0"
@@ -13020,6 +13143,12 @@
         },
         {
             "ref": "spatie/invade-2.1.0.0"
+        },
+        {
+            "ref": "spatie/laravel-activitylog-4.10.2.0",
+            "dependsOn": [
+                "spatie/laravel-package-tools-1.92.7.0"
+            ]
         },
         {
             "ref": "spatie/laravel-ignition-2.9.1.0",
@@ -13316,6 +13445,7 @@
                 "lucasgiovanny/filament-multiselect-two-sides-2.1.2.0",
                 "outerweb/filament-settings-1.3.0.0",
                 "outerweb/settings-1.1.0.0",
+                "rmsramos/activitylog-2.0.0.0",
                 "socialiteproviders/auth0-4.2.0.0",
                 "socialiteproviders/google-4.1.0.0",
                 "socialiteproviders/microsoft-azure-5.2.0.0",

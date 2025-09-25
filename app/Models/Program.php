@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Program extends Model
 {
-    use HasFactory, HasTaxonomy;
+    use HasFactory, HasTaxonomy, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -57,5 +59,13 @@ class Program extends Model
         return $standardControls->concat($directControls)
             ->unique('id')
             ->values();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'program_manager_id', 'last_audit_date', 'scope_status'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

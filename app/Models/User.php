@@ -13,14 +13,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasFactory, HasRoles, HasSuperAdmin, Notifiable, softDeletes, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasRoles, HasSuperAdmin, LogsActivity, Notifiable, softDeletes, TwoFactorAuthenticatable;
+
+    protected static $logOnlyDirty = true;
+
+    protected static $logName = 'user';
 
     /**
      * The attributes that are mass assignable.
@@ -29,6 +34,7 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'text',
         'email',
         'password',
     ];
@@ -63,35 +69,8 @@ class User extends Authenticatable implements FilamentUser
         'password' => 'hashed',
     ];
 
-    protected static function booted()
-    {
-        // static::saving(function ($user) {
-        //     if ($user->isDirty('last_activity')) {
-        //         Log::debug('Attempt to update last_activity through model save', [
-        //             'trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),
-        //             'dirty' => $user->getDirty()
-        //         ]);
-        //         // Prevent the update of last_activity through normal model operations
-        //         $user->last_activity = $user->getOriginal('last_activity');
-        //     }
-        // });
-
-        // static::updating(function ($user) {
-        //     if ($user->isDirty('last_activity')) {
-        //         Log::debug('Attempt to update last_activity through model update', [
-        //             'trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),
-        //             'dirty' => $user->getDirty()
-        //         ]);
-        //         // Prevent the update of last_activity through normal model operations
-        //         $user->last_activity = $user->getOriginal('last_activity');
-        //     }
-        // });
-    }
-
     /**
      * Update the user's last activity timestamp.
-     *
-     * @return void
      */
     public function updateLastActivity(): void
     {
@@ -125,5 +104,13 @@ class User extends Authenticatable implements FilamentUser
     public function managedPrograms(): HasMany
     {
         return $this->hasMany(Program::class, 'program_manager_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

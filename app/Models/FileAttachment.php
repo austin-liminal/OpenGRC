@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Class FileAttachment
@@ -38,6 +40,8 @@ use Illuminate\Support\Carbon;
  */
 class FileAttachment extends Model
 {
+    use LogsActivity;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -75,5 +79,13 @@ class FileAttachment extends Model
     public function audit(): BelongsTo
     {
         return $this->belongsTo(Audit::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['file_name', 'file_size', 'uploaded_by', 'data_request_id', 'audit_id', 'data_request_response_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }
