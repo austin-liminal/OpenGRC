@@ -26,6 +26,18 @@ use Carbon\Carbon;
 
 class AppPanelProvider extends PanelProvider
 {
+    private function getSessionTimeout(): int
+    {
+        try {
+            // Check if database is connected
+            \DB::connection()->getPdo();
+            return setting('security.session_timeout', 15);
+        } catch (\Exception $e) {
+            // Return default value if database is not available
+            return 15;
+        }
+    }
+
     public function panel(Panel $panel): Panel
     {
         $socialProviders = [];
@@ -115,7 +127,7 @@ class AppPanelProvider extends PanelProvider
                 FilamentSocialitePlugin::make()
                     ->setProviders($socialProviders),
                 FilamentInactivityGuardPlugin::make()
-                    ->inactiveAfter(setting('security.session_timeout') * Carbon::SECONDS_PER_MINUTE)
+                    ->inactiveAfter($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE)
                     ->showNoticeFor(1* Carbon::SECONDS_PER_MINUTE)
                     ->showNoticeFor(null)
                     ->enabled(true),
