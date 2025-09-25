@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Class Implementation
@@ -52,7 +54,7 @@ use Illuminate\Support\Carbon;
  */
 class Implementation extends Model
 {
-    use HasFactory, SoftDeletes, HasTaxonomy;
+    use HasFactory, HasTaxonomy, LogsActivity, SoftDeletes;
 
     /**
      * Indicates if the model should be indexed as you type.
@@ -153,4 +155,11 @@ class Implementation extends Model
         return $this->belongsTo(\App\Models\User::class, 'implementation_owner_id');
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'details', 'status', 'effectiveness', 'notes'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }

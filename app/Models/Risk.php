@@ -7,10 +7,12 @@ use App\Enums\MitigationType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Risk extends Model
 {
-    use HasFactory, HasTaxonomy;
+    use HasFactory, HasTaxonomy, LogsActivity;
 
     protected $casts = [
         'id' => 'integer',
@@ -52,5 +54,13 @@ class Risk extends Model
     public static function next()
     {
         return static::max('id') + 1;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'likelihood', 'impact', 'action'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

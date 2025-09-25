@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class DataRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * The attributes that should be cast.
@@ -61,5 +63,13 @@ class DataRequest extends Model
     public function attachments(): HasManyThrough
     {
         return $this->hasManyThrough(FileAttachment::class, DataRequestResponse::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['code', 'status', 'created_by_id', 'assigned_to_id', 'audit_item_id', 'audit_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

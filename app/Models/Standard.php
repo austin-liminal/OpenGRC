@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Class Standard
@@ -41,7 +43,7 @@ use Illuminate\Support\Carbon;
  */
 class Standard extends Model
 {
-    use HasFactory, SoftDeletes, HasTaxonomy;
+    use HasFactory, HasTaxonomy, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that should be cast.
@@ -83,6 +85,12 @@ class Standard extends Model
     public function toSearchableArray(): array
     {
         return $this->toArray();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['code', 'title', 'status']);
     }
 
     public function programs(): BelongsToMany

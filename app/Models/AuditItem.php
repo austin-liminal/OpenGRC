@@ -9,9 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class AuditItem extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['audit_id', 'user_id', 'control_id', 'auditor_notes', 'status', 'effectiveness', 'applicability'];
 
     /**
@@ -54,5 +58,13 @@ class AuditItem extends Model
     public function dataRequests(): HasMany
     {
         return $this->hasMany(DataRequest::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['audit_id', 'user_id', 'control_id', 'status', 'effectiveness', 'applicability'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Class Control
@@ -55,7 +57,7 @@ use Illuminate\Support\Carbon;
  */
 class Control extends Model
 {
-    use HasFactory, SoftDeletes, HasTaxonomy;
+    use HasFactory, HasTaxonomy, LogsActivity, SoftDeletes;
 
     /**
      * Indicates if the model should be indexed as you type.
@@ -176,4 +178,11 @@ class Control extends Model
         return $this->belongsTo(\App\Models\User::class, 'control_owner_id');
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['identifier', 'title', 'description', 'status', 'effectiveness', 'type', 'category', 'enforcement'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 }
