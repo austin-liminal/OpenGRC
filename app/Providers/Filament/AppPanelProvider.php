@@ -21,6 +21,8 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
+use EightCedars\FilamentInactivityGuard\FilamentInactivityGuardPlugin;
+use Carbon\Carbon;
 
 class AppPanelProvider extends PanelProvider
 {
@@ -112,6 +114,11 @@ class AppPanelProvider extends PanelProvider
                     ->enableSanctumTokens(),
                 FilamentSocialitePlugin::make()
                     ->setProviders($socialProviders),
+                FilamentInactivityGuardPlugin::make()
+                    ->inactiveAfter(setting('security.session_timeout') * Carbon::SECONDS_PER_MINUTE)
+                    ->showNoticeFor(1* Carbon::SECONDS_PER_MINUTE)
+                    ->showNoticeFor(null)
+                    ->enabled(true),
             ],
 
             )
@@ -129,8 +136,6 @@ class AppPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \App\Http\Middleware\UserActivityMonitor::class,
-                \App\Http\Middleware\SessionTimeout::class,
             ])
             ->authGuard('web')
             ->authMiddleware([

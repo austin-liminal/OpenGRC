@@ -9,6 +9,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+//override default login route to point to Filament login
+Route::get('login', function () {
+    return redirect()->route('filament.app.auth.login');
+})->name('login');
+
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/app/reset-password', PasswordResetPage::class)->name('password-reset-page');

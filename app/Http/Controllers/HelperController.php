@@ -48,4 +48,29 @@ class HelperController extends Controller
 
         return $end->greaterThan($latestDate) ? $latestDate : $end;
     }
+
+    /**
+     * Update the .env file with the given key-value pairs.
+     * 
+     * @param array $data Key-value pairs to update
+     * @param bool $create If true, creates variables that don't exist. Default: false
+     */
+    public static function updateEnv(array $data, bool $create = false): void
+    {
+        $envPath = base_path('.env');
+        $envContent = file_get_contents($envPath);
+
+        foreach ($data as $key => $value) {
+            $pattern = "/^{$key}=.*/m";
+            if (preg_match($pattern, $envContent)) {
+                // Update existing variable
+                $envContent = preg_replace($pattern, "{$key}=\"{$value}\"", $envContent);
+            } elseif ($create) {
+                // Create new variable if it doesn't exist and $create is true
+                $envContent .= "\n{$key}=\"{$value}\"";
+            }
+        }
+
+        file_put_contents($envPath, $envContent);
+    }
 }
