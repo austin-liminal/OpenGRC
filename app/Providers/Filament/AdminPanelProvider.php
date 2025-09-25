@@ -23,6 +23,18 @@ use Illuminate\Support\Carbon;
 
 class AdminPanelProvider extends PanelProvider
 {
+    private function getSessionTimeout(): int
+    {
+        try {
+            // Check if database is connected
+            \DB::connection()->getPdo();
+            return setting('security.session_timeout', 15);
+        } catch (\Exception $e) {
+            // Return default value if database is not available
+            return 15;
+        }
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -75,7 +87,7 @@ class AdminPanelProvider extends PanelProvider
                     'default_sort_column' => 'created_at',
                 ])->authorize(fn () => auth()->user()->can('View Audit Log')),
                 FilamentInactivityGuardPlugin::make()
-                    ->inactiveAfter(setting('security.session_timeout') * Carbon::SECONDS_PER_MINUTE)
+                    ->inactiveAfter($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE)
                     ->showNoticeFor(1* Carbon::SECONDS_PER_MINUTE)
                     ->showNoticeFor(null)
                     ->enabled(true),
