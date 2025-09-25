@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Rmsramos\Activitylog\ActivitylogPlugin;
+use EightCedars\FilamentInactivityGuard\FilamentInactivityGuardPlugin;
+use Illuminate\Support\Carbon;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -26,6 +28,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->id('admin')
             ->path('admin')
+            ->loginRouteSlug('login')
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -52,8 +55,6 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \App\Http\Middleware\UserActivityMonitor::class,
-                \App\Http\Middleware\SessionTimeout::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -72,10 +73,13 @@ class AdminPanelProvider extends PanelProvider
                 ActivitylogPlugin::make([
                     'enable_cleanup_command' => true,
                     'default_sort_column' => 'created_at',
-                ])
-                    ->authorize(
-                        fn () => auth()->user()->can('View Audit Log')
-                    ),
+                ])->authorize(fn () => auth()->user()->can('View Audit Log')),
+                FilamentInactivityGuardPlugin::make()
+                    ->inactiveAfter(setting('security.session_timeout') * Carbon::SECONDS_PER_MINUTE)
+                    ->showNoticeFor(1* Carbon::SECONDS_PER_MINUTE)
+                    ->showNoticeFor(null)
+                    ->enabled(true),
+
             ])
             ->navigationItems([
                 NavigationItem::make('Back to OpenGRC')
