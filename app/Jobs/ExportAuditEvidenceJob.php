@@ -40,7 +40,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
         ])->findOrFail($this->auditId);
 
         $exportPath = storage_path("app/exports/audit_{$this->auditId}/");
-        if (! Storage::exists("app/exports/audit_{$this->auditId}/") && ! Storage::disk('s3')) {
+        if (! Storage::exists("app/exports/audit_{$this->auditId}/") && ! Storage::disk('s3') && ! Storage::disk('digitalocean')) {
             Storage::makeDirectory("app/exports/audit_{$this->auditId}/");
         }
 
