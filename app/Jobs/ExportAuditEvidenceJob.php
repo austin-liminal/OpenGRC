@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Audit;
 use App\Models\FileAttachment;
+use App\Http\Controllers\PdfHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
-use Jurosh\PDFMerge\PDFMerger;
 use ZipArchive;
 
 class ExportAuditEvidenceJob implements ShouldQueue
@@ -112,7 +112,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             if (! empty($pdfAttachments)) {
                 $tempMainPath = $tmpDir.'/'.$filenamePrefix.'_temp.pdf';
                 rename($mainPdfPath, $tempMainPath);
-                $this->mergePdfs($tempMainPath, $pdfAttachments, $mainPdfPath, $disk);
+                PdfHelper::mergePdfs($tempMainPath, $pdfAttachments, $mainPdfPath, $disk);
                 unlink($tempMainPath);
             }
 
@@ -128,8 +128,21 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
                     file_put_contents($localPath, $storage->get($attachment->file_path));
                     $allFiles[] = $localPath;
+                    $attachment->hash =  hash('sha256', $storage->get($attachment->file_path));
                 }
             }
+        }
+
+        // Create a hasfile for all files
+        foreach ($allFiles as $file) {
+            $hashFileContents = "";
+
+            if (file_exists($file)) {
+                $hashFileContents = hash_file('sha256', $file)."  ".basename($file)."\n";
+                file_put_contents($tmpDir.'/hashes.txt', $hashFileContents, FILE_APPEND);
+                $allFiles[] = $tmpDir.'/hashes.txt';
+            }
+
         }
 
         if ($disk === 's3' || $disk === 'digitalocean') {
@@ -210,59 +223,4 @@ class ExportAuditEvidenceJob implements ShouldQueue
         }
     }
 
-    /**
-     * Merge PDF attachments with the main PDF using PDFMerger
-     */
-    private function mergePdfs($mainPdfPath, $pdfAttachments, $outputPath, $disk)
-    {
-        try {
-            $merger = new PDFMerger;
-
-            // Add the main PDF first
-            $merger->addPDF($mainPdfPath, 'all');
-
-            // Add each PDF attachment
-            $storage = \Storage::disk($disk);
-            $tmpFiles = [];
-
-            foreach ($pdfAttachments as $attachment) {
-                if ($storage->exists($attachment->file_path)) {
-                    // Create a temporary file for the attachment
-                    $tmpAttachmentPath = sys_get_temp_dir().'/'.uniqid().'.pdf';
-                    file_put_contents($tmpAttachmentPath, $storage->get($attachment->file_path));
-                    $tmpFiles[] = $tmpAttachmentPath;
-
-                    try {
-                        $merger->addPDF($tmpAttachmentPath, 'all');
-                    } catch (\Exception $e) {
-                        \Log::warning('[ExportAuditEvidenceJob] Failed to merge PDF attachment', [
-                            'attachment_id' => $attachment->id,
-                            'file_name' => $attachment->file_name,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-            }
-
-            // Save the merged PDF
-            $merger->merge('file', $outputPath);
-
-            // Clean up temporary files
-            foreach ($tmpFiles as $tmpFile) {
-                if (file_exists($tmpFile)) {
-                    unlink($tmpFile);
-                }
-            }
-
-        } catch (\Exception $e) {
-            \Log::error('[ExportAuditEvidenceJob] PDF merging failed', [
-                'main_pdf' => $mainPdfPath,
-                'output_path' => $outputPath,
-                'error' => $e->getMessage(),
-            ]);
-
-            // If merging fails, just copy the main PDF
-            copy($mainPdfPath, $outputPath);
-        }
-    }
 }

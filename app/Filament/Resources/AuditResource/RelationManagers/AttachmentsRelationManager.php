@@ -75,7 +75,7 @@ class AttachmentsRelationManager extends RelationManager
                     ->label('Uploaded By')
                     ->getStateUsing(function ($record) {
                         $user = User::find($record->uploaded_by);
-                        return $user ? $user->name : 'Unknown';
+                        return $user ? $user->name : 'System';
                     }),
             ])
             ->filters([])

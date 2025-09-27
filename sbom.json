@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:85b8637f-aa91-4de8-8ddd-448b2aa39139",
+    "serialNumber": "urn:uuid:b04db62d-3964-4ae0-b762-3c963c48ea43",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-09-25T21:43:05Z",
+        "timestamp": "2025-09-27T20:21:32Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "921a21afeba5cbacfb8f206133aee7768f5da603"
+                    "value": "2ad166f31458ca2642b3999effd2afa5da051b3f"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "921a21afeba5cbacfb8f206133aee7768f5da603"
+                    "value": "2ad166f31458ca2642b3999effd2afa5da051b3f"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -335,10 +335,10 @@
             ]
         },
         {
-            "bom-ref": "aws/aws-sdk-php-3.356.26.0",
+            "bom-ref": "aws/aws-sdk-php-3.356.27.0",
             "type": "library",
             "name": "aws-sdk-php",
-            "version": "3.356.26",
+            "version": "3.356.27",
             "group": "aws",
             "description": "AWS SDK for PHP - Use Amazon Web Services in your PHP project",
             "author": "Amazon Web Services",
@@ -349,17 +349,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/aws/aws-sdk-php@3.356.26",
+            "purl": "pkg:composer/aws/aws-sdk-php@3.356.27",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/98d100ee08eb5340148cc6010c0443eb346a8486",
-                    "comment": "dist reference: 98d100ee08eb5340148cc6010c0443eb346a8486"
+                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/6f6b8cfdc1a1555b7a749395a79bda51910646e0",
+                    "comment": "dist reference: 6f6b8cfdc1a1555b7a749395a79bda51910646e0"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/aws/aws-sdk-php.git",
-                    "comment": "source reference: 98d100ee08eb5340148cc6010c0443eb346a8486"
+                    "comment": "source reference: 6f6b8cfdc1a1555b7a749395a79bda51910646e0"
                 },
                 {
                     "type": "website",
@@ -378,18 +378,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.26",
+                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.27",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "98d100ee08eb5340148cc6010c0443eb346a8486"
+                    "value": "6f6b8cfdc1a1555b7a749395a79bda51910646e0"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "98d100ee08eb5340148cc6010c0443eb346a8486"
+                    "value": "6f6b8cfdc1a1555b7a749395a79bda51910646e0"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3246,64 +3246,6 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "22abc1c5c61257e930a7697177f2ae34a514b652"
-                },
-                {
-                    "name": "cdx:composer:package:type",
-                    "value": "library"
-                }
-            ]
-        },
-        {
-            "bom-ref": "jurosh/pdf-merge-2.1.0.0",
-            "type": "library",
-            "name": "pdf-merge",
-            "version": "2.1.0",
-            "group": "jurosh",
-            "description": "PHP PDF Merger",
-            "author": "Juraj Husar",
-            "licenses": [
-                {
-                    "license": {
-                        "id": "MIT"
-                    }
-                }
-            ],
-            "purl": "pkg:composer/jurosh/pdf-merge@2.1.0",
-            "externalReferences": [
-                {
-                    "type": "distribution",
-                    "url": "https://api.github.com/repos/jurosh/php-pdf-merge/zipball/89ba3446c9f38c573e3b8bf577d2f22993494130",
-                    "comment": "dist reference: 89ba3446c9f38c573e3b8bf577d2f22993494130"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/jurosh/php-pdf-merge.git",
-                    "comment": "source reference: 89ba3446c9f38c573e3b8bf577d2f22993494130"
-                },
-                {
-                    "type": "website",
-                    "url": "https://github.com/jurosh/php-pdf-merge",
-                    "comment": "as detected from Composer manifest 'homepage'"
-                },
-                {
-                    "type": "issue-tracker",
-                    "url": "https://github.com/jurosh/php-pdf-merge/issues",
-                    "comment": "as detected from Composer manifest 'support.issues'"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/jurosh/php-pdf-merge/tree/remove",
-                    "comment": "as detected from Composer manifest 'support.source'"
-                }
-            ],
-            "properties": [
-                {
-                    "name": "cdx:composer:package:distReference",
-                    "value": "89ba3446c9f38c573e3b8bf577d2f22993494130"
-                },
-                {
-                    "name": "cdx:composer:package:sourceReference",
-                    "value": "89ba3446c9f38c573e3b8bf577d2f22993494130"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -8830,117 +8772,6 @@
             ]
         },
         {
-            "bom-ref": "setasign/fpdf-1.8.6.0",
-            "type": "library",
-            "name": "fpdf",
-            "version": "1.8.6",
-            "group": "setasign",
-            "description": "FPDF is a PHP class which allows to generate PDF files with pure PHP. F from FPDF stands for Free: you may use it for any kind of usage and modify it to suit your needs.",
-            "author": "Olivier Plathey",
-            "licenses": [
-                {
-                    "license": {
-                        "id": "MIT"
-                    }
-                }
-            ],
-            "purl": "pkg:composer/setasign/fpdf@1.8.6",
-            "externalReferences": [
-                {
-                    "type": "distribution",
-                    "url": "https://api.github.com/repos/Setasign/FPDF/zipball/0838e0ee4925716fcbbc50ad9e1799b5edfae0a0",
-                    "comment": "dist reference: 0838e0ee4925716fcbbc50ad9e1799b5edfae0a0"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/Setasign/FPDF.git",
-                    "comment": "source reference: 0838e0ee4925716fcbbc50ad9e1799b5edfae0a0"
-                },
-                {
-                    "type": "website",
-                    "url": "http://www.fpdf.org",
-                    "comment": "as detected from Composer manifest 'homepage'"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/Setasign/FPDF/tree/1.8.6",
-                    "comment": "as detected from Composer manifest 'support.source'"
-                }
-            ],
-            "properties": [
-                {
-                    "name": "cdx:composer:package:distReference",
-                    "value": "0838e0ee4925716fcbbc50ad9e1799b5edfae0a0"
-                },
-                {
-                    "name": "cdx:composer:package:sourceReference",
-                    "value": "0838e0ee4925716fcbbc50ad9e1799b5edfae0a0"
-                },
-                {
-                    "name": "cdx:composer:package:type",
-                    "value": "library"
-                }
-            ]
-        },
-        {
-            "bom-ref": "setasign/fpdi-2.6.4.0",
-            "type": "library",
-            "name": "fpdi",
-            "version": "v2.6.4",
-            "group": "setasign",
-            "description": "FPDI is a collection of PHP classes facilitating developers to read pages from existing PDF documents and use them as templates in FPDF. Because it is also possible to use FPDI with TCPDF, there are no fixed dependencies defined. Please see suggestions for packages which evaluates the dependencies automatically.",
-            "author": "Jan Slabon, Maximilian Kresse",
-            "licenses": [
-                {
-                    "license": {
-                        "id": "MIT"
-                    }
-                }
-            ],
-            "purl": "pkg:composer/setasign/fpdi@v2.6.4",
-            "externalReferences": [
-                {
-                    "type": "distribution",
-                    "url": "https://api.github.com/repos/Setasign/FPDI/zipball/4b53852fde2734ec6a07e458a085db627c60eada",
-                    "comment": "dist reference: 4b53852fde2734ec6a07e458a085db627c60eada"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/Setasign/FPDI.git",
-                    "comment": "source reference: 4b53852fde2734ec6a07e458a085db627c60eada"
-                },
-                {
-                    "type": "website",
-                    "url": "https://www.setasign.com/fpdi",
-                    "comment": "as detected from Composer manifest 'homepage'"
-                },
-                {
-                    "type": "issue-tracker",
-                    "url": "https://github.com/Setasign/FPDI/issues",
-                    "comment": "as detected from Composer manifest 'support.issues'"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/Setasign/FPDI/tree/v2.6.4",
-                    "comment": "as detected from Composer manifest 'support.source'"
-                }
-            ],
-            "properties": [
-                {
-                    "name": "cdx:composer:package:distReference",
-                    "value": "4b53852fde2734ec6a07e458a085db627c60eada"
-                },
-                {
-                    "name": "cdx:composer:package:sourceReference",
-                    "value": "4b53852fde2734ec6a07e458a085db627c60eada"
-                },
-                {
-                    "name": "cdx:composer:package:type",
-                    "value": "library"
-                }
-            ]
-        },
-        {
             "bom-ref": "socialiteproviders/auth0-4.2.0.0",
             "type": "library",
             "name": "auth0",
@@ -10074,10 +9905,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/console-7.3.3.0",
+            "bom-ref": "symfony/console-7.3.4.0",
             "type": "library",
             "name": "console",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Eases the creation of beautiful and testable command line interfaces",
             "author": "Fabien Potencier, Symfony Community",
@@ -10088,17 +9919,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/console@v7.3.3",
+            "purl": "pkg:composer/symfony/console@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/console/zipball/cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7",
-                    "comment": "dist reference: cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7"
+                    "url": "https://api.github.com/repos/symfony/console/zipball/2b9c5fafbac0399a20a2e82429e2bd735dcfb7db",
+                    "comment": "dist reference: 2b9c5fafbac0399a20a2e82429e2bd735dcfb7db"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/console.git",
-                    "comment": "source reference: cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7"
+                    "comment": "source reference: 2b9c5fafbac0399a20a2e82429e2bd735dcfb7db"
                 },
                 {
                     "type": "website",
@@ -10107,18 +9938,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/console/tree/v7.3.3",
+                    "url": "https://github.com/symfony/console/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7"
+                    "value": "2b9c5fafbac0399a20a2e82429e2bd735dcfb7db"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7"
+                    "value": "2b9c5fafbac0399a20a2e82429e2bd735dcfb7db"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -10233,10 +10064,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/error-handler-7.3.2.0",
+            "bom-ref": "symfony/error-handler-7.3.4.0",
             "type": "library",
             "name": "error-handler",
-            "version": "v7.3.2",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Provides tools to manage errors and ease debugging PHP code",
             "author": "Fabien Potencier, Symfony Community",
@@ -10247,17 +10078,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/error-handler@v7.3.2",
+            "purl": "pkg:composer/symfony/error-handler@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/error-handler/zipball/0b31a944fcd8759ae294da4d2808cbc53aebd0c3",
-                    "comment": "dist reference: 0b31a944fcd8759ae294da4d2808cbc53aebd0c3"
+                    "url": "https://api.github.com/repos/symfony/error-handler/zipball/99f81bc944ab8e5dae4f21b4ca9972698bbad0e4",
+                    "comment": "dist reference: 99f81bc944ab8e5dae4f21b4ca9972698bbad0e4"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/error-handler.git",
-                    "comment": "source reference: 0b31a944fcd8759ae294da4d2808cbc53aebd0c3"
+                    "comment": "source reference: 99f81bc944ab8e5dae4f21b4ca9972698bbad0e4"
                 },
                 {
                     "type": "website",
@@ -10266,18 +10097,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/error-handler/tree/v7.3.2",
+                    "url": "https://github.com/symfony/error-handler/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "0b31a944fcd8759ae294da4d2808cbc53aebd0c3"
+                    "value": "99f81bc944ab8e5dae4f21b4ca9972698bbad0e4"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "0b31a944fcd8759ae294da4d2808cbc53aebd0c3"
+                    "value": "99f81bc944ab8e5dae4f21b4ca9972698bbad0e4"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -10498,10 +10329,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/http-foundation-7.3.3.0",
+            "bom-ref": "symfony/http-foundation-7.3.4.0",
             "type": "library",
             "name": "http-foundation",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Defines an object-oriented layer for the HTTP specification",
             "author": "Fabien Potencier, Symfony Community",
@@ -10512,17 +10343,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/http-foundation@v7.3.3",
+            "purl": "pkg:composer/symfony/http-foundation@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/http-foundation/zipball/7475561ec27020196c49bb7c4f178d33d7d3dc00",
-                    "comment": "dist reference: 7475561ec27020196c49bb7c4f178d33d7d3dc00"
+                    "url": "https://api.github.com/repos/symfony/http-foundation/zipball/c061c7c18918b1b64268771aad04b40be41dd2e6",
+                    "comment": "dist reference: c061c7c18918b1b64268771aad04b40be41dd2e6"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/http-foundation.git",
-                    "comment": "source reference: 7475561ec27020196c49bb7c4f178d33d7d3dc00"
+                    "comment": "source reference: c061c7c18918b1b64268771aad04b40be41dd2e6"
                 },
                 {
                     "type": "website",
@@ -10531,18 +10362,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/http-foundation/tree/v7.3.3",
+                    "url": "https://github.com/symfony/http-foundation/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "7475561ec27020196c49bb7c4f178d33d7d3dc00"
+                    "value": "c061c7c18918b1b64268771aad04b40be41dd2e6"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "7475561ec27020196c49bb7c4f178d33d7d3dc00"
+                    "value": "c061c7c18918b1b64268771aad04b40be41dd2e6"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -10551,10 +10382,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/http-kernel-7.3.3.0",
+            "bom-ref": "symfony/http-kernel-7.3.4.0",
             "type": "library",
             "name": "http-kernel",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Provides a structured process for converting a Request into a Response",
             "author": "Fabien Potencier, Symfony Community",
@@ -10565,17 +10396,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/http-kernel@v7.3.3",
+            "purl": "pkg:composer/symfony/http-kernel@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/http-kernel/zipball/72c304de37e1a1cec6d5d12b81187ebd4850a17b",
-                    "comment": "dist reference: 72c304de37e1a1cec6d5d12b81187ebd4850a17b"
+                    "url": "https://api.github.com/repos/symfony/http-kernel/zipball/b796dffea7821f035047235e076b60ca2446e3cf",
+                    "comment": "dist reference: b796dffea7821f035047235e076b60ca2446e3cf"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/http-kernel.git",
-                    "comment": "source reference: 72c304de37e1a1cec6d5d12b81187ebd4850a17b"
+                    "comment": "source reference: b796dffea7821f035047235e076b60ca2446e3cf"
                 },
                 {
                     "type": "website",
@@ -10584,18 +10415,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/http-kernel/tree/v7.3.3",
+                    "url": "https://github.com/symfony/http-kernel/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "72c304de37e1a1cec6d5d12b81187ebd4850a17b"
+                    "value": "b796dffea7821f035047235e076b60ca2446e3cf"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "72c304de37e1a1cec6d5d12b81187ebd4850a17b"
+                    "value": "b796dffea7821f035047235e076b60ca2446e3cf"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -10604,10 +10435,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/mailer-7.3.3.0",
+            "bom-ref": "symfony/mailer-7.3.4.0",
             "type": "library",
             "name": "mailer",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Helps sending emails",
             "author": "Fabien Potencier, Symfony Community",
@@ -10618,17 +10449,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/mailer@v7.3.3",
+            "purl": "pkg:composer/symfony/mailer@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/mailer/zipball/a32f3f45f1990db8c4341d5122a7d3a381c7e575",
-                    "comment": "dist reference: a32f3f45f1990db8c4341d5122a7d3a381c7e575"
+                    "url": "https://api.github.com/repos/symfony/mailer/zipball/ab97ef2f7acf0216955f5845484235113047a31d",
+                    "comment": "dist reference: ab97ef2f7acf0216955f5845484235113047a31d"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/mailer.git",
-                    "comment": "source reference: a32f3f45f1990db8c4341d5122a7d3a381c7e575"
+                    "comment": "source reference: ab97ef2f7acf0216955f5845484235113047a31d"
                 },
                 {
                     "type": "website",
@@ -10637,18 +10468,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/mailer/tree/v7.3.3",
+                    "url": "https://github.com/symfony/mailer/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "a32f3f45f1990db8c4341d5122a7d3a381c7e575"
+                    "value": "ab97ef2f7acf0216955f5845484235113047a31d"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "a32f3f45f1990db8c4341d5122a7d3a381c7e575"
+                    "value": "ab97ef2f7acf0216955f5845484235113047a31d"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -10657,10 +10488,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/mime-7.3.2.0",
+            "bom-ref": "symfony/mime-7.3.4.0",
             "type": "library",
             "name": "mime",
-            "version": "v7.3.2",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Allows manipulating MIME messages",
             "author": "Fabien Potencier, Symfony Community",
@@ -10671,17 +10502,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/mime@v7.3.2",
+            "purl": "pkg:composer/symfony/mime@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/mime/zipball/e0a0f859148daf1edf6c60b398eb40bfc96697d1",
-                    "comment": "dist reference: e0a0f859148daf1edf6c60b398eb40bfc96697d1"
+                    "url": "https://api.github.com/repos/symfony/mime/zipball/b1b828f69cbaf887fa835a091869e55df91d0e35",
+                    "comment": "dist reference: b1b828f69cbaf887fa835a091869e55df91d0e35"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/mime.git",
-                    "comment": "source reference: e0a0f859148daf1edf6c60b398eb40bfc96697d1"
+                    "comment": "source reference: b1b828f69cbaf887fa835a091869e55df91d0e35"
                 },
                 {
                     "type": "website",
@@ -10690,18 +10521,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/mime/tree/v7.3.2",
+                    "url": "https://github.com/symfony/mime/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "e0a0f859148daf1edf6c60b398eb40bfc96697d1"
+                    "value": "b1b828f69cbaf887fa835a091869e55df91d0e35"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "e0a0f859148daf1edf6c60b398eb40bfc96697d1"
+                    "value": "b1b828f69cbaf887fa835a091869e55df91d0e35"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11191,10 +11022,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/process-7.3.3.0",
+            "bom-ref": "symfony/process-7.3.4.0",
             "type": "library",
             "name": "process",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Executes commands in sub-processes",
             "author": "Fabien Potencier, Symfony Community",
@@ -11205,17 +11036,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/process@v7.3.3",
+            "purl": "pkg:composer/symfony/process@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/process/zipball/32241012d521e2e8a9d713adb0812bb773b907f1",
-                    "comment": "dist reference: 32241012d521e2e8a9d713adb0812bb773b907f1"
+                    "url": "https://api.github.com/repos/symfony/process/zipball/f24f8f316367b30810810d4eb30c543d7003ff3b",
+                    "comment": "dist reference: f24f8f316367b30810810d4eb30c543d7003ff3b"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/process.git",
-                    "comment": "source reference: 32241012d521e2e8a9d713adb0812bb773b907f1"
+                    "comment": "source reference: f24f8f316367b30810810d4eb30c543d7003ff3b"
                 },
                 {
                     "type": "website",
@@ -11224,18 +11055,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/process/tree/v7.3.3",
+                    "url": "https://github.com/symfony/process/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "32241012d521e2e8a9d713adb0812bb773b907f1"
+                    "value": "f24f8f316367b30810810d4eb30c543d7003ff3b"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "32241012d521e2e8a9d713adb0812bb773b907f1"
+                    "value": "f24f8f316367b30810810d4eb30c543d7003ff3b"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11244,10 +11075,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/routing-7.3.2.0",
+            "bom-ref": "symfony/routing-7.3.4.0",
             "type": "library",
             "name": "routing",
-            "version": "v7.3.2",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Maps an HTTP request to a set of configuration variables",
             "author": "Fabien Potencier, Symfony Community",
@@ -11258,17 +11089,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/routing@v7.3.2",
+            "purl": "pkg:composer/symfony/routing@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/routing/zipball/7614b8ca5fa89b9cd233e21b627bfc5774f586e4",
-                    "comment": "dist reference: 7614b8ca5fa89b9cd233e21b627bfc5774f586e4"
+                    "url": "https://api.github.com/repos/symfony/routing/zipball/8dc648e159e9bac02b703b9fbd937f19ba13d07c",
+                    "comment": "dist reference: 8dc648e159e9bac02b703b9fbd937f19ba13d07c"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/routing.git",
-                    "comment": "source reference: 7614b8ca5fa89b9cd233e21b627bfc5774f586e4"
+                    "comment": "source reference: 8dc648e159e9bac02b703b9fbd937f19ba13d07c"
                 },
                 {
                     "type": "website",
@@ -11277,18 +11108,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/routing/tree/v7.3.2",
+                    "url": "https://github.com/symfony/routing/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "7614b8ca5fa89b9cd233e21b627bfc5774f586e4"
+                    "value": "8dc648e159e9bac02b703b9fbd937f19ba13d07c"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "7614b8ca5fa89b9cd233e21b627bfc5774f586e4"
+                    "value": "8dc648e159e9bac02b703b9fbd937f19ba13d07c"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11407,10 +11238,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/string-7.3.3.0",
+            "bom-ref": "symfony/string-7.3.4.0",
             "type": "library",
             "name": "string",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Provides an object-oriented API to strings and deals with bytes, UTF-8 code points and grapheme clusters in a unified way",
             "author": "Nicolas Grekas, Symfony Community",
@@ -11421,17 +11252,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/string@v7.3.3",
+            "purl": "pkg:composer/symfony/string@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/string/zipball/17a426cce5fd1f0901fefa9b2a490d0038fd3c9c",
-                    "comment": "dist reference: 17a426cce5fd1f0901fefa9b2a490d0038fd3c9c"
+                    "url": "https://api.github.com/repos/symfony/string/zipball/f96476035142921000338bad71e5247fbc138872",
+                    "comment": "dist reference: f96476035142921000338bad71e5247fbc138872"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/string.git",
-                    "comment": "source reference: 17a426cce5fd1f0901fefa9b2a490d0038fd3c9c"
+                    "comment": "source reference: f96476035142921000338bad71e5247fbc138872"
                 },
                 {
                     "type": "website",
@@ -11440,18 +11271,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/string/tree/v7.3.3",
+                    "url": "https://github.com/symfony/string/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "17a426cce5fd1f0901fefa9b2a490d0038fd3c9c"
+                    "value": "f96476035142921000338bad71e5247fbc138872"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "17a426cce5fd1f0901fefa9b2a490d0038fd3c9c"
+                    "value": "f96476035142921000338bad71e5247fbc138872"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11460,10 +11291,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/translation-7.3.3.0",
+            "bom-ref": "symfony/translation-7.3.4.0",
             "type": "library",
             "name": "translation",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Provides tools to internationalize your application",
             "author": "Fabien Potencier, Symfony Community",
@@ -11474,17 +11305,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/translation@v7.3.3",
+            "purl": "pkg:composer/symfony/translation@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/translation/zipball/e0837b4cbcef63c754d89a4806575cada743a38d",
-                    "comment": "dist reference: e0837b4cbcef63c754d89a4806575cada743a38d"
+                    "url": "https://api.github.com/repos/symfony/translation/zipball/ec25870502d0c7072d086e8ffba1420c85965174",
+                    "comment": "dist reference: ec25870502d0c7072d086e8ffba1420c85965174"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/translation.git",
-                    "comment": "source reference: e0837b4cbcef63c754d89a4806575cada743a38d"
+                    "comment": "source reference: ec25870502d0c7072d086e8ffba1420c85965174"
                 },
                 {
                     "type": "website",
@@ -11493,18 +11324,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/translation/tree/v7.3.3",
+                    "url": "https://github.com/symfony/translation/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "e0837b4cbcef63c754d89a4806575cada743a38d"
+                    "value": "ec25870502d0c7072d086e8ffba1420c85965174"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "e0837b4cbcef63c754d89a4806575cada743a38d"
+                    "value": "ec25870502d0c7072d086e8ffba1420c85965174"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11619,10 +11450,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/var-dumper-7.3.3.0",
+            "bom-ref": "symfony/var-dumper-7.3.4.0",
             "type": "library",
             "name": "var-dumper",
-            "version": "v7.3.3",
+            "version": "v7.3.4",
             "group": "symfony",
             "description": "Provides mechanisms for walking through any arbitrary PHP variable",
             "author": "Nicolas Grekas, Symfony Community",
@@ -11633,17 +11464,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/var-dumper@v7.3.3",
+            "purl": "pkg:composer/symfony/var-dumper@v7.3.4",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/var-dumper/zipball/34d8d4c4b9597347306d1ec8eb4e1319b1e6986f",
-                    "comment": "dist reference: 34d8d4c4b9597347306d1ec8eb4e1319b1e6986f"
+                    "url": "https://api.github.com/repos/symfony/var-dumper/zipball/b8abe7daf2730d07dfd4b2ee1cecbf0dd2fbdabb",
+                    "comment": "dist reference: b8abe7daf2730d07dfd4b2ee1cecbf0dd2fbdabb"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/var-dumper.git",
-                    "comment": "source reference: 34d8d4c4b9597347306d1ec8eb4e1319b1e6986f"
+                    "comment": "source reference: b8abe7daf2730d07dfd4b2ee1cecbf0dd2fbdabb"
                 },
                 {
                     "type": "website",
@@ -11652,18 +11483,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/var-dumper/tree/v7.3.3",
+                    "url": "https://github.com/symfony/var-dumper/tree/v7.3.4",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "34d8d4c4b9597347306d1ec8eb4e1319b1e6986f"
+                    "value": "b8abe7daf2730d07dfd4b2ee1cecbf0dd2fbdabb"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "34d8d4c4b9597347306d1ec8eb4e1319b1e6986f"
+                    "value": "b8abe7daf2730d07dfd4b2ee1cecbf0dd2fbdabb"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12265,7 +12096,7 @@
             "ref": "aws/aws-crt-php-1.2.7.0"
         },
         {
-            "ref": "aws/aws-sdk-php-3.356.26.0",
+            "ref": "aws/aws-sdk-php-3.356.27.0",
             "dependsOn": [
                 "aws/aws-crt-php-1.2.7.0",
                 "guzzlehttp/guzzle-7.10.0.0",
@@ -12310,7 +12141,7 @@
         {
             "ref": "blade-ui-kit/blade-icons-1.8.0.0",
             "dependsOn": [
-                "symfony/console-7.3.3.0",
+                "symfony/console-7.3.4.0",
                 "symfony/finder-7.3.2.0"
             ]
         },
@@ -12492,7 +12323,7 @@
                 "spatie/color-1.8.0.0",
                 "spatie/invade-2.1.0.0",
                 "spatie/laravel-package-tools-1.92.7.0",
-                "symfony/console-7.3.3.0",
+                "symfony/console-7.3.4.0",
                 "symfony/html-sanitizer-7.3.3.0"
             ]
         },
@@ -12524,7 +12355,7 @@
         {
             "ref": "fruitcake/php-cors-1.3.0.0",
             "dependsOn": [
-                "symfony/http-foundation-7.3.3.0"
+                "symfony/http-foundation-7.3.4.0"
             ]
         },
         {
@@ -12593,13 +12424,6 @@
             ]
         },
         {
-            "ref": "jurosh/pdf-merge-2.1.0.0",
-            "dependsOn": [
-                "setasign/fpdf-1.8.6.0",
-                "setasign/fpdi-2.6.4.0"
-            ]
-        },
-        {
             "ref": "kirschbaum-development/eloquent-power-joins-4.2.8.0"
         },
         {
@@ -12614,9 +12438,9 @@
             "dependsOn": [
                 "guzzlehttp/guzzle-7.10.0.0",
                 "php-webdriver/webdriver-1.15.2.0",
-                "symfony/console-7.3.3.0",
+                "symfony/console-7.3.4.0",
                 "symfony/finder-7.3.2.0",
-                "symfony/process-7.3.3.0",
+                "symfony/process-7.3.4.0",
                 "vlucas/phpdotenv-5.6.2.0"
             ]
         },
@@ -12643,18 +12467,18 @@
                 "psr/log-3.0.2.0",
                 "psr/simple-cache-3.0.0.0",
                 "ramsey/uuid-4.9.1.0",
-                "symfony/console-7.3.3.0",
-                "symfony/error-handler-7.3.2.0",
+                "symfony/console-7.3.4.0",
+                "symfony/error-handler-7.3.4.0",
                 "symfony/finder-7.3.2.0",
-                "symfony/http-foundation-7.3.3.0",
-                "symfony/http-kernel-7.3.3.0",
-                "symfony/mailer-7.3.3.0",
-                "symfony/mime-7.3.2.0",
+                "symfony/http-foundation-7.3.4.0",
+                "symfony/http-kernel-7.3.4.0",
+                "symfony/mailer-7.3.4.0",
+                "symfony/mime-7.3.4.0",
                 "symfony/polyfill-php83-1.33.0.0",
-                "symfony/process-7.3.3.0",
-                "symfony/routing-7.3.2.0",
+                "symfony/process-7.3.4.0",
+                "symfony/routing-7.3.4.0",
                 "symfony/uid-7.3.1.0",
-                "symfony/var-dumper-7.3.3.0",
+                "symfony/var-dumper-7.3.4.0",
                 "tijsverkoyen/css-to-inline-styles-2.3.0.0",
                 "vlucas/phpdotenv-5.6.2.0",
                 "voku/portable-ascii-2.0.3.0"
@@ -12666,20 +12490,20 @@
         {
             "ref": "laravel/prompts-0.3.7.0",
             "dependsOn": [
-                "symfony/console-7.3.3.0"
+                "symfony/console-7.3.4.0"
             ]
         },
         {
             "ref": "laravel/sail-1.46.0.0",
             "dependsOn": [
-                "symfony/console-7.3.3.0",
+                "symfony/console-7.3.4.0",
                 "symfony/yaml-7.3.3.0"
             ]
         },
         {
             "ref": "laravel/sanctum-4.2.0.0",
             "dependsOn": [
-                "symfony/console-7.3.3.0"
+                "symfony/console-7.3.4.0"
             ]
         },
         {
@@ -12698,7 +12522,7 @@
             "ref": "laravel/tinker-2.10.1.0",
             "dependsOn": [
                 "psy/psysh-0.12.12.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -12730,7 +12554,7 @@
         {
             "ref": "league/flysystem-aws-s3-v3-3.29.0.0",
             "dependsOn": [
-                "aws/aws-sdk-php-3.356.26.0",
+                "aws/aws-sdk-php-3.356.27.0",
                 "league/flysystem-3.30.0.0",
                 "league/mime-type-detection-1.16.0.0"
             ]
@@ -12779,8 +12603,8 @@
             "dependsOn": [
                 "laravel/prompts-0.3.7.0",
                 "league/mime-type-detection-1.16.0.0",
-                "symfony/console-7.3.3.0",
-                "symfony/http-kernel-7.3.3.0"
+                "symfony/console-7.3.4.0",
+                "symfony/http-kernel-7.3.4.0"
             ]
         },
         {
@@ -12825,7 +12649,7 @@
                 "psr/clock-1.0.0.0",
                 "symfony/clock-7.3.0.0",
                 "symfony/polyfill-mbstring-1.33.0.0",
-                "symfony/translation-7.3.3.0"
+                "symfony/translation-7.3.4.0"
             ]
         },
         {
@@ -12845,13 +12669,13 @@
             "dependsOn": [
                 "filp/whoops-2.18.4.0",
                 "nunomaduro/termwind-2.3.1.0",
-                "symfony/console-7.3.3.0"
+                "symfony/console-7.3.4.0"
             ]
         },
         {
             "ref": "nunomaduro/termwind-2.3.1.0",
             "dependsOn": [
-                "symfony/console-7.3.3.0"
+                "symfony/console-7.3.4.0"
             ]
         },
         {
@@ -12911,7 +12735,7 @@
             "ref": "php-debugbar/php-debugbar-2.2.4.0",
             "dependsOn": [
                 "psr/log-3.0.2.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -12932,7 +12756,7 @@
             "ref": "php-webdriver/webdriver-1.15.2.0",
             "dependsOn": [
                 "symfony/polyfill-mbstring-1.33.0.0",
-                "symfony/process-7.3.3.0"
+                "symfony/process-7.3.4.0"
             ]
         },
         {
@@ -13044,8 +12868,8 @@
             "ref": "psy/psysh-0.12.12.0",
             "dependsOn": [
                 "nikic/php-parser-5.6.1.0",
-                "symfony/console-7.3.3.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/console-7.3.4.0",
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -13144,12 +12968,6 @@
             "ref": "sebastian/version-4.0.1.0"
         },
         {
-            "ref": "setasign/fpdf-1.8.6.0"
-        },
-        {
-            "ref": "setasign/fpdi-2.6.4.0"
-        },
-        {
             "ref": "socialiteproviders/auth0-4.2.0.0",
             "dependsOn": [
                 "socialiteproviders/manager-4.8.1.0"
@@ -13192,10 +13010,10 @@
             "ref": "spatie/flare-client-php-1.10.1.0",
             "dependsOn": [
                 "spatie/backtrace-1.8.1.0",
-                "symfony/http-foundation-7.3.3.0",
-                "symfony/mime-7.3.2.0",
-                "symfony/process-7.3.3.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/http-foundation-7.3.4.0",
+                "symfony/mime-7.3.4.0",
+                "symfony/process-7.3.4.0",
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -13203,8 +13021,8 @@
             "dependsOn": [
                 "spatie/error-solutions-1.1.3.0",
                 "spatie/flare-client-php-1.10.1.0",
-                "symfony/console-7.3.3.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/console-7.3.4.0",
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -13220,8 +13038,8 @@
             "ref": "spatie/laravel-ignition-2.9.1.0",
             "dependsOn": [
                 "spatie/ignition-1.15.1.0",
-                "symfony/console-7.3.3.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/console-7.3.4.0",
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -13249,7 +13067,7 @@
                 "spatie/backtrace-1.8.1.0",
                 "spatie/macroable-2.0.0.0",
                 "symfony/stopwatch-7.3.0.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -13260,12 +13078,12 @@
             ]
         },
         {
-            "ref": "symfony/console-7.3.3.0",
+            "ref": "symfony/console-7.3.4.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.6.0.0",
                 "symfony/polyfill-mbstring-1.33.0.0",
                 "symfony/service-contracts-3.6.0.0",
-                "symfony/string-7.3.3.0"
+                "symfony/string-7.3.4.0"
             ]
         },
         {
@@ -13275,10 +13093,10 @@
             "ref": "symfony/deprecation-contracts-3.6.0.0"
         },
         {
-            "ref": "symfony/error-handler-7.3.2.0",
+            "ref": "symfony/error-handler-7.3.4.0",
             "dependsOn": [
                 "psr/log-3.0.2.0",
-                "symfony/var-dumper-7.3.3.0"
+                "symfony/var-dumper-7.3.4.0"
             ]
         },
         {
@@ -13304,7 +13122,7 @@
             ]
         },
         {
-            "ref": "symfony/http-foundation-7.3.3.0",
+            "ref": "symfony/http-foundation-7.3.4.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.6.0.0",
                 "symfony/polyfill-mbstring-1.33.0.0",
@@ -13312,29 +13130,29 @@
             ]
         },
         {
-            "ref": "symfony/http-kernel-7.3.3.0",
+            "ref": "symfony/http-kernel-7.3.4.0",
             "dependsOn": [
                 "psr/log-3.0.2.0",
                 "symfony/deprecation-contracts-3.6.0.0",
-                "symfony/error-handler-7.3.2.0",
+                "symfony/error-handler-7.3.4.0",
                 "symfony/event-dispatcher-7.3.3.0",
-                "symfony/http-foundation-7.3.3.0",
+                "symfony/http-foundation-7.3.4.0",
                 "symfony/polyfill-ctype-1.33.0.0"
             ]
         },
         {
-            "ref": "symfony/mailer-7.3.3.0",
+            "ref": "symfony/mailer-7.3.4.0",
             "dependsOn": [
                 "egulias/email-validator-4.0.4.0",
                 "psr/event-dispatcher-1.0.0.0",
                 "psr/log-3.0.2.0",
                 "symfony/event-dispatcher-7.3.3.0",
-                "symfony/mime-7.3.2.0",
+                "symfony/mime-7.3.4.0",
                 "symfony/service-contracts-3.6.0.0"
             ]
         },
         {
-            "ref": "symfony/mime-7.3.2.0",
+            "ref": "symfony/mime-7.3.4.0",
             "dependsOn": [
                 "symfony/polyfill-intl-idn-1.33.0.0",
                 "symfony/polyfill-mbstring-1.33.0.0"
@@ -13371,10 +13189,10 @@
             "ref": "symfony/polyfill-uuid-1.33.0.0"
         },
         {
-            "ref": "symfony/process-7.3.3.0"
+            "ref": "symfony/process-7.3.4.0"
         },
         {
-            "ref": "symfony/routing-7.3.2.0",
+            "ref": "symfony/routing-7.3.4.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.6.0.0"
             ]
@@ -13393,7 +13211,7 @@
             ]
         },
         {
-            "ref": "symfony/string-7.3.3.0",
+            "ref": "symfony/string-7.3.4.0",
             "dependsOn": [
                 "symfony/polyfill-ctype-1.33.0.0",
                 "symfony/polyfill-intl-grapheme-1.33.0.0",
@@ -13402,7 +13220,7 @@
             ]
         },
         {
-            "ref": "symfony/translation-7.3.3.0",
+            "ref": "symfony/translation-7.3.4.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.6.0.0",
                 "symfony/polyfill-mbstring-1.33.0.0",
@@ -13419,7 +13237,7 @@
             ]
         },
         {
-            "ref": "symfony/var-dumper-7.3.3.0",
+            "ref": "symfony/var-dumper-7.3.4.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.6.0.0",
                 "symfony/polyfill-mbstring-1.33.0.0"
@@ -13502,7 +13320,6 @@
                 "guzzlehttp/guzzle-7.10.0.0",
                 "jeffgreco13/filament-breezy-2.6.4.0",
                 "jibaymcs/filament-tour-3.1.2.0",
-                "jurosh/pdf-merge-2.1.0.0",
                 "laravel/framework-11.46.0.0",
                 "laravel/prompts-0.3.7.0",
                 "laravel/sanctum-4.2.0.0",
