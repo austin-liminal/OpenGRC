@@ -193,6 +193,41 @@ class DataRequestsRelationManager extends RelationManager
                         ->disabled(function () {
                             return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                         }),
+                    Tables\Actions\BulkAction::make('bulk_update_status')
+                        ->label('Bulk Update Status')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->form([
+                            Select::make('status')
+                                ->label('Status')
+                                ->options(ResponseStatus::class)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
+                            $status = $data['status'];
+                            $updatedCount = 0;
+
+                            foreach ($records as $dataRequest) {
+                                $response = $dataRequest->responses->first();
+                                if ($response) {
+                                    $response->update(['status' => $status]);
+                                    $updatedCount++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('Bulk Status Update Complete')
+                                ->body("Successfully updated status for {$updatedCount} data request responses.")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Bulk Update Status')
+                        ->modalDescription('This will update the status for the first response of each selected data request.')
+                        ->disabled(function () {
+                            return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
+                        }),
                 ]),
             ]);
     }
