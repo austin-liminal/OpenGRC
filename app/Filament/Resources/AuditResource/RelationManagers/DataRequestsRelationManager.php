@@ -73,15 +73,20 @@ class DataRequestsRelationManager extends RelationManager
                             });
                         }
                     }),
-                Tables\Filters\SelectFilter::make('assigned_to_id')
-                    ->options(
-                        DataRequest::with('assignedTo')
-                            ->get()
-                            ->filter(fn ($dr) => $dr->assignedTo && $dr->assignedTo->name)
-                            ->pluck('assignedTo.name', 'assigned_to_id')
-                            ->toArray()
-                    )
-                    ->label('Assigned To'),
+                Tables\Filters\SelectFilter::make('assigned_to')
+                    ->options(function () {
+                        return User::whereHas('todos')
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->label('Assigned To')
+                    ->query(function ($query, $state) {
+                        if ($state['value'] ?? null) {
+                            return $query->whereHas('responses', function ($query) use ($state) {
+                                $query->where('requestee_id', $state['value']);
+                            });
+                        }
+                    }),
                 Tables\Filters\SelectFilter::make('code')
                     ->options(DataRequest::whereNotNull('code')->pluck('code', 'code')->toArray())
                     ->label('Request Code'),
