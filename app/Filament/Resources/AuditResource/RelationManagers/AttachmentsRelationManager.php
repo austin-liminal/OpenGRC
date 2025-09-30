@@ -65,6 +65,7 @@ class AttachmentsRelationManager extends RelationManager
                     ->label('File Name')
                     ->searchable()
                     ->sortable()
+                    ->wrap()
                     ->description(fn ($record) => $record->description),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Uploaded At')
