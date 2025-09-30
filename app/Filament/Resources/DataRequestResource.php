@@ -241,7 +241,7 @@ class DataRequestResource extends Resource
                                                     $output .= "<span class='text-gray-400'>{$attachment->file_name} (not available)</span>";
                                                 }
                                                 $output .= "</td>
-                                                <td class='px-6 py-4 whitespace-nowrap'>{$attachment->description}</td>
+                                                <td class='px-6 py-4 whitespace-normal'>{$attachment->description}</td>
                                             </tr>";
                                             }
                                         }
