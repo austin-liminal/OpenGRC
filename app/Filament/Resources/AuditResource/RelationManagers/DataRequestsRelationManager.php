@@ -14,6 +14,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use App\Enums\ResponseStatus;
 
 class DataRequestsRelationManager extends RelationManager
 {
@@ -63,8 +64,15 @@ class DataRequestsRelationManager extends RelationManager
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(WorkflowStatus::class)
-                    ->label('Status'),
+                    ->options(ResponseStatus::class)
+                    ->label('Status')
+                    ->query(function ($query, $state) {
+                        if ($state['value'] ?? null) {
+                            return $query->whereHas('responses', function ($query) use ($state) {
+                                $query->where('status', $state['value']);
+                            });
+                        }
+                    }),
                 Tables\Filters\SelectFilter::make('assigned_to_id')
                     ->options(
                         DataRequest::with('assignedTo')
