@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+    
 
 class ProgramResource extends Resource
 {
@@ -90,6 +91,7 @@ class ProgramResource extends Resource
                     return "<div class='fi-section-content p-6'>".__('programs.description').'</div>';
                 }
             })
+            ->recordUrl(fn (Program $record): string => Pages\ProgramPage::getUrl(['record' => $record]))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('programs.table.name'))
@@ -194,7 +196,10 @@ class ProgramResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                
+              
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -208,7 +213,8 @@ class ProgramResource extends Resource
         return [
             RelationManagers\StandardsRelationManager::class,
             RelationManagers\ControlsRelationManager::class,
-            RelationManagers\RisksRelationManager::class,
+            RelationManagers\RisksRelationManager::class,            
+            RelationManagers\AuditsRelationManager::class,
         ];
     }
 
@@ -217,6 +223,7 @@ class ProgramResource extends Resource
         return [
             'index' => Pages\ListPrograms::route('/'),
             'create' => Pages\CreateProgram::route('/create'),
+            'view' => Pages\ProgramPage::route('/{record}'),
             'edit' => Pages\EditProgram::route('/{record}/edit'),
         ];
     }
