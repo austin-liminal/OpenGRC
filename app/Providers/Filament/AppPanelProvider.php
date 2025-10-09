@@ -127,9 +127,8 @@ class AppPanelProvider extends PanelProvider
                 FilamentSocialitePlugin::make()
                     ->setProviders($socialProviders),
                 FilamentInactivityGuardPlugin::make()
-                    ->inactiveAfter($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE)
-                    ->showNoticeFor(1* Carbon::SECONDS_PER_MINUTE)
-                    ->showNoticeFor(null)
+                    ->inactiveAfter(($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE) - 60) // Subtract 60 seconds for the warning period
+                    ->showNoticeFor(60) // 60 second warning before logout
                     ->enabled(true),
             ],
 
@@ -152,10 +151,6 @@ class AppPanelProvider extends PanelProvider
             ->authGuard('web')
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->renderHook(
-                'panels::body.end',
-                fn () => auth()->check() ? view('components.session-timeout-warning') : ''
-            );
+            ]);
     }
 }

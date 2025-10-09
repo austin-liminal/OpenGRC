@@ -87,9 +87,8 @@ class AdminPanelProvider extends PanelProvider
                     'default_sort_column' => 'created_at',
                 ])->authorize(fn () => auth()->user()->can('View Audit Log')),
                 FilamentInactivityGuardPlugin::make()
-                    ->inactiveAfter($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE)
-                    ->showNoticeFor(1* Carbon::SECONDS_PER_MINUTE)
-                    ->showNoticeFor(null)
+                    ->inactiveAfter(($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE) - 60) // Subtract 60 seconds for the warning period
+                    ->showNoticeFor(60) // 60 second warning before logout
                     ->enabled(true),
 
             ])
@@ -97,10 +96,6 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Back to OpenGRC')
                     ->url('/app', shouldOpenInNewTab: false)
                     ->icon('heroicon-o-arrow-left'),
-            ])
-            ->renderHook(
-                'panels::body.end',
-                fn () => auth()->check() ? view('components.session-timeout-warning') : ''
-            );
+            ]);
     }
 }
