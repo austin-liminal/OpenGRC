@@ -33,6 +33,16 @@ class StorageSettings extends BaseSettings
         return false;
     }
 
+    public function mount(): void
+    {
+        // Set default storage driver if not set
+        if (empty(setting('storage.driver'))) {
+            setting(['storage.driver' => 'private']);
+        }
+
+        parent::mount();
+    }
+
     public static function getNavigationGroup(): string
     {
         return __('navigation.groups.settings');
@@ -58,6 +68,7 @@ class StorageSettings extends BaseSettings
                             's3' => 'Amazon S3',
                             'digitalocean' => 'DigitalOcean Spaces',
                         ])
+                        ->default('private')
                         ->required()
                         ->live()
                         ->disabled($isLocked),

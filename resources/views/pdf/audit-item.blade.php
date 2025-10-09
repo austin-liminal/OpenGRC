@@ -8,6 +8,7 @@
         .section { margin-bottom: 30px; }
         .data-request { margin-bottom: 15px; }
         .response { margin-left: 20px; color: #444; }
+        .control-item { margin-bottom: 15px; padding: 10px; background-color: #f5f5f5; }
     </style>
 </head>
 <body>
@@ -15,14 +16,27 @@
     <center><h2>{{ $audit->title }}</h2></center>
     <center><h3>Request Code: {{ $dataRequest->code ?? $dataRequest->id }}</h3></center>
     <div class="section">
-        <p>
-            <strong>Title:</strong> {{ $auditItem->auditable->title ?? '' }}<br>
-            <strong>Description:</strong> {!! html_entity_decode($auditItem->auditable->description ?? '') !!}
-        </p>
+        @if(isset($auditItems) && count($auditItems) > 0)
+            @foreach($auditItems as $item)
+                <div class="control-item">
+                    <p>
+                        <strong>Control Code:</strong> {{ $item->auditable->code ?? '' }}<br>
+                        <strong>Title:</strong> {{ $item->auditable->title ?? '' }}<br>
+                        <strong>Description:</strong> {!! html_entity_decode($item->auditable->description ?? '') !!}
+                    </p>
+                </div>
+            @endforeach
+        @elseif(isset($auditItem))
+            <p>
+                <strong>Control Code:</strong> {{ $auditItem->auditable->code ?? '' }}<br>
+                <strong>Title:</strong> {{ $auditItem->auditable->title ?? '' }}<br>
+                <strong>Description:</strong> {!! html_entity_decode($auditItem->auditable->description ?? '') !!}
+            </p>
+        @endif
     </div>
     <div class="section">
         <h3>Data Request</h3>
-        <strong>Requested Information:</strong> {!! html_entity_decode($dataRequest->details) !!}
+        <strong>Requested Information:</strong><br> {!! html_entity_decode($dataRequest->details) !!}
         <div style="margin-top: 10px;">
             <strong>Responses:</strong>
             @foreach($dataRequest->responses as $response)

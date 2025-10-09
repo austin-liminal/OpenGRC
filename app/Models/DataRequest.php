@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Spatie\Activitylog\LogOptions;
@@ -43,6 +44,11 @@ class DataRequest extends Model
     public function auditItem(): BelongsTo
     {
         return $this->belongsTo(AuditItem::class);
+    }
+
+    public function auditItems(): BelongsToMany
+    {
+        return $this->belongsToMany(AuditItem::class, 'audit_item_data_request');
     }
 
     public function audit(): BelongsTo

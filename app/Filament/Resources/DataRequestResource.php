@@ -107,7 +107,7 @@ class DataRequestResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                //
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -116,8 +116,6 @@ class DataRequestResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -134,10 +132,7 @@ class DataRequestResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+        return parent::getEloquentQuery();
     }
 
     public static function createResponses(DataRequest $record, ?string $dueDate = null): void
@@ -157,36 +152,75 @@ class DataRequestResource extends Resource
             ->schema([
 
                 Forms\Components\Section::make('Request Details')
-                    ->columns(3)
+                    ->columns(2)
                     ->schema([
-                        Forms\Components\Placeholder::make('Requested Information')
-                            ->content(function ($record) {
-                                return new HtmlString($record->details ?? '');
-                            }),
-                        Placeholder::make('control')
-                            ->label('Control')
-                            ->content(function ($record) {
-                                return $record->auditItem->auditable->code.' - '.$record->auditItem->auditable->title;
-                            }),
                         Placeholder::make('code')
                             ->label('Request Code')
                             ->content(function ($record) {
                                 return $record->code;
                             }),
-                        Placeholder::make('control_description')
-                            ->label('Control Description')
-                            ->columnSpanFull()
-                            ->content(function ($record) {
-                                return new HtmlString($record->auditItem->auditable->description);
-                            }),
-                        Forms\Components\Repeater::make('Responses')
-                            ->label('Responses')
-                            ->relationship('responses')
-                            ->addable(false)
-                            ->columns()
-                            ->deletable(false)
+                        Forms\Components\Section::make('Data Request Details')
                             ->columnSpanFull()
                             ->schema([
+                                Forms\Components\Placeholder::make('Requested Information')
+                                    ->label('')
+                                    ->columnSpanFull()
+                                    ->content(function ($record) {
+                                        return new HtmlString($record->details ?? '');
+                                    }),
+                            ]),
+                        Forms\Components\Section::make('Control Details')
+                            ->columnSpanFull()
+                            ->collapsible()
+                            ->collapsed()
+                            ->schema([
+                                Placeholder::make('control')
+                                    ->label('Control(s)')
+                                    ->content(function ($record) {
+                                        // Try many-to-many relationship first
+                                        $controls = $record->auditItems->map(function ($item) {
+                                            return $item->auditable ? ($item->auditable->code . ' - ' . $item->auditable->title) : null;
+                                        })->filter()->all();
+
+                                        // Fallback to single relationship for backwards compatibility
+                                        if (empty($controls) && $record->auditItem?->auditable) {
+                                            $controls = [$record->auditItem->auditable->code . ' - ' . $record->auditItem->auditable->title];
+                                        }
+
+                                        return new HtmlString(!empty($controls) ? implode('<br>', $controls) : '-');
+                                    })
+                                    ->columnSpanFull(),
+                                Placeholder::make('control_description')
+                                    ->label('Control Description(s)')
+                                    ->columnSpanFull()
+                                    ->content(function ($record) {
+                                        // Try many-to-many relationship first
+                                        $descriptions = $record->auditItems->map(function ($item) {
+                                            if ($item->auditable) {
+                                                return '<strong>' . $item->auditable->code . ':</strong> ' . $item->auditable->description;
+                                            }
+                                            return null;
+                                        })->filter()->all();
+
+                                        // Fallback to single relationship for backwards compatibility
+                                        if (empty($descriptions) && $record->auditItem?->auditable) {
+                                            $descriptions = ['<strong>' . $record->auditItem->auditable->code . ':</strong> ' . $record->auditItem->auditable->description];
+                                        }
+
+                                        return new HtmlString(!empty($descriptions) ? implode('<br><br>', $descriptions) : '-');
+                                    }),
+                            ]),
+                        Forms\Components\Section::make('Responses')
+                            ->columnSpanFull()
+                            ->schema([
+                                Forms\Components\Repeater::make('Responses')
+                                    ->label('')
+                                    ->relationship('responses')
+                                    ->addable(false)
+                                    ->columns()
+                                    ->deletable(false)
+                                    ->columnSpanFull()
+                                    ->schema([
                                 Select::make('requestee_id')
                                     ->label('Assigned To')
                                     ->relationship('requestee', 'name', fn ($query) => $query->whereNotNull('name'))
@@ -250,6 +284,7 @@ class DataRequestResource extends Resource
                                         return new HtmlString($output);
                                     })
                                     ->label('Attachments'),
+                                    ]),
                             ]),
                     ]),
             ]);

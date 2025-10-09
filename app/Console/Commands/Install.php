@@ -172,6 +172,10 @@ class Install extends Command
             'key' => 'general.url',
             'value' => $site_url,
         ]);
+        $this->call('settings:set', [
+            'key' => 'storage.driver',
+            'value' => 'private',
+        ]);
 
         // Update .env with site settings.
         $this->updateEnv([

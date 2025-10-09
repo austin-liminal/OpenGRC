@@ -28,11 +28,15 @@ class ViewDataRequest extends ViewRecord
         /** @var DataRequest $record */
         $record = $this->record;
 
-        return [
-            Action::make('back')
+        $actions = [];
+
+        if ($record->audit_item_id) {
+            $actions[] = Action::make('back')
                 ->label('Back to Audit Item')
                 ->icon('heroicon-m-arrow-left')
-                ->url(route('filament.app.resources.audit-items.edit', $record->audit_item_id)),
-        ];
+                ->url(route('filament.app.resources.audit-items.edit', $record->audit_item_id));
+        }
+
+        return $actions;
     }
 }
