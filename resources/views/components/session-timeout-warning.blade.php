@@ -1,1 +1,0 @@
-@livewire('session-timeout-warning')
