@@ -113,26 +113,12 @@ class ImportIrl extends Page implements HasForms
 
                                         // Read file contents directly - Livewire stores in livewire-tmp directory
                                         try {
-                                            // $state is a TemporaryUploadedFile - get the file path in livewire-tmp
-                                            $livewirePath = 'livewire-tmp/' . $state->getFilename();
+                                            // $state is a TemporaryUploadedFile - read contents directly
+                                            // Use the get() method on the TemporaryUploadedFile object
+                                            $this->irl_file_contents = $state->get();
 
-                                            // Read from local disk using Storage facade
-                                            if (\Storage::disk('local')->exists($livewirePath)) {
-                                                $this->irl_file_contents = \Storage::disk('local')->get($livewirePath);
-                                            } else {
-                                                // Fallback: construct absolute path
-                                                $realPath = $state->getRealPath();
-
-                                                // If getRealPath returns a relative path, make it absolute
-                                                if (!str_starts_with($realPath, '/')) {
-                                                    $realPath = storage_path('app/' . $realPath);
-                                                }
-
-                                                if (!file_exists($realPath)) {
-                                                    throw new \Exception("File not found at: {$realPath}");
-                                                }
-
-                                                $this->irl_file_contents = file_get_contents($realPath);
+                                            if (empty($this->irl_file_contents)) {
+                                                throw new \Exception("File contents are empty");
                                             }
 
                                             $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
