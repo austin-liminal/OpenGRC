@@ -59,6 +59,8 @@ class ImportIrl extends Page implements HasForms
 
     public ?string $irl_file_path;
 
+    public ?string $irl_file_contents;
+
     public bool $isIrlFileValid = false;
 
     public bool $isProcessing = false;
@@ -108,10 +110,16 @@ class ImportIrl extends Page implements HasForms
                                         $this->isProcessing = true;
                                         $this->isIrlFileValid = false;
                                         $this->dispatch('processing-started');
-                                        
-                                        $this->irl_file_path = $state->getPathname();
-                                        $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
-                                        
+
+                                        // Read file contents directly to avoid path issues with cloud storage
+                                        try {
+                                            $this->irl_file_contents = file_get_contents($state->getRealPath());
+                                            $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
+                                        } catch (\Exception $e) {
+                                            $this->addError('irl_file', 'Failed to read uploaded file: ' . $e->getMessage());
+                                            $this->isIrlFileValid = false;
+                                        }
+
                                         $this->isProcessing = false;
                                         $this->dispatch('processing-completed');
                                     }
@@ -145,7 +153,8 @@ class ImportIrl extends Page implements HasForms
     public function validateIrlFile(): bool
     {
         try {
-            $reader = Reader::createFromPath($this->irl_file_path, 'r');
+            // Create CSV reader from string content instead of file path
+            $reader = Reader::createFromString($this->irl_file_contents);
             $reader->setHeaderOffset(0);
             $headers = $reader->getHeader();
             $normalizedHeaders = array_map(function ($header) {
