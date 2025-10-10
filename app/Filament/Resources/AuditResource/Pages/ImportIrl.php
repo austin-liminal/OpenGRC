@@ -111,9 +111,10 @@ class ImportIrl extends Page implements HasForms
                                         $this->isIrlFileValid = false;
                                         $this->dispatch('processing-started');
 
-                                        // Read file contents directly to avoid path issues with cloud storage
+                                        // Read file contents directly - Livewire now configured to use local disk
                                         try {
-                                            $this->irl_file_contents = file_get_contents($state->getRealPath());
+                                            // Use get() method to read file contents via Storage facade
+                                            $this->irl_file_contents = \Storage::disk('local')->get($state->getFilename());
                                             $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
                                         } catch (\Exception $e) {
                                             $this->addError('irl_file', 'Failed to read uploaded file: ' . $e->getMessage());
