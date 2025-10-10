@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -19,6 +20,14 @@ class ExportAuditEvidenceJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $auditId;
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->auditId))->dontRelease()];
+    }
 
     /**
      * Create a new job instance.
@@ -33,6 +42,9 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function handle()
     {
+        // Set cache flag to indicate export is running
+        \Cache::put("audit_{$this->auditId}_exporting", true, now()->addHours(2));
+
         \Log::info("ExportAuditEvidenceJob started for audit {$this->auditId}");
 
         $audit = Audit::with([
@@ -251,6 +263,20 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
             rmdir($tmpDir);
         }
+
+        // Clear cache flag when export completes
+        \Cache::forget("audit_{$this->auditId}_exporting");
+        \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId}");
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        // Clear cache flag on failure
+        \Cache::forget("audit_{$this->auditId}_exporting");
+        \Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: " . $exception->getMessage());
     }
 
 }
