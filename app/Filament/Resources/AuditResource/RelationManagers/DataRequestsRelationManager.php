@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\AuditResource\RelationManagers;
 
+use App\Enums\ResponseStatus;
 use App\Enums\WorkflowStatus;
 use App\Filament\Resources\DataRequestResource;
 use App\Http\Controllers\QueueController;
 use App\Models\DataRequest;
 use App\Models\User;
+use App\Notifications\DropdownNotification;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -14,7 +16,6 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use App\Enums\ResponseStatus;
 
 class DataRequestsRelationManager extends RelationManager
 {
@@ -56,7 +57,7 @@ class DataRequestsRelationManager extends RelationManager
                             $codes = [$record->auditItem->auditable->code];
                         }
 
-                        return !empty($codes) ? implode(', ', $codes) : '-';
+                        return ! empty($codes) ? implode(', ', $codes) : '-';
                     })
                     ->searchable(query: function ($query, $search) {
                         return $query->whereHas('auditItems.auditable', function ($q) use ($search) {
@@ -145,30 +146,35 @@ class DataRequestsRelationManager extends RelationManager
                     ->label(function () {
                         $audit = $this->getOwnerRecord();
                         $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+
                         return $isExporting ? 'Export In Progress...' : 'Export All Evidence';
                     })
                     ->icon(function () {
                         $audit = $this->getOwnerRecord();
                         $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+
                         return $isExporting ? 'heroicon-m-arrow-path' : 'heroicon-m-arrow-down-tray';
                     })
                     ->disabled(function () {
                         $audit = $this->getOwnerRecord();
+
                         return \Cache::has("audit_{$audit->id}_exporting");
                     })
                     ->color(function () {
                         $audit = $this->getOwnerRecord();
                         $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+
                         return $isExporting ? 'warning' : 'primary';
                     })
                     ->extraAttributes(function () {
                         $audit = $this->getOwnerRecord();
                         $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+
                         return $isExporting ? ['class' => 'animate-pulse'] : [];
                     })
                     ->requiresConfirmation()
                     ->modalHeading('Export All Evidence')
-                    ->modalDescription('This will generate a PDF for each audit item and zip them for download. You will be notified when the export is ready.')                    
+                    ->modalDescription('This will generate a PDF for each audit item and zip them for download. You will be notified when the export is ready.')
                     ->action(function ($livewire) {
                         $audit = $this->getOwnerRecord();
 
@@ -181,7 +187,7 @@ class DataRequestsRelationManager extends RelationManager
                                 ->send();
                         }
 
-                        \App\Jobs\ExportAuditEvidenceJob::dispatch($audit->id);
+                        \App\Jobs\ExportAuditEvidenceJob::dispatch($audit->id, auth()->id());
 
                         // Ensure queue worker is running
                         $queueController = new QueueController;
@@ -196,6 +202,12 @@ class DataRequestsRelationManager extends RelationManager
                             ->body($body)
                             ->success()
                             ->send();
+                        auth()->user()->notify(new DropdownNotification(
+                            title: 'Evidence Export Started',
+                            body: 'Your evidence export is in-progress. This will take several minutes depending on the amount of evidence you collected.',
+                            icon: 'heroicon-o-bell',
+                            color: 'success'
+                        ));
 
                         // Use JavaScript to refresh the page
                         $this->js('window.location.reload()');
@@ -233,7 +245,7 @@ class DataRequestsRelationManager extends RelationManager
                         ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
                             $requesteeId = $data['requestee_id'];
                             $updatedCount = 0;
-                            
+
                             foreach ($records as $dataRequest) {
                                 $response = $dataRequest->responses->first();
                                 if ($response) {
@@ -241,7 +253,7 @@ class DataRequestsRelationManager extends RelationManager
                                     $updatedCount++;
                                 }
                             }
-                            
+
                             Notification::make()
                                 ->title('Bulk Assignment Complete')
                                 ->body("Successfully assigned {$updatedCount} data request responses.")
