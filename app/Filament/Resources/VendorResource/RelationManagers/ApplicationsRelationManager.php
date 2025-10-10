@@ -4,6 +4,7 @@ namespace App\Filament\Resources\VendorResource\RelationManagers;
 
 use App\Enums\ApplicationStatus;
 use App\Enums\ApplicationType;
+use App\Models\Application;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -12,8 +13,6 @@ use Filament\Tables\Table;
 class ApplicationsRelationManager extends RelationManager
 {
     protected static string $relationship = 'applications';
-
-    protected static ?string $recordTitleAttribute = 'name';
 
     public function form(Forms\Form $form): Forms\Form
     {
@@ -45,10 +44,9 @@ class ApplicationsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
-                Tables\Actions\AttachAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make(),                
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
