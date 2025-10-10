@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
@@ -19,6 +20,14 @@ class ExportAuditEvidenceJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $auditId;
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->auditId))->dontRelease()];
+    }
 
     /**
      * Create a new job instance.
@@ -33,6 +42,11 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function handle()
     {
+        // Set cache flag to indicate export is running
+        \Cache::put("audit_{$this->auditId}_exporting", true, now()->addHours(2));
+
+        \Log::info("ExportAuditEvidenceJob started for audit {$this->auditId}");
+
         $audit = Audit::with([
             'auditItems',
             'auditItems.dataRequests.responses.attachments',
@@ -46,9 +60,13 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
         $disk = setting('storage.driver', 'private');
         $allFiles = [];
-        $dataRequests = $audit->auditItems->flatMap(function ($item) {
-            return $item->dataRequests;
-        })->filter();
+
+        // Get all data requests for this audit (supports both old and new relationships)
+        $dataRequests = \App\Models\DataRequest::where('audit_id', $this->auditId)
+            ->with(['responses.attachments', 'auditItems.auditable', 'auditItem.auditable'])
+            ->get();
+
+        \Log::info("Found {$dataRequests->count()} data requests to export");
 
         // Directory/key prefix for exports
         $exportDir = "exports/audit_{$this->auditId}/";
@@ -60,8 +78,8 @@ class ExportAuditEvidenceJob implements ShouldQueue
         }
 
         foreach ($dataRequests as $dataRequest) {
-            $auditItem = $dataRequest->auditItem;
-            $dataRequest->loadMissing(['responses.attachments']);
+            \Log::info("Processing data request {$dataRequest->id}");
+            $dataRequest->loadMissing(['responses.attachments', 'auditItems.auditable']);
 
             // Collect all attachments for processing
             $attachments = [];
@@ -94,11 +112,25 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
 
             // Generate the main PDF with embedded images
-            $pdf = Pdf::loadView('pdf.audit-item', [
+            // Support both single audit item (old) and multiple audit items (new many-to-many)
+            $pdfData = [
                 'audit' => $audit,
-                'auditItem' => $auditItem,
                 'dataRequest' => $dataRequest,
-            ]);
+            ];
+
+            // Check if using many-to-many relationship
+            if ($dataRequest->auditItems && $dataRequest->auditItems->count() > 0) {
+                $pdfData['auditItems'] = $dataRequest->auditItems;
+                \Log::info("Data request {$dataRequest->id} has {$dataRequest->auditItems->count()} audit items (many-to-many)");
+            } elseif ($dataRequest->auditItem) {
+                $pdfData['auditItem'] = $dataRequest->auditItem;
+                \Log::info("Data request {$dataRequest->id} has single audit item (legacy)");
+            } else {
+                \Log::info("Skipping data request {$dataRequest->id} - no audit items");
+                continue;
+            }
+
+            $pdf = Pdf::loadView('pdf.audit-item', $pdfData);
 
             // Determine filename prefix
             $filenamePrefix = $dataRequest->code ?
@@ -117,6 +149,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
 
             $allFiles[] = $mainPdfPath;
+            \Log::info("Generated PDF for data request {$dataRequest->id}: {$mainPdfPath}");
 
             // Export other attachments with prefixed names
             foreach ($otherAttachments as $attachment) {
@@ -132,6 +165,8 @@ class ExportAuditEvidenceJob implements ShouldQueue
                 }
             }
         }
+
+        \Log::info("Total files to include in zip: " . count($allFiles));
 
         // Create a hasfile for all files
         foreach ($allFiles as $file) {
@@ -155,24 +190,28 @@ class ExportAuditEvidenceJob implements ShouldQueue
                 }
                 $zip->close();
             }
-            // Upload ZIP to S3
-            $zipS3Path = $exportDir."audit_{$this->auditId}_data_requests.zip";
-            \Storage::disk($disk)->put($zipS3Path, file_get_contents($zipLocalPath));
 
-            // Create or update FileAttachment for the ZIP
-            FileAttachment::updateOrCreate(
-                [
-                    'audit_id' => $this->auditId,
-                    'data_request_response_id' => null,
-                    'file_name' => "audit_{$this->auditId}_data_requests.zip",
-                ],
-                [
-                    'file_path' => $zipS3Path,
-                    'file_size' => filesize($zipLocalPath),
-                    'uploaded_by' => auth()->id() ?? null,
-                    'description' => 'Exported audit evidence ZIP',
-                ]
-            );
+            // Only upload and create FileAttachment if zip file was successfully created
+            if (file_exists($zipLocalPath)) {
+                // Upload ZIP to S3
+                $zipS3Path = $exportDir."audit_{$this->auditId}_data_requests.zip";
+                \Storage::disk($disk)->put($zipS3Path, file_get_contents($zipLocalPath));
+
+                // Create or update FileAttachment for the ZIP
+                FileAttachment::updateOrCreate(
+                    [
+                        'audit_id' => $this->auditId,
+                        'data_request_response_id' => null,
+                        'file_name' => "audit_{$this->auditId}_data_requests.zip",
+                    ],
+                    [
+                        'file_path' => $zipS3Path,
+                        'file_size' => filesize($zipLocalPath),
+                        'uploaded_by' => auth()->id() ?? null,
+                        'description' => 'Exported audit evidence ZIP',
+                    ]
+                );
+            }
             // Clean up
             // Remove all files in the temp directory
             $files = glob($tmpDir.'/*');
@@ -197,20 +236,23 @@ class ExportAuditEvidenceJob implements ShouldQueue
                 $zip->close();
             }
 
-            // Create or update FileAttachment for the ZIP
-            FileAttachment::updateOrCreate(
-                [
-                    'audit_id' => $this->auditId,
-                    'data_request_response_id' => null,
-                    'file_name' => "audit_{$this->auditId}_data_requests.zip",
-                ],
-                [
-                    'file_path' => $exportDir."audit_{$this->auditId}_data_requests.zip",
-                    'file_size' => filesize($zipPath),
-                    'uploaded_by' => auth()->id() ?? null,
-                    'description' => 'Exported audit evidence ZIP',
-                ]
-            );
+            // Only create FileAttachment if zip file was successfully created
+            if (file_exists($zipPath)) {
+                // Create or update FileAttachment for the ZIP
+                FileAttachment::updateOrCreate(
+                    [
+                        'audit_id' => $this->auditId,
+                        'data_request_response_id' => null,
+                        'file_name' => "audit_{$this->auditId}_data_requests.zip",
+                    ],
+                    [
+                        'file_path' => $exportDir."audit_{$this->auditId}_data_requests.zip",
+                        'file_size' => filesize($zipPath),
+                        'uploaded_by' => auth()->id() ?? null,
+                        'description' => 'Exported audit evidence ZIP',
+                    ]
+                );
+            }
 
             // Remove all files in the temp directory
             $files = glob($tmpDir.'/*');
@@ -221,6 +263,20 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
             rmdir($tmpDir);
         }
+
+        // Clear cache flag when export completes
+        \Cache::forget("audit_{$this->auditId}_exporting");
+        \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId}");
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        // Clear cache flag on failure
+        \Cache::forget("audit_{$this->auditId}_exporting");
+        \Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: " . $exception->getMessage());
     }
 
 }

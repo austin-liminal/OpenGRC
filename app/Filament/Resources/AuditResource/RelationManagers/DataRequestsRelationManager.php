@@ -20,6 +20,14 @@ class DataRequestsRelationManager extends RelationManager
 {
     protected static string $relationship = 'DataRequest';
 
+    protected $listeners = ['refreshComponent' => '$refresh'];
+
+    public function getTablePollInterval(): ?string
+    {
+        // Poll every 5 seconds to update button state
+        return '5s';
+    }
+
     public function form(Form $form): Form
     {
         return DataRequestResource::getEditForm($form);
@@ -36,9 +44,27 @@ class DataRequestsRelationManager extends RelationManager
                     ->toggleable()
                     ->toggledHiddenByDefault()
                     ->label('ID'),
-                TextColumn::make('auditItem.auditable.code')
-                    ->searchable()
-                    ->label('Audit Item'),
+                TextColumn::make('auditItems')
+                    ->label('Audit Item(s)')
+                    ->wrap()
+                    ->state(function (DataRequest $record) {
+                        // Try the many-to-many relationship first (for new data requests)
+                        $codes = $record->auditItems->pluck('auditable.code')->filter()->all();
+
+                        // Fallback to single relationship for backwards compatibility
+                        if (empty($codes) && $record->auditItem?->auditable) {
+                            $codes = [$record->auditItem->auditable->code];
+                        }
+
+                        return !empty($codes) ? implode(', ', $codes) : '-';
+                    })
+                    ->searchable(query: function ($query, $search) {
+                        return $query->whereHas('auditItems.auditable', function ($q) use ($search) {
+                            $q->where('code', 'like', "%{$search}%");
+                        })->orWhereHas('auditItem.auditable', function ($q) use ($search) {
+                            $q->where('code', 'like', "%{$search}%");
+                        });
+                    }),
                 TextColumn::make('code')
                     ->searchable()
                     ->toggleable()
@@ -46,6 +72,7 @@ class DataRequestsRelationManager extends RelationManager
                 TextColumn::make('details')
                     ->label('Request Details')
                     ->searchable()
+                    ->html()
                     ->wrap(),
                 TextColumn::make('responses.status')
                     ->label('Responses')
@@ -115,13 +142,45 @@ class DataRequestsRelationManager extends RelationManager
                         return redirect()->route('filament.app.resources.audits.import-irl', $audit);
                     }),
                 Tables\Actions\Action::make('ExportAuditEvidence')
-                    ->label('Export All Evidence')
-                    ->icon('heroicon-m-arrow-down-tray')
+                    ->label(function () {
+                        $audit = $this->getOwnerRecord();
+                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        return $isExporting ? 'Export In Progress...' : 'Export All Evidence';
+                    })
+                    ->icon(function () {
+                        $audit = $this->getOwnerRecord();
+                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        return $isExporting ? 'heroicon-m-arrow-path' : 'heroicon-m-arrow-down-tray';
+                    })
+                    ->disabled(function () {
+                        $audit = $this->getOwnerRecord();
+                        return \Cache::has("audit_{$audit->id}_exporting");
+                    })
+                    ->color(function () {
+                        $audit = $this->getOwnerRecord();
+                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        return $isExporting ? 'warning' : 'primary';
+                    })
+                    ->extraAttributes(function () {
+                        $audit = $this->getOwnerRecord();
+                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        return $isExporting ? ['class' => 'animate-pulse'] : [];
+                    })
                     ->requiresConfirmation()
                     ->modalHeading('Export All Evidence')
-                    ->modalDescription('This will generate a PDF for each audit item and zip them for download. You will be notified when the export is ready.')
+                    ->modalDescription('This will generate a PDF for each audit item and zip them for download. You will be notified when the export is ready.')                    
                     ->action(function ($livewire) {
                         $audit = $this->getOwnerRecord();
+
+                        // Check cache before dispatching
+                        if (\Cache::has("audit_{$audit->id}_exporting")) {
+                            return Notification::make()
+                                ->title('Export Already In Progress')
+                                ->body('An export is already running for this audit. Please wait for it to complete.')
+                                ->warning()
+                                ->send();
+                        }
+
                         \App\Jobs\ExportAuditEvidenceJob::dispatch($audit->id);
 
                         // Ensure queue worker is running
@@ -132,11 +191,14 @@ class DataRequestsRelationManager extends RelationManager
                             ? 'The export job has been added to the queue. You will be able to download the ZIP in the Attachments section.'
                             : 'The export job has been queued and a queue worker has been started. You will be able to download the ZIP in the Attachments section.';
 
-                        return Notification::make()
+                        Notification::make()
                             ->title('Export Started')
                             ->body($body)
                             ->success()
                             ->send();
+
+                        // Use JavaScript to refresh the page
+                        $this->js('window.location.reload()');
                     }),
             ])
 

@@ -237,12 +237,19 @@ class ImportIrl extends Page implements HasForms
                     $finalRecord['Assigned To'] = $this->users[$row['Assigned To']];
                 }
 
-                // Validate the control exists by control code
-                if (! in_array($row['Control Code'], $this->controlCodes)) {
-                    //                    $this->addError('irl_file', "Row $index: no control with the code of " . $row["Control Code"]);
+                // Validate the control exists by control code (supports comma-separated list)
+                $controlCodes = array_map('trim', explode(',', $row['Control Code']));
+                $invalidCodes = [];
+                foreach ($controlCodes as $code) {
+                    if (!in_array($code, $this->controlCodes)) {
+                        $invalidCodes[] = $code;
+                    }
+                }
+
+                if (!empty($invalidCodes)) {
                     $has_errors = true;
-                    $finalRecord['Control Code'] = "Control Code Not In Audit: {$row['Control Code']}";
-                    $error_array[] = "Row $index: no control with the code of ".$row['Control Code'];
+                    $finalRecord['Control Code'] = "Control Code Not In Audit: " . implode(', ', $invalidCodes);
+                    $error_array[] = "Row $index: no control with the code(s): " . implode(', ', $invalidCodes);
                 } else {
                     $finalRecord['Control Code'] = $row['Control Code'];
                 }
@@ -331,14 +338,33 @@ class ImportIrl extends Page implements HasForms
 
         foreach ($this->finalData as $row) {
             if ($row['_ACTION'] == 'CREATE') {
+                // Handle multiple control codes (comma-separated)
+                $controlCodes = array_map('trim', explode(',', $row['Control Code']));
+
+                // Collect audit item IDs for all control codes
+                $auditItemIds = [];
+                foreach ($controlCodes as $controlCode) {
+                    $auditItem = $this->auditItems->where('auditable.code', $controlCode)->first();
+                    if ($auditItem) {
+                        $auditItemIds[] = $auditItem->id;
+                    }
+                }
+
+                if (empty($auditItemIds)) {
+                    continue; // Skip if no valid controls found
+                }
+
+                // Create a single data request
                 $dataRequest = new DataRequest;
                 $dataRequest->audit_id = $row['Audit ID'];
-                $dataRequest->audit_item_id = $this->auditItems->where('auditable.code', $row['Control Code'])->first()->id;
                 $dataRequest->details = $row['Details'];
                 $dataRequest->assigned_to_id = array_search($row['Assigned To'], $this->users);
                 $dataRequest->created_by_id = auth()->id();
                 $dataRequest->code = $row['Request Code'] ?? null;
                 $dataRequest->save();
+
+                // Attach all audit items to this data request
+                $dataRequest->auditItems()->attach($auditItemIds);
 
                 // Create a Matching DataRequestResponse
                 $dataRequestResponse = new DataRequestResponse;

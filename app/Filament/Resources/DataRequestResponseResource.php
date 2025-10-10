@@ -38,30 +38,74 @@ class DataRequestResponseResource extends Resource
                 Section::make('Evidence Requested')
                     ->columns(2)
                     ->schema([
-                        Placeholder::make('request.dataRequest.auditItem.audit.name')
-                            ->content(fn ($record) => $record->dataRequest->auditItem->audit->title ?? 'No audit name available')
+                        Placeholder::make('request.dataRequest.audit.name')
+                            ->content(fn ($record) => $record->dataRequest->audit->title ?? 'No audit name available')
                             ->label('Audit Name'),
                         Placeholder::make('dataRequest.code')
                             ->content(fn ($record) => $record->dataRequest->code ?? 'No code')
                             ->label('Request Code'),
-                        Placeholder::make('request.dataRequest.details')
-                            ->content(fn ($record) => $record->dataRequest->details ?? 'No details available')
-                            ->label('Data Request Details')
-                            ->columnSpanFull(),
-                        Placeholder::make('request.dataRequest.auditItem.audit.name')
-                            ->content(function ($record) {
-                                return $record->dataRequest->auditItem->auditable->title ?? 'No audit name available';
-                            })
-                            ->label(function ($record) {
-                                return $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class ? 'Control Name' : 'Implementation Name';
-                            })
-                            ->columnSpanFull(),
-                        Placeholder::make('request.dataRequest.auditItem.audit.description')
-                            ->content(function ($record) {
-                                return new HtmlString($record->dataRequest->auditItem->auditable->description);
-                            })
-                            ->label('Control Description')
-                            ->columnSpanFull(),
+                        Section::make('Data Request Details')
+                            ->columnSpanFull()
+                            ->schema([
+                                Placeholder::make('request.dataRequest.details')
+                                    ->content(fn ($record) => new HtmlString($record->dataRequest->details ?? 'No details available'))
+                                    ->label('')
+                                    ->columnSpanFull(),
+                            ]),
+                        Section::make('Control Details')
+                            ->columnSpanFull()
+                            ->collapsible()
+                            ->collapsed()
+                            ->schema([
+                                Placeholder::make('request.dataRequest.auditItems.names')
+                                    ->content(function ($record) {
+                                        // Try many-to-many relationship first
+                                        $titles = $record->dataRequest->auditItems->map(function ($item) {
+                                            return $item->auditable ? $item->auditable->title : null;
+                                        })->filter()->all();
+
+                                        // Fallback to single relationship for backwards compatibility
+                                        if (empty($titles) && $record->dataRequest->auditItem?->auditable) {
+                                            $titles = [$record->dataRequest->auditItem->auditable->title];
+                                        }
+
+                                        return new HtmlString(!empty($titles) ? implode('<br>', $titles) : 'No audit items available');
+                                    })
+                                    ->label(function ($record) {
+                                        // Check if any audit items are Controls
+                                        $hasControl = $record->dataRequest->auditItems->contains(function ($item) {
+                                            return $item->auditable_type === \App\Models\Control::class;
+                                        });
+
+                                        // Fallback to single relationship
+                                        if (!$hasControl && $record->dataRequest->auditItem) {
+                                            $hasControl = $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class;
+                                        }
+
+                                        return $hasControl ? 'Control Name(s)' : 'Implementation Name(s)';
+                                    })
+                                    ->columnSpanFull(),
+                                Placeholder::make('request.dataRequest.auditItems.descriptions')
+                                    ->content(function ($record) {
+                                        // Try many-to-many relationship first
+                                        $descriptions = $record->dataRequest->auditItems->map(function ($item) {
+                                            if ($item->auditable) {
+                                                return '<strong>' . ($item->auditable->code ?? $item->auditable->title) . ':</strong> ' . $item->auditable->description;
+                                            }
+                                            return null;
+                                        })->filter()->all();
+
+                                        // Fallback to single relationship for backwards compatibility
+                                        if (empty($descriptions) && $record->dataRequest->auditItem?->auditable) {
+                                            $code = $record->dataRequest->auditItem->auditable->code ?? $record->dataRequest->auditItem->auditable->title;
+                                            $descriptions = ['<strong>' . $code . ':</strong> ' . $record->dataRequest->auditItem->auditable->description];
+                                        }
+
+                                        return new HtmlString(!empty($descriptions) ? implode('<br><br>', $descriptions) : 'No descriptions available');
+                                    })
+                                    ->label('Control Description(s)')
+                                    ->columnSpanFull(),
+                            ]),
                     ]),
                 Section::make('Response')
                     ->columnSpanFull()

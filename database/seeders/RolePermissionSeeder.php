@@ -97,8 +97,11 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // -----------------------------------------------------------------------------------------
-        // Assign users with ID 1 Super Admin
-        User::find(1)->assignRole($superAdmin);
+        // Assign users with ID 1 Super Admin (if exists)
+        $firstUser = User::find(1);
+        if ($firstUser) {
+            $firstUser->assignRole($superAdmin);
+        }
 
     }
 }

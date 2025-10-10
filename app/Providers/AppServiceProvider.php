@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        // Only skip the install check if running the installer command
+        // Only skip the install check if running the installer command or tests
         $isInstaller = false;
         if ($this->app->runningInConsole()) {
             $argv = $_SERVER['argv'] ?? [];
@@ -41,9 +41,15 @@ class AppServiceProvider extends ServiceProvider
             || $argv[1] === 'package:discover'
             || $argv[1] === 'filament:upgrade'
             || $argv[1] === 'vendor:publish'
+            || $argv[1] === 'test'
             )) {
                 $isInstaller = true;
             }
+        }
+
+        // Skip install check when running tests
+        if ($this->app->environment('testing')) {
+            $isInstaller = true;
         }
 
         if (! $isInstaller) {

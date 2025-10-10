@@ -139,29 +139,6 @@ class ViewAudit extends ViewRecord
                 ->color('primary')
                 ->button(),
             ActionGroup::make([
-                Action::make('ExportAuditEvidence')
-                    ->label('Export All Evidence')
-                    ->icon('heroicon-m-arrow-down-tray')
-                    ->requiresConfirmation()
-                    ->modalHeading('Export All Evidence')
-                    ->modalDescription('This will generate a PDF for each audit item and zip them for download. You will be notified when the export is ready.')
-                    ->action(function (Audit $audit, $livewire) {
-                        \App\Jobs\ExportAuditEvidenceJob::dispatch($audit->id);
-
-                        // Ensure queue worker is running
-                        $queueController = new QueueController;
-                        $wasAlreadyRunning = $queueController->ensureQueueWorkerRunning();
-
-                        $body = $wasAlreadyRunning
-                            ? 'The export job has been added to the queue. You will be able to download the ZIP in the Attachments section.'
-                            : 'The export job has been queued and a queue worker has been started. You will be able to download the ZIP in the Attachments section.';
-
-                        return Notification::make()
-                            ->title('Export Started')
-                            ->body($body)
-                            ->success()
-                            ->send();
-                    }),
                 Action::make('ReportsButton')
                     ->label('Download Audit Report')
                     ->size(ActionSize::Small)
