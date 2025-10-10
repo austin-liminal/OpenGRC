@@ -14,12 +14,17 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
+use \App\Notifications\DropdownNotification;
+
+
+
 
 class ExportAuditEvidenceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $auditId;
+    protected $userId;
 
     /**
      * Get the middleware the job should pass through.
@@ -32,9 +37,10 @@ class ExportAuditEvidenceJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($auditId)
+    public function __construct($auditId, $userId)
     {
         $this->auditId = $auditId;
+        $this->userId = $userId;
     }
 
     /**
@@ -207,7 +213,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     [
                         'file_path' => $zipS3Path,
                         'file_size' => filesize($zipLocalPath),
-                        'uploaded_by' => auth()->id() ?? null,
+                        'uploaded_by' => $this->userId,
                         'description' => 'Exported audit evidence ZIP',
                     ]
                 );
@@ -248,7 +254,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     [
                         'file_path' => $exportDir."audit_{$this->auditId}_data_requests.zip",
                         'file_size' => filesize($zipPath),
-                        'uploaded_by' => auth()->id() ?? null,
+                        'uploaded_by' => $this->userId,
                         'description' => 'Exported audit evidence ZIP',
                     ]
                 );
@@ -267,6 +273,42 @@ class ExportAuditEvidenceJob implements ShouldQueue
         // Clear cache flag when export completes
         \Cache::forget("audit_{$this->auditId}_exporting");
         \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId}");
+
+        // Notify the user who initiated the export
+        \Log::info("Attempting to notify user. User ID: " . ($this->userId ?? 'null'));
+        if ($this->userId) {
+            $user = \App\Models\User::find($this->userId);
+            \Log::info("User found: " . ($user ? $user->name : 'null'));
+            if ($user) {
+                try {
+                    // Generate URL to the audit's attachments tab
+                    $auditUrl = \App\Filament\Resources\AuditResource::getUrl('view', [
+                        'record' => $this->auditId,
+                        'activeRelationManager' => 1, // Index of attachments relation manager
+                    ]);
+
+                    \Log::info("Generated audit URL: {$auditUrl}");
+
+                    $user->notify(new \App\Notifications\DropdownNotification(
+                        title: 'Evidence Export Completed',
+                        body: 'Your evidence export is ready for download.',
+                        icon: 'heroicon-o-check-circle',
+                        color: 'success',
+                        actionUrl: $auditUrl,
+                        actionLabel: 'View Attachments'
+                    ));
+
+                    \Log::info("Notification sent successfully to user {$user->id}");
+                } catch (\Exception $e) {
+                    \Log::error("Failed to send notification: " . $e->getMessage());
+                    \Log::error($e->getTraceAsString());
+                }
+            } else {
+                \Log::warning("User with ID {$this->userId} not found");
+            }
+        } else {
+            \Log::warning("No user ID provided to export job");
+        }
     }
 
     /**

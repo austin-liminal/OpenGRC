@@ -4,13 +4,16 @@ namespace App\Providers\Filament;
 
 use App\Models\Settings;
 use App\Models\User;
+use Carbon\Carbon;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
+use EightCedars\FilamentInactivityGuard\FilamentInactivityGuardPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -21,8 +24,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
-use EightCedars\FilamentInactivityGuard\FilamentInactivityGuardPlugin;
-use Carbon\Carbon;
+use Livewire\Livewire;
 
 class AppPanelProvider extends PanelProvider
 {
@@ -31,6 +33,7 @@ class AppPanelProvider extends PanelProvider
         try {
             // Check if database is connected
             \DB::connection()->getPdo();
+
             return setting('security.session_timeout', 15);
         } catch (\Exception $e) {
             // Return default value if database is not available
