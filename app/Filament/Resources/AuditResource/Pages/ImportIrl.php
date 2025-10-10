@@ -111,10 +111,19 @@ class ImportIrl extends Page implements HasForms
                                         $this->isIrlFileValid = false;
                                         $this->dispatch('processing-started');
 
-                                        // Read file contents directly - Livewire now configured to use local disk
+                                        // Read file contents directly - Livewire stores in livewire-tmp directory
                                         try {
-                                            // Use get() method to read file contents via Storage facade
-                                            $this->irl_file_contents = \Storage::disk('local')->get($state->getFilename());
+                                            // $state is a TemporaryUploadedFile - get the file path in livewire-tmp
+                                            $livewirePath = 'livewire-tmp/' . $state->getFilename();
+
+                                            // Read from local disk
+                                            if (\Storage::disk('local')->exists($livewirePath)) {
+                                                $this->irl_file_contents = \Storage::disk('local')->get($livewirePath);
+                                            } else {
+                                                // Fallback: try reading directly from the path
+                                                $this->irl_file_contents = file_get_contents($state->getRealPath());
+                                            }
+
                                             $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
                                         } catch (\Exception $e) {
                                             $this->addError('irl_file', 'Failed to read uploaded file: ' . $e->getMessage());
