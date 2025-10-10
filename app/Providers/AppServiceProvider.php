@@ -80,7 +80,7 @@ class AppServiceProvider extends ServiceProvider
 
                 // Ensure local disk is always configured
                 config()->set('filesystems.disks.local', array_merge(config('filesystems.disks.local', []), [
-                    'driver' => 'private',
+                    'driver' => 'local',
                     'root' => storage_path('app'),
                     'throw' => false,
                 ]));

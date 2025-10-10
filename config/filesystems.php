@@ -49,6 +49,7 @@ return [
             'root' => storage_path('app/private'),
             'visibility' => 'private',
             'url' => env('APP_URL').'/app/priv-storage',
+            'throw' => false,
         ],
 
         's3' => [

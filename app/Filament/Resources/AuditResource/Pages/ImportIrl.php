@@ -59,6 +59,8 @@ class ImportIrl extends Page implements HasForms
 
     public ?string $irl_file_path;
 
+    public ?string $irl_file_contents;
+
     public bool $isIrlFileValid = false;
 
     public bool $isProcessing = false;
@@ -108,10 +110,23 @@ class ImportIrl extends Page implements HasForms
                                         $this->isProcessing = true;
                                         $this->isIrlFileValid = false;
                                         $this->dispatch('processing-started');
-                                        
-                                        $this->irl_file_path = $state->getPathname();
-                                        $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
-                                        
+
+                                        // Read file contents directly - Livewire stores in livewire-tmp directory
+                                        try {
+                                            // $state is a TemporaryUploadedFile - read contents directly
+                                            // Use the get() method on the TemporaryUploadedFile object
+                                            $this->irl_file_contents = $state->get();
+
+                                            if (empty($this->irl_file_contents)) {
+                                                throw new \Exception("File contents are empty");
+                                            }
+
+                                            $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
+                                        } catch (\Exception $e) {
+                                            $this->addError('irl_file', 'Failed to read uploaded file: ' . $e->getMessage());
+                                            $this->isIrlFileValid = false;
+                                        }
+
                                         $this->isProcessing = false;
                                         $this->dispatch('processing-completed');
                                     }
@@ -145,7 +160,8 @@ class ImportIrl extends Page implements HasForms
     public function validateIrlFile(): bool
     {
         try {
-            $reader = Reader::createFromPath($this->irl_file_path, 'r');
+            // Create CSV reader from string content instead of file path
+            $reader = Reader::createFromString($this->irl_file_contents);
             $reader->setHeaderOffset(0);
             $headers = $reader->getHeader();
             $normalizedHeaders = array_map(function ($header) {
