@@ -116,12 +116,23 @@ class ImportIrl extends Page implements HasForms
                                             // $state is a TemporaryUploadedFile - get the file path in livewire-tmp
                                             $livewirePath = 'livewire-tmp/' . $state->getFilename();
 
-                                            // Read from local disk
+                                            // Read from local disk using Storage facade
                                             if (\Storage::disk('local')->exists($livewirePath)) {
                                                 $this->irl_file_contents = \Storage::disk('local')->get($livewirePath);
                                             } else {
-                                                // Fallback: try reading directly from the path
-                                                $this->irl_file_contents = file_get_contents($state->getRealPath());
+                                                // Fallback: construct absolute path
+                                                $realPath = $state->getRealPath();
+
+                                                // If getRealPath returns a relative path, make it absolute
+                                                if (!str_starts_with($realPath, '/')) {
+                                                    $realPath = storage_path('app/' . $realPath);
+                                                }
+
+                                                if (!file_exists($realPath)) {
+                                                    throw new \Exception("File not found at: {$realPath}");
+                                                }
+
+                                                $this->irl_file_contents = file_get_contents($realPath);
                                             }
 
                                             $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
