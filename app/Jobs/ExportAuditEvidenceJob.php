@@ -284,7 +284,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     // Generate URL to the audit's attachments tab
                     $auditUrl = \App\Filament\Resources\AuditResource::getUrl('view', [
                         'record' => $this->auditId,
-                        'activeRelationManager' => 1, // Index of attachments relation manager
+                        'activeRelationManager' => 2, // Index of attachments relation manager (0: AuditItems, 1: DataRequests, 2: Attachments)
                     ]);
 
                     \Log::info("Generated audit URL: {$auditUrl}");

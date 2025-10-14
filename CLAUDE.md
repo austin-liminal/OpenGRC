@@ -132,3 +132,37 @@ OpenGRC uses two Filament panels:
 - File upload restrictions in place
 - Role-based permission system
 - Session timeout middleware
+
+## Claude Code Configuration
+
+### MCP Servers
+
+This project uses the **context7** MCP (Model Context Protocol) server to provide enhanced context and semantic search capabilities.
+
+**Usage:**
+- When working with this codebase, use `use context7` to leverage the MCP server for better code understanding
+- The context7 server provides semantic search across the codebase
+- Helps with navigating relationships between models, resources, and components
+
+**Setup:**
+To enable the context7 MCP server in your Claude Desktop configuration:
+
+1. Add to your `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upwego/mcp-context7"]
+    }
+  }
+}
+```
+
+2. Restart Claude Desktop to load the MCP server
+
+**When to use context7:**
+- Finding related files and components
+- Understanding model relationships and dependencies
+- Searching for usage patterns across the codebase
+- Navigating complex Filament resource structures

@@ -60,6 +60,11 @@ class AttachmentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                // Always show "Exported audit evidence ZIP" files first
+                return $query->orderByRaw("CASE WHEN description = 'Exported audit evidence ZIP' THEN 0 ELSE 1 END")
+                    ->orderBy('updated_at', 'desc');
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('file_name')
                     ->label('File Name')
@@ -75,10 +80,14 @@ class AttachmentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('uploaded_by')
                     ->label('Uploaded By')
                     ->getStateUsing(function ($record) {
+                        if ($record->description === 'Exported audit evidence ZIP') {
+                            return 'System';
+                        }
                         $user = User::find($record->uploaded_by);
                         return $user ? $user->name : 'System';
                     }),
             ])
+            ->recordClasses(fn ($record) => $record->description === 'Exported audit evidence ZIP' ? 'bg-blue-50' : null)
             ->filters([])
             ->headerActions([
                 Tables\Actions\ActionGroup::make([
