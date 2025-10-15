@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Resources\ProgramResource\Pages;
 use App\Filament\Resources\ProgramResource\RelationManagers;
@@ -11,7 +12,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-    
 
 class ProgramResource extends Resource
 {
@@ -54,9 +54,12 @@ class ProgramResource extends Resource
                     ->columnSpanFull()
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('description')
+                TinyEditor::make('description')
                     ->label(__('programs.form.description'))
-                    ->maxLength(65535)
+                    ->profile('default')
+                    ->fileAttachmentsDisk(setting('storage.driver', 'private'))
+                    ->fileAttachmentsVisibility('private')
+                    ->fileAttachmentsDirectory('ssp-uploads')
                     ->columnSpanFull(),
                 Forms\Components\Select::make('program_manager_id')
                     ->label(__('programs.form.program_manager'))
@@ -198,8 +201,7 @@ class ProgramResource extends Resource
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
-                
-              
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -213,7 +215,7 @@ class ProgramResource extends Resource
         return [
             RelationManagers\StandardsRelationManager::class,
             RelationManagers\ControlsRelationManager::class,
-            RelationManagers\RisksRelationManager::class,            
+            RelationManagers\RisksRelationManager::class,
             RelationManagers\AuditsRelationManager::class,
         ];
     }

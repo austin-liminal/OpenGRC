@@ -3,11 +3,15 @@
 namespace App\Filament\Resources\ProgramResource\Pages;
 
 use App\Filament\Resources\ProgramResource;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Enums\ActionSize;
 
 class ProgramPage extends ViewRecord
 {
@@ -23,7 +27,49 @@ class ProgramPage extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->label('Edit')
+                ->icon('heroicon-m-pencil')
+                ->size(ActionSize::Small)
+                ->color('primary')
+                ->button(),
+            ActionGroup::make([
+                Action::make('download_ssp')
+                    ->label('Download SSP')
+                    ->size(ActionSize::Small)
+                    ->color('primary')
+                    ->action(function () {
+                        $program = $this->record;
+                        $program->load(['programManager', 'standards']);
+
+                        // Get all controls for the program
+                        $controls = $program->getAllControls();
+
+                        // Get control IDs and eager load relationships
+                        $controlIds = $controls->pluck('id')->toArray();
+                        $controls = \App\Models\Control::whereIn('id', $controlIds)
+                            ->with(['implementations', 'standard'])
+                            ->get();
+
+                        $pdf = Pdf::loadView('reports.ssp', [
+                            'program' => $program,
+                            'controls' => $controls,
+                        ]);
+
+                        return response()->streamDownload(
+                            function () use ($pdf) {
+                                echo $pdf->output();
+                            },
+                            "SSP-{$program->name}-".date('Y-m-d').'.pdf',
+                            ['Content-Type' => 'application/pdf']
+                        );
+                    }),
+            ])
+                ->label('Reports')
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->size(ActionSize::Small)
+                ->color('primary')
+                ->button(),
         ];
     }
 
@@ -67,13 +113,18 @@ class ProgramPage extends ViewRecord
 
                                 return $scope?->name ?? 'Not assigned';
                             }),
-                        TextEntry::make('description')
-                            ->label(__('programs.form.description'))
-                            ->columnSpanFull()
-                            ->markdown()
-                            ->hidden(fn ($record) => empty($record->description)),
                     ])
                     ->columns(2),
+                Section::make(__('programs.form.description'))
+                    ->schema([
+                        TextEntry::make('description')
+                            ->label('')
+                            ->markdown()
+                            ->placeholder('No description provided'),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->hidden(fn ($record) => empty($record->description)),
             ]);
     }
 
@@ -84,7 +135,7 @@ class ProgramPage extends ViewRecord
         ];
     }
 
-    public function getHeaderWidgetsColumns(): int | array
+    public function getHeaderWidgetsColumns(): int|array
     {
         return 3;
     }

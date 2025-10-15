@@ -9,7 +9,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-//override default login route to point to Filament login
+// override default login route to point to Filament login
 Route::get('login', function () {
     return redirect()->route('filament.app.auth.login');
 })->name('login');
@@ -21,6 +21,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/app/priv-storage/{filepath}', function ($filepath) {
         return Storage::disk('private')->download($filepath);
     })->where('filepath', '.*')->name('priv-storage');
+
+    // Media proxy route for serving private S3/cloud storage files
+    Route::get('/media/{path}', [\App\Http\Controllers\MediaProxyController::class, 'show'])
+        ->where('path', '.*')
+        ->name('media.show');
 
 });
 
