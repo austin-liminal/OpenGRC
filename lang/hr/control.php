@@ -23,6 +23,14 @@ return [
         'enforcement' => [
             'tooltip' => 'Odaberite kategoriju provedbe za ovu kontrolu. To će pomoći u određivanju kako se ova kontrola provodi.',
         ],
+        'type' => [
+            'label' => 'Tip',
+            'tooltip' => 'Odaberite tip kontrole (npr: Preventivna, Detektivna, Korektivna). Ovo kategorizira kontrolu prema tome kada djeluje u odnosu na sigurnosni incident.',
+        ],
+        'category' => [
+            'label' => 'Kategorija',
+            'tooltip' => 'Odaberite kategoriju kontrole (npr: Tehnička, Administrativna, Fizička). Ovo kategorizira kontrolu prema njenom pristupu implementaciji.',
+        ],
         'title' => [
             'tooltip' => 'Unesite naslov za ovu kontrolu.',
         ],
