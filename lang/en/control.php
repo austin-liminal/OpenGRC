@@ -23,6 +23,14 @@ return [
         'enforcement' => [
             'tooltip' => 'Select an enforcement category for this control. This will help determine how this control is enforced.',
         ],
+        'type' => [
+            'label' => 'Type',
+            'tooltip' => 'Select the type of control (e.g., Preventive, Detective, Corrective). This categorizes the control based on when it acts in relation to a security incident.',
+        ],
+        'category' => [
+            'label' => 'Category',
+            'tooltip' => 'Select the category of control (e.g., Technical, Administrative, Physical). This categorizes the control based on its implementation approach.',
+        ],
         'title' => [
             'tooltip' => 'Enter a title for this control.',
         ],

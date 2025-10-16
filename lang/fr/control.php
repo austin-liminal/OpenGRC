@@ -23,6 +23,14 @@ return [
         'enforcement' => [
             'tooltip' => 'Sélectionnez une catégorie d\'application pour ce contrôle. Cela aidera à déterminer comment ce contrôle est appliqué.',
         ],
+        'type' => [
+            'label' => 'Type',
+            'tooltip' => 'Sélectionnez le type de contrôle (ex: Préventif, Détectif, Correctif). Cela catégorise le contrôle en fonction du moment où il agit par rapport à un incident de sécurité.',
+        ],
+        'category' => [
+            'label' => 'Catégorie',
+            'tooltip' => 'Sélectionnez la catégorie du contrôle (ex: Technique, Administratif, Physique). Cela catégorise le contrôle en fonction de son approche de mise en œuvre.',
+        ],
         'title' => [
             'tooltip' => 'Entrez un titre pour ce contrôle.',
         ],

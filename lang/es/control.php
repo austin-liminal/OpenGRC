@@ -23,6 +23,14 @@ return [
         'enforcement' => [
             'tooltip' => 'Seleccione una categoría de cumplimiento para este control. Esto ayudará a determinar cómo se aplica este control.',
         ],
+        'type' => [
+            'label' => 'Tipo',
+            'tooltip' => 'Seleccione el tipo de control (ej: Preventivo, Detectivo, Correctivo). Esto categoriza el control según cuándo actúa en relación con un incidente de seguridad.',
+        ],
+        'category' => [
+            'label' => 'Categoría',
+            'tooltip' => 'Seleccione la categoría del control (ej: Técnico, Administrativo, Físico). Esto categoriza el control según su enfoque de implementación.',
+        ],
         'title' => [
             'tooltip' => 'Ingrese un título para este control.',
         ],

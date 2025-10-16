@@ -89,12 +89,16 @@ class ControlResource extends Resource
                     ->options(ControlEnforcementCategory::class)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.enforcement.tooltip'))
                     ->required(),
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->columnSpanFull()
-                    ->maxLength(1024)
-                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.title.tooltip'))
-                    ->maxLength(1024),
+                Forms\Components\Select::make('type')
+                    ->label(__('control.form.type.label'))
+                    ->options(ControlType::class)
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.type.tooltip'))
+                    ->nullable(),
+                Forms\Components\Select::make('category')
+                    ->label(__('control.form.category.label'))
+                    ->options(ControlCategory::class)
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.category.tooltip'))
+                    ->nullable(),
                 Forms\Components\Select::make('control_owner_id')
                     ->label('Control Owner')
                     ->options(User::pluck('name', 'id')->toArray())
@@ -107,6 +111,12 @@ class ControlResource extends Resource
                 self::taxonomySelect('Scope')
                     ->nullable()
                     ->columnSpan(1),
+                Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->columnSpanFull()
+                    ->maxLength(1024)
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.title.tooltip'))
+                    ->maxLength(1024),
                 TinyEditor::make('description')
                     ->required()
                     ->maxLength(65535)
@@ -342,7 +352,6 @@ class ControlResource extends Resource
                 Section::make(__('control.infolist.section_title'))
                     ->columns(3)
                     ->schema([
-                        TextEntry::make('title')->columnSpanFull(),
                         TextEntry::make('code'),
                         TextEntry::make('effectiveness')
                             ->default(function (Control $record) {
@@ -377,6 +386,7 @@ class ControlResource extends Resource
 
                                 return $scope?->name ?? 'Not assigned';
                             }),
+                        TextEntry::make('title')->columnSpanFull(),
                         TextEntry::make('description')
                             ->columnSpanFull()
                             ->extraAttributes(['class' => 'control-description-text'])
