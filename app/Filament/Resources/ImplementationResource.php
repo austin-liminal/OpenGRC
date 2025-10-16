@@ -113,6 +113,16 @@ class ImplementationResource extends Resource
                     ->columnSpanFull()
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter a description for this implementation. This be an in-depth description of how this implementation is put in place.'),
 
+                Forms\Components\RichEditor::make('test_procedure')
+                    ->label('Test Procedure')
+                    ->maxLength(65535)
+                    ->disableToolbarButtons([
+                        'image',
+                        'attachFiles',
+                    ])
+                    ->columnSpanFull()
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter the procedure for testing this implementation during audits.'),
+
                 Forms\Components\RichEditor::make('notes')
                     ->maxLength(65535)
                     ->disableToolbarButtons([
@@ -327,6 +337,10 @@ class ImplementationResource extends Resource
                                 return $scope?->name ?? 'Not assigned';
                             }),
                         TextEntry::make('details')
+                            ->columnSpanFull()
+                            ->html(),
+                        TextEntry::make('test_procedure')
+                            ->label('Test Procedure')
                             ->columnSpanFull()
                             ->html(),
                         TextEntry::make('notes')
