@@ -77,7 +77,7 @@ class Implementation extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = ['details', 'status', 'notes', 'effectiveness'];
+    protected $fillable = ['details', 'status', 'notes', 'effectiveness', 'test_procedure'];
 
     /**
      * The controls that belong to the implementation.
@@ -158,7 +158,7 @@ class Implementation extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['title', 'details', 'status', 'effectiveness', 'notes'])
+            ->logOnly(['title', 'details', 'status', 'effectiveness', 'notes', 'test_procedure'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
