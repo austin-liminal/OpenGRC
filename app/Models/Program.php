@@ -70,7 +70,7 @@ class Program extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'program_manager_id', 'last_audit_date', 'scope_status'])
+            ->logOnly(['name', 'description', 'program_manager_id', 'last_audit_date', 'scope_status'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

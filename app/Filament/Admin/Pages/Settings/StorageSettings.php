@@ -2,19 +2,18 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use App\Filament\Admin\Pages\Settings\Schemas\StorageSchema;
 use Closure;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Grid;
-use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 use Throwable;
-
 
 class StorageSettings extends BaseSettings
 {
@@ -26,7 +25,7 @@ class StorageSettings extends BaseSettings
 
     public static function canAccess(): bool
     {
-        if (auth()->check() && auth()->user()->can('Manage Preferences') && setting('storage.locked') != "true") {
+        if (auth()->check() && auth()->user()->can('Manage Preferences') && setting('storage.locked') != 'true') {
             return true;
         }
 
@@ -79,6 +78,7 @@ class StorageSettings extends BaseSettings
                                 ->label('AWS Access Key ID')
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 's3')
                                 ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
@@ -96,6 +96,7 @@ class StorageSettings extends BaseSettings
                                 ->password()
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 's3')
                                 ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
@@ -113,12 +114,14 @@ class StorageSettings extends BaseSettings
                                 ->placeholder('us-east-1')
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 's3')
                                 ->disabled($isLocked),
 
                             TextInput::make('storage.s3.bucket')
                                 ->label('S3 Bucket Name')
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 's3')
                                 ->disabled($isLocked),
 
                             TextInput::make('storage.digitalocean.key')
@@ -126,6 +129,7 @@ class StorageSettings extends BaseSettings
                                 ->helperText('Your DigitalOcean Spaces access key ID')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
@@ -144,6 +148,7 @@ class StorageSettings extends BaseSettings
                                 ->helperText('Your DigitalOcean Spaces secret access key')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->disabled($isLocked)
                                 ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
                                 ->afterStateHydrated(function (TextInput $component, $state) {
@@ -162,6 +167,7 @@ class StorageSettings extends BaseSettings
                                 ->helperText('DigitalOcean region code (e.g., nyc3, sfo3, fra1) - used for endpoint URL')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->disabled($isLocked),
 
                             TextInput::make('storage.digitalocean.bucket')
@@ -169,6 +175,7 @@ class StorageSettings extends BaseSettings
                                 ->helperText('The name of your Space - endpoint will be auto-constructed as spacename.region.digitaloceanspaces.com')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
+                                ->dehydrated(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->disabled($isLocked),
 
                         ]),
@@ -190,29 +197,58 @@ class StorageSettings extends BaseSettings
                 ->color('primary')
                 ->action(function () {
                     try {
-                        // Save current form data first
-                        $this->save();
+                        // Get form data directly without saving
+                        $formState = $this->form->getState();
+                        $key = $formState['storage']['s3']['key'] ?? '';
+                        $secret = $formState['storage']['s3']['secret'] ?? '';
+                        $region = $formState['storage']['s3']['region'] ?? '';
+                        $bucket = $formState['storage']['s3']['bucket'] ?? '';
 
-                        // Then test S3 connection with saved settings
-                        static::testS3Connection();
+                        // Decrypt credentials if they're encrypted (they will be from getState after dehydration)
+                        try {
+                            if (filled($key) && str_starts_with($key, 'eyJpdiI6')) {
+                                $key = Crypt::decryptString($key);
+                            }
+                            if (filled($secret) && str_starts_with($secret, 'eyJpdiI6')) {
+                                $secret = Crypt::decryptString($secret);
+                            }
+                        } catch (\Exception $e) {
+                            // If decryption fails, use the values as-is (they might not be encrypted yet)
+                            \Log::warning('Failed to decrypt S3 credentials for testing: '.$e->getMessage());
+                        }
+
+                        // Validate that all required fields are filled
+                        if (empty($key) || empty($secret) || empty($region) || empty($bucket)) {
+                            Notification::make()
+                                ->title('S3 connection test failed')
+                                ->body('All S3 fields must be filled to test the connection.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Test connection with current form values
+                        static::testS3ConnectionWithCredentials($key, $secret, $region, $bucket);
                     } catch (\Exception $e) {
-                        // Handle any errors during the entire process
-                        \Log::error('S3 connection test failed during setup: '.$e->getMessage());
+                        // Handle any errors during the test
+                        \Log::error('S3 connection test failed: '.$e->getMessage());
 
                         Notification::make()
                             ->title('S3 connection test failed')
-                            ->body('Failed to save settings or test connection: '.$e->getMessage())
+                            ->body('Connection test failed: '.$e->getMessage())
                             ->danger()
                             ->send();
                     }
                 })
                 ->visible(function () {
-                    $driver = $this->form->getState()['storage']['driver'] ?? null;
+                    $driver = setting('storage.driver');
+
                     return $driver === 's3' &&
-                           !empty($this->form->getState()['storage']['s3']['key'] ?? null) &&
-                           !empty($this->form->getState()['storage']['s3']['secret'] ?? null) &&
-                           !empty($this->form->getState()['storage']['s3']['region'] ?? null) &&
-                           !empty($this->form->getState()['storage']['s3']['bucket'] ?? null);
+                           ! empty(setting('storage.s3.key')) &&
+                           ! empty(setting('storage.s3.secret')) &&
+                           ! empty(setting('storage.s3.region')) &&
+                           ! empty(setting('storage.s3.bucket'));
                 }),
             Action::make('testDigitalOceanConnection')
                 ->label('Test DigitalOcean Connection')
@@ -225,6 +261,19 @@ class StorageSettings extends BaseSettings
                         $secret = $formState['storage']['digitalocean']['secret'] ?? '';
                         $region = $formState['storage']['digitalocean']['region'] ?? '';
                         $bucket = $formState['storage']['digitalocean']['bucket'] ?? '';
+
+                        // Decrypt credentials if they're encrypted (they will be from getState after dehydration)
+                        try {
+                            if (filled($key) && str_starts_with($key, 'eyJpdiI6')) {
+                                $key = Crypt::decryptString($key);
+                            }
+                            if (filled($secret) && str_starts_with($secret, 'eyJpdiI6')) {
+                                $secret = Crypt::decryptString($secret);
+                            }
+                        } catch (\Exception $e) {
+                            // If decryption fails, use the values as-is (they might not be encrypted yet)
+                            \Log::warning('Failed to decrypt credentials for testing: '.$e->getMessage());
+                        }
 
                         // Validate that all required fields are filled
                         if (empty($key) || empty($secret) || empty($region) || empty($bucket)) {
@@ -251,12 +300,13 @@ class StorageSettings extends BaseSettings
                     }
                 })
                 ->visible(function () {
-                    $driver = $this->form->getState()['storage']['driver'] ?? null;
+                    $driver = setting('storage.driver');
+
                     return $driver === 'digitalocean' &&
-                           !empty($this->form->getState()['storage']['digitalocean']['key'] ?? null) &&
-                           !empty($this->form->getState()['storage']['digitalocean']['secret'] ?? null) &&
-                           !empty($this->form->getState()['storage']['digitalocean']['region'] ?? null) &&
-                           !empty($this->form->getState()['storage']['digitalocean']['bucket'] ?? null);
+                           ! empty(setting('storage.digitalocean.key')) &&
+                           ! empty(setting('storage.digitalocean.secret')) &&
+                           ! empty(setting('storage.digitalocean.region')) &&
+                           ! empty(setting('storage.digitalocean.bucket'));
                 }),
         ];
     }
@@ -269,15 +319,20 @@ class StorageSettings extends BaseSettings
             // Update environment variables based on the selected storage driver
             if ($driver === 'digitalocean') {
                 \Log::info('About to update DigitalOcean environment variables after save');
-                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::updateDigitalOceanEnvVars();
+                static::updateDigitalOceanEnvVars();
                 \Log::info('Successfully updated DigitalOcean environment variables after save');
+            } elseif ($driver === 's3') {
+                \Log::info('About to update S3 environment variables after save');
+                static::updateS3EnvVars();
+                \Log::info('Successfully updated S3 environment variables after save');
             } else {
-                // For any other driver (private, s3), clear DigitalOcean env vars and set FILESYSTEM_DISK
-                \Log::info('Clearing DigitalOcean environment variables for driver: '.$driver);
-                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::clearDigitalOceanEnvVars();
+                // For private storage, clear all cloud storage env vars
+                \Log::info('Clearing cloud storage environment variables for driver: '.$driver);
+                static::clearDigitalOceanEnvVars();
+                static::clearS3EnvVars();
 
                 // Update the FILESYSTEM_DISK environment variable to match the selected driver
-                \App\Filament\Admin\Pages\Settings\Schemas\StorageSchema::updateFilesystemDisk($driver);
+                static::updateFilesystemDisk($driver);
                 \Log::info('Successfully updated environment variables for driver: '.$driver);
             }
         } catch (\Throwable $e) {
@@ -691,6 +746,70 @@ class StorageSettings extends BaseSettings
             ->send();
     }
 
+    public static function updateS3EnvVars(): void
+    {
+        try {
+            $s3Config = static::getS3Configuration();
+
+            // Log what we received for debugging
+            \Log::info('updateS3EnvVars called with config:', [
+                'key_present' => ! empty($s3Config['key']),
+                'secret_present' => ! empty($s3Config['secret']),
+                'region' => $s3Config['region'] ?? 'null',
+                'bucket' => $s3Config['bucket'] ?? 'null',
+            ]);
+
+            if (empty($s3Config['key']) || empty($s3Config['secret']) ||
+                empty($s3Config['region']) || empty($s3Config['bucket'])) {
+                \Log::info('S3 configuration incomplete, skipping env update');
+
+                return;
+            }
+
+            $envVars = [
+                'AWS_ACCESS_KEY_ID' => $s3Config['key'],
+                'AWS_SECRET_ACCESS_KEY' => $s3Config['secret'],
+                'AWS_DEFAULT_REGION' => $s3Config['region'],
+                'AWS_BUCKET' => $s3Config['bucket'],
+            ];
+
+            \Log::info('About to write S3 env vars:', array_keys($envVars));
+            static::writeEnvVars($envVars);
+
+            // Set the default filesystem to s3
+            static::writeEnvVars(['FILESYSTEM_DISK' => 's3']);
+
+            \Log::info('Updated S3 environment variables', [
+                'bucket' => $s3Config['bucket'],
+                'region' => $s3Config['region'],
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Failed to update S3 environment variables: '.$e->getMessage());
+            \Log::error('Exception trace: '.$e->getTraceAsString());
+            throw $e; // Re-throw to allow upper error handling
+        }
+    }
+
+    public static function clearS3EnvVars(): void
+    {
+        try {
+            $envVars = [
+                'AWS_ACCESS_KEY_ID' => '',
+                'AWS_SECRET_ACCESS_KEY' => '',
+                'AWS_DEFAULT_REGION' => '',
+                'AWS_BUCKET' => '',
+            ];
+
+            static::writeEnvVars($envVars);
+
+            \Log::info('Cleared S3 environment variables');
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to clear S3 environment variables: '.$e->getMessage());
+        }
+    }
+
     public static function updateDigitalOceanEnvVars(): void
     {
         try {
@@ -827,6 +946,122 @@ class StorageSettings extends BaseSettings
             \Log::info('Config cache cleared after env update');
         } catch (\Exception $e) {
             \Log::warning('Failed to clear config cache: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Test S3 connection with provided credentials without saving to settings
+     */
+    protected static function testS3ConnectionWithCredentials(string $key, string $secret, string $region, string $bucket): void
+    {
+        try {
+            // Validate inputs
+            if (empty($key) || empty($secret) || empty($region) || empty($bucket)) {
+                throw new \Exception('All S3 credentials are required for testing.');
+            }
+
+            // Validate key format
+            if (! str_starts_with($key, 'AKIA')) {
+                throw new \Exception('AWS Access Key ID should start with "AKIA". Please verify your credentials.');
+            }
+
+            \Log::info('Testing S3 connection with provided credentials:', [
+                'bucket' => $bucket,
+                'region' => $region,
+                'key_prefix' => substr($key, 0, 8).'...',
+            ]);
+
+            // Create test configuration
+            $testConfig = [
+                'driver' => 's3',
+                'key' => $key,
+                'secret' => $secret,
+                'region' => $region,
+                'bucket' => $bucket,
+                'url' => env('AWS_URL'),
+                'endpoint' => env('AWS_ENDPOINT'),
+                'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+                'throw' => false,
+            ];
+
+            // Temporarily configure the s3 disk for testing
+            config(['filesystems.disks.s3' => $testConfig]);
+
+            // Generate a unique test file name
+            $testFileName = 'opengrc-connection-test-'.uniqid().'.txt';
+            $testContent = 'OpenGRC S3 connection test - '.now();
+
+            \Log::info('Starting S3 test', [
+                'file' => $testFileName,
+                'bucket' => $bucket,
+                'region' => $region,
+            ]);
+
+            // Get the disk instance
+            $disk = \Storage::disk('s3');
+
+            // Test 1: Write a test file
+            $writeResult = $disk->put($testFileName, $testContent);
+            if (! $writeResult) {
+                throw new \Exception('Failed to write test file to S3. Please check your credentials and permissions.');
+            }
+
+            \Log::info('S3 write successful: '.$testFileName);
+
+            // Test 2: Wait for consistency and then read it back
+            sleep(2); // Give S3 a moment for consistency
+            \Log::info('Waiting for S3 consistency...');
+
+            if (! $disk->exists($testFileName)) {
+                // Cleanup and throw error
+                try {
+                    $disk->delete($testFileName);
+                } catch (\Exception $e) {
+                    // Ignore cleanup errors
+                }
+                throw new \Exception('Test file was written but cannot be found. This might indicate a permissions issue.');
+            }
+
+            $readContent = $disk->get($testFileName);
+            if ($readContent !== $testContent) {
+                // Cleanup and throw error
+                try {
+                    $disk->delete($testFileName);
+                } catch (\Exception $e) {
+                    // Ignore cleanup errors
+                }
+
+                \Log::error('S3 test failed', [
+                    'error' => 'Content mismatch: expected "'.$testContent.'", got "'.$readContent.'"',
+                    'bucket' => $bucket,
+                    'file' => $testFileName,
+                ]);
+
+                throw new \Exception('Content mismatch: expected "'.$testContent.'", got "'.$readContent.'"');
+            }
+
+            \Log::info('S3 read test successful');
+
+            // Test 3: Clean up the test file
+            $deleteResult = $disk->delete($testFileName);
+            if (! $deleteResult) {
+                \Log::warning('Could not delete test file: '.$testFileName);
+                // This is not critical, so we won't fail the test
+            } else {
+                \Log::info('S3 cleanup successful');
+            }
+
+            // Success notification
+            Notification::make()
+                ->title('S3 Connection Successful!')
+                ->body("Successfully connected to '{$bucket}' in region '{$region}'. All operations (read, write, delete) completed successfully.")
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            \Log::error('S3 connection test error: '.$e->getMessage());
+
+            throw new \Exception('S3 connection test failed: '.$e->getMessage());
         }
     }
 

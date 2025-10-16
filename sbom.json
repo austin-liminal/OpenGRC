@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:c6b7dc17-a8f7-4bc2-896d-e2e375a35fcb",
+    "serialNumber": "urn:uuid:6a340734-b66e-460b-998e-5d14e9000a07",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-10-09T18:46:14Z",
+        "timestamp": "2025-10-15T19:44:19Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "cd5e345958c9444fc896cf566803bbdb422cb358"
+                    "value": "abaf78039a9f34cbc1055943fd8ef8c495dc7b43"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "cd5e345958c9444fc896cf566803bbdb422cb358"
+                    "value": "abaf78039a9f34cbc1055943fd8ef8c495dc7b43"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -114,10 +114,10 @@
     },
     "components": [
         {
-            "bom-ref": "aliziodev/laravel-taxonomy-2.6.0.0",
+            "bom-ref": "aliziodev/laravel-taxonomy-2.6.1.0",
             "type": "library",
             "name": "laravel-taxonomy",
-            "version": "v2.6.0",
+            "version": "v2.6.1",
             "group": "aliziodev",
             "description": "Laravel Taxonomy is a flexible and powerful package for managing taxonomies, categories, tags, and hierarchical structures in Laravel applications. Features nested-set support for optimal query performance on hierarchical data structures.",
             "author": "Alizio",
@@ -128,17 +128,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/aliziodev/laravel-taxonomy@v2.6.0",
+            "purl": "pkg:composer/aliziodev/laravel-taxonomy@v2.6.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/aliziodev/laravel-taxonomy/zipball/fa75256509433e580bddb38d15d1cdda10b6eb51",
-                    "comment": "dist reference: fa75256509433e580bddb38d15d1cdda10b6eb51"
+                    "url": "https://api.github.com/repos/aliziodev/laravel-taxonomy/zipball/f4c10477f59876420597692b66be21aa7245e626",
+                    "comment": "dist reference: f4c10477f59876420597692b66be21aa7245e626"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/aliziodev/laravel-taxonomy.git",
-                    "comment": "source reference: fa75256509433e580bddb38d15d1cdda10b6eb51"
+                    "comment": "source reference: f4c10477f59876420597692b66be21aa7245e626"
                 },
                 {
                     "type": "issue-tracker",
@@ -147,18 +147,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/aliziodev/laravel-taxonomy/tree/v2.6.0",
+                    "url": "https://github.com/aliziodev/laravel-taxonomy/tree/v2.6.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "fa75256509433e580bddb38d15d1cdda10b6eb51"
+                    "value": "f4c10477f59876420597692b66be21aa7245e626"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "fa75256509433e580bddb38d15d1cdda10b6eb51"
+                    "value": "f4c10477f59876420597692b66be21aa7245e626"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -335,10 +335,10 @@
             ]
         },
         {
-            "bom-ref": "aws/aws-sdk-php-3.356.36.0",
+            "bom-ref": "aws/aws-sdk-php-3.356.40.0",
             "type": "library",
             "name": "aws-sdk-php",
-            "version": "3.356.36",
+            "version": "3.356.40",
             "group": "aws",
             "description": "AWS SDK for PHP - Use Amazon Web Services in your PHP project",
             "author": "Amazon Web Services",
@@ -349,17 +349,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/aws/aws-sdk-php@3.356.36",
+            "purl": "pkg:composer/aws/aws-sdk-php@3.356.40",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/20facd00fe1a8f733c3275918bf533d2330af53d",
-                    "comment": "dist reference: 20facd00fe1a8f733c3275918bf533d2330af53d"
+                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/3c1d71932ed962810316930b327b3b71a7517cff",
+                    "comment": "dist reference: 3c1d71932ed962810316930b327b3b71a7517cff"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/aws/aws-sdk-php.git",
-                    "comment": "source reference: 20facd00fe1a8f733c3275918bf533d2330af53d"
+                    "comment": "source reference: 3c1d71932ed962810316930b327b3b71a7517cff"
                 },
                 {
                     "type": "website",
@@ -378,18 +378,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.36",
+                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.40",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "20facd00fe1a8f733c3275918bf533d2330af53d"
+                    "value": "3c1d71932ed962810316930b327b3b71a7517cff"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "20facd00fe1a8f733c3275918bf533d2330af53d"
+                    "value": "3c1d71932ed962810316930b327b3b71a7517cff"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1552,10 +1552,10 @@
             ]
         },
         {
-            "bom-ref": "dompdf/dompdf-3.1.2.0",
+            "bom-ref": "dompdf/dompdf-3.1.3.0",
             "type": "library",
             "name": "dompdf",
-            "version": "v3.1.2",
+            "version": "v3.1.3",
             "group": "dompdf",
             "description": "DOMPDF is a CSS 2.1 compliant HTML to PDF converter",
             "author": "The Dompdf Community",
@@ -1566,17 +1566,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/dompdf/dompdf@v3.1.2",
+            "purl": "pkg:composer/dompdf/dompdf@v3.1.3",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/dompdf/dompdf/zipball/b3493e35d31a5e76ec24c3b64a29b0034b2f32a6",
-                    "comment": "dist reference: b3493e35d31a5e76ec24c3b64a29b0034b2f32a6"
+                    "url": "https://api.github.com/repos/dompdf/dompdf/zipball/baed300e4fb8226359c04395518059a136e2a2e2",
+                    "comment": "dist reference: baed300e4fb8226359c04395518059a136e2a2e2"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/dompdf/dompdf.git",
-                    "comment": "source reference: b3493e35d31a5e76ec24c3b64a29b0034b2f32a6"
+                    "comment": "source reference: baed300e4fb8226359c04395518059a136e2a2e2"
                 },
                 {
                     "type": "website",
@@ -1590,18 +1590,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/dompdf/dompdf/tree/v3.1.2",
+                    "url": "https://github.com/dompdf/dompdf/tree/v3.1.3",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "b3493e35d31a5e76ec24c3b64a29b0034b2f32a6"
+                    "value": "baed300e4fb8226359c04395518059a136e2a2e2"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "b3493e35d31a5e76ec24c3b64a29b0034b2f32a6"
+                    "value": "baed300e4fb8226359c04395518059a136e2a2e2"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3708,10 +3708,10 @@
             ]
         },
         {
-            "bom-ref": "laravel/serializable-closure-2.0.5.0",
+            "bom-ref": "laravel/serializable-closure-2.0.6.0",
             "type": "library",
             "name": "serializable-closure",
-            "version": "v2.0.5",
+            "version": "v2.0.6",
             "group": "laravel",
             "description": "Laravel Serializable Closure provides an easy and secure way to serialize closures in PHP.",
             "author": "Taylor Otwell, Nuno Maduro",
@@ -3722,17 +3722,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/laravel/serializable-closure@v2.0.5",
+            "purl": "pkg:composer/laravel/serializable-closure@v2.0.6",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/3832547db6e0e2f8bb03d4093857b378c66eceed",
-                    "comment": "dist reference: 3832547db6e0e2f8bb03d4093857b378c66eceed"
+                    "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/038ce42edee619599a1debb7e81d7b3759492819",
+                    "comment": "dist reference: 038ce42edee619599a1debb7e81d7b3759492819"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/laravel/serializable-closure.git",
-                    "comment": "source reference: 3832547db6e0e2f8bb03d4093857b378c66eceed"
+                    "comment": "source reference: 038ce42edee619599a1debb7e81d7b3759492819"
                 },
                 {
                     "type": "issue-tracker",
@@ -3748,11 +3748,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "3832547db6e0e2f8bb03d4093857b378c66eceed"
+                    "value": "038ce42edee619599a1debb7e81d7b3759492819"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "3832547db6e0e2f8bb03d4093857b378c66eceed"
+                    "value": "038ce42edee619599a1debb7e81d7b3759492819"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -9657,10 +9657,10 @@
             ]
         },
         {
-            "bom-ref": "spatie/laravel-ray-1.40.2.0",
+            "bom-ref": "spatie/laravel-ray-1.40.3.0",
             "type": "library",
             "name": "laravel-ray",
-            "version": "1.40.2",
+            "version": "1.40.3",
             "group": "spatie",
             "description": "Easily debug Laravel apps",
             "author": "Freek Van der Herten",
@@ -9671,17 +9671,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/spatie/laravel-ray@1.40.2",
+            "purl": "pkg:composer/spatie/laravel-ray@1.40.3",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/spatie/laravel-ray/zipball/1d1b31eb83cb38b41975c37363c7461de6d86b25",
-                    "comment": "dist reference: 1d1b31eb83cb38b41975c37363c7461de6d86b25"
+                    "url": "https://api.github.com/repos/spatie/laravel-ray/zipball/cd487424e6727984a87f3044abdaee3490856822",
+                    "comment": "dist reference: cd487424e6727984a87f3044abdaee3490856822"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/spatie/laravel-ray.git",
-                    "comment": "source reference: 1d1b31eb83cb38b41975c37363c7461de6d86b25"
+                    "comment": "source reference: cd487424e6727984a87f3044abdaee3490856822"
                 },
                 {
                     "type": "website",
@@ -9695,18 +9695,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/spatie/laravel-ray/tree/1.40.2",
+                    "url": "https://github.com/spatie/laravel-ray/tree/1.40.3",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "1d1b31eb83cb38b41975c37363c7461de6d86b25"
+                    "value": "cd487424e6727984a87f3044abdaee3490856822"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "1d1b31eb83cb38b41975c37363c7461de6d86b25"
+                    "value": "cd487424e6727984a87f3044abdaee3490856822"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12065,7 +12065,7 @@
     ],
     "dependencies": [
         {
-            "ref": "aliziodev/laravel-taxonomy-2.6.0.0",
+            "ref": "aliziodev/laravel-taxonomy-2.6.1.0",
             "dependsOn": [
                 "laravel/framework-11.46.1.0"
             ]
@@ -12087,7 +12087,7 @@
             "ref": "aws/aws-crt-php-1.2.7.0"
         },
         {
-            "ref": "aws/aws-sdk-php-3.356.36.0",
+            "ref": "aws/aws-sdk-php-3.356.40.0",
             "dependsOn": [
                 "aws/aws-crt-php-1.2.7.0",
                 "guzzlehttp/guzzle-7.10.0.0",
@@ -12113,7 +12113,7 @@
         {
             "ref": "barryvdh/laravel-dompdf-3.1.1.0",
             "dependsOn": [
-                "dompdf/dompdf-3.1.2.0"
+                "dompdf/dompdf-3.1.3.0"
             ]
         },
         {
@@ -12199,7 +12199,7 @@
             "ref": "doctrine/lexer-3.0.1.0"
         },
         {
-            "ref": "dompdf/dompdf-3.1.2.0",
+            "ref": "dompdf/dompdf-3.1.3.0",
             "dependsOn": [
                 "dompdf/php-font-lib-1.0.1.0",
                 "dompdf/php-svg-lib-1.0.0.0",
@@ -12446,7 +12446,7 @@
                 "guzzlehttp/guzzle-7.10.0.0",
                 "guzzlehttp/uri-template-1.0.5.0",
                 "laravel/prompts-0.3.7.0",
-                "laravel/serializable-closure-2.0.5.0",
+                "laravel/serializable-closure-2.0.6.0",
                 "league/commonmark-2.7.1.0",
                 "league/flysystem-3.30.0.0",
                 "league/flysystem-local-3.30.0.0",
@@ -12498,7 +12498,7 @@
             ]
         },
         {
-            "ref": "laravel/serializable-closure-2.0.5.0"
+            "ref": "laravel/serializable-closure-2.0.6.0"
         },
         {
             "ref": "laravel/socialite-5.23.0.0",
@@ -12545,7 +12545,7 @@
         {
             "ref": "league/flysystem-aws-s3-v3-3.29.0.0",
             "dependsOn": [
-                "aws/aws-sdk-php-3.356.36.0",
+                "aws/aws-sdk-php-3.356.40.0",
                 "league/flysystem-3.30.0.0",
                 "league/mime-type-detection-1.16.0.0"
             ]
@@ -12738,7 +12738,7 @@
         {
             "ref": "php-di/php-di-7.1.1.0",
             "dependsOn": [
-                "laravel/serializable-closure-2.0.5.0",
+                "laravel/serializable-closure-2.0.6.0",
                 "php-di/invoker-2.3.7.0",
                 "psr/container-2.0.2.0"
             ]
@@ -13040,7 +13040,7 @@
             "ref": "spatie/laravel-permission-6.21.0.0"
         },
         {
-            "ref": "spatie/laravel-ray-1.40.2.0",
+            "ref": "spatie/laravel-ray-1.40.3.0",
             "dependsOn": [
                 "spatie/backtrace-1.8.1.0",
                 "spatie/ray-1.42.0.0",
@@ -13296,7 +13296,7 @@
         {
             "ref": "laravel/laravel-dev-main",
             "dependsOn": [
-                "aliziodev/laravel-taxonomy-2.6.0.0",
+                "aliziodev/laravel-taxonomy-2.6.1.0",
                 "amidesfahani/filament-tinyeditor-2.1.1.0",
                 "barryvdh/laravel-dompdf-3.1.1.0",
                 "bezhansalleh/filament-language-switch-3.1.1.0",
@@ -13337,7 +13337,7 @@
                 "nunomaduro/collision-8.5.0.0",
                 "phpunit/phpunit-10.5.58.0",
                 "spatie/laravel-ignition-2.9.1.0",
-                "spatie/laravel-ray-1.40.2.0"
+                "spatie/laravel-ray-1.40.3.0"
             ]
         }
     ]
