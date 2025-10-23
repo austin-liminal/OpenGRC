@@ -24,11 +24,13 @@ class ToDoListWidget extends BaseWidget
             ->emptyStateIcon('heroicon-o-check-circle')
             ->columns([
                 Tables\Columns\TextColumn::make('dataRequest.audit.title')
-                    ->label(trans('widgets.todo.audit')),
+                    ->label(trans('widgets.todo.audit'))
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('dataRequest.details')
                     ->label(trans('widgets.todo.request_details'))
                     ->url(fn (DataRequestResponse $record) => route('filament.app.resources.data-request-responses.edit', $record))
-                    ->limit(100),
+                    ->limit(120)
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('status')
                     ->label(trans('widgets.todo.status'))
                     ->badge()
