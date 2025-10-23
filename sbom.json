@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:6a340734-b66e-460b-998e-5d14e9000a07",
+    "serialNumber": "urn:uuid:6a532b37-5ed9-4cde-9c1f-7722ad082294",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-10-15T19:44:19Z",
+        "timestamp": "2025-10-23T22:57:49Z",
         "tools": [
             {
                 "name": "composer",
@@ -46,17 +46,17 @@
             {
                 "vendor": "cyclonedx",
                 "name": "cyclonedx-library",
-                "version": "v3.7.0",
+                "version": "v3.8.0",
                 "externalReferences": [
                     {
                         "type": "distribution",
-                        "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/39d519f93a223899fe93c9a4484b55ede934430a",
-                        "comment": "dist reference: 39d519f93a223899fe93c9a4484b55ede934430a"
+                        "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f",
+                        "comment": "dist reference: 0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f"
                     },
                     {
                         "type": "vcs",
                         "url": "https://github.com/CycloneDX/cyclonedx-php-library.git",
-                        "comment": "source reference: 39d519f93a223899fe93c9a4484b55ede934430a"
+                        "comment": "source reference: 0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f"
                     },
                     {
                         "type": "website",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "abaf78039a9f34cbc1055943fd8ef8c495dc7b43"
+                    "value": "cb4a00bc7f99dbdd2c3fa6eb930d57fe15397f45"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "abaf78039a9f34cbc1055943fd8ef8c495dc7b43"
+                    "value": "cb4a00bc7f99dbdd2c3fa6eb930d57fe15397f45"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -335,10 +335,10 @@
             ]
         },
         {
-            "bom-ref": "aws/aws-sdk-php-3.356.40.0",
+            "bom-ref": "aws/aws-sdk-php-3.357.1.0",
             "type": "library",
             "name": "aws-sdk-php",
-            "version": "3.356.40",
+            "version": "3.357.1",
             "group": "aws",
             "description": "AWS SDK for PHP - Use Amazon Web Services in your PHP project",
             "author": "Amazon Web Services",
@@ -349,17 +349,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/aws/aws-sdk-php@3.356.40",
+            "purl": "pkg:composer/aws/aws-sdk-php@3.357.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/3c1d71932ed962810316930b327b3b71a7517cff",
-                    "comment": "dist reference: 3c1d71932ed962810316930b327b3b71a7517cff"
+                    "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/c52162a65338044c15ec38c29055edb06376ccf0",
+                    "comment": "dist reference: c52162a65338044c15ec38c29055edb06376ccf0"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/aws/aws-sdk-php.git",
-                    "comment": "source reference: 3c1d71932ed962810316930b327b3b71a7517cff"
+                    "comment": "source reference: c52162a65338044c15ec38c29055edb06376ccf0"
                 },
                 {
                     "type": "website",
@@ -378,18 +378,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/aws/aws-sdk-php/tree/3.356.40",
+                    "url": "https://github.com/aws/aws-sdk-php/tree/3.357.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "3c1d71932ed962810316930b327b3b71a7517cff"
+                    "value": "c52162a65338044c15ec38c29055edb06376ccf0"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "3c1d71932ed962810316930b327b3b71a7517cff"
+                    "value": "c52162a65338044c15ec38c29055edb06376ccf0"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -907,10 +907,10 @@
             ]
         },
         {
-            "bom-ref": "cyclonedx/cyclonedx-library-3.7.0.0",
+            "bom-ref": "cyclonedx/cyclonedx-library-3.8.0.0",
             "type": "library",
             "name": "cyclonedx-library",
-            "version": "v3.7.0",
+            "version": "v3.8.0",
             "group": "cyclonedx",
             "description": "Work with CycloneDX documents.",
             "author": "Jan Kowalleck",
@@ -921,17 +921,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/cyclonedx/cyclonedx-library@v3.7.0",
+            "purl": "pkg:composer/cyclonedx/cyclonedx-library@v3.8.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/39d519f93a223899fe93c9a4484b55ede934430a",
-                    "comment": "dist reference: 39d519f93a223899fe93c9a4484b55ede934430a"
+                    "url": "https://api.github.com/repos/CycloneDX/cyclonedx-php-library/zipball/0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f",
+                    "comment": "dist reference: 0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/CycloneDX/cyclonedx-php-library.git",
-                    "comment": "source reference: 39d519f93a223899fe93c9a4484b55ede934430a"
+                    "comment": "source reference: 0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f"
                 },
                 {
                     "type": "website",
@@ -957,11 +957,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "39d519f93a223899fe93c9a4484b55ede934430a"
+                    "value": "0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "39d519f93a223899fe93c9a4484b55ede934430a"
+                    "value": "0c6fdbc1241d9435426eef0ce45ed7fb6a9a1c9f"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1205,10 +1205,10 @@
             ]
         },
         {
-            "bom-ref": "dedoc/scramble-0.12.35.0",
+            "bom-ref": "dedoc/scramble-0.12.36.0",
             "type": "library",
             "name": "scramble",
-            "version": "v0.12.35",
+            "version": "v0.12.36",
             "group": "dedoc",
             "description": "Automatic generation of API documentation for Laravel applications.",
             "author": "Roman Lytvynenko",
@@ -1219,17 +1219,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/dedoc/scramble@v0.12.35",
+            "purl": "pkg:composer/dedoc/scramble@v0.12.36",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/dedoc/scramble/zipball/b6d06a1cec5f8a8ad08ebce9c2df37a1ef4a2629",
-                    "comment": "dist reference: b6d06a1cec5f8a8ad08ebce9c2df37a1ef4a2629"
+                    "url": "https://api.github.com/repos/dedoc/scramble/zipball/e2741add99b5f9360a7a58a58ce97781569e4cc6",
+                    "comment": "dist reference: e2741add99b5f9360a7a58a58ce97781569e4cc6"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/dedoc/scramble.git",
-                    "comment": "source reference: b6d06a1cec5f8a8ad08ebce9c2df37a1ef4a2629"
+                    "comment": "source reference: e2741add99b5f9360a7a58a58ce97781569e4cc6"
                 },
                 {
                     "type": "website",
@@ -1243,18 +1243,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/dedoc/scramble/tree/v0.12.35",
+                    "url": "https://github.com/dedoc/scramble/tree/v0.12.36",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "b6d06a1cec5f8a8ad08ebce9c2df37a1ef4a2629"
+                    "value": "e2741add99b5f9360a7a58a58ce97781569e4cc6"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "b6d06a1cec5f8a8ad08ebce9c2df37a1ef4a2629"
+                    "value": "e2741add99b5f9360a7a58a58ce97781569e4cc6"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -4013,10 +4013,10 @@
             ]
         },
         {
-            "bom-ref": "league/csv-9.26.0.0",
+            "bom-ref": "league/csv-9.27.0.0",
             "type": "library",
             "name": "csv",
-            "version": "9.26.0",
+            "version": "9.27.0",
             "group": "league",
             "description": "CSV data manipulation made easy in PHP",
             "author": "Ignace Nyamagana Butera",
@@ -4027,17 +4027,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/league/csv@9.26.0",
+            "purl": "pkg:composer/league/csv@9.27.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/thephpleague/csv/zipball/7fce732754d043f3938899e5183e2d0f3d31b571",
-                    "comment": "dist reference: 7fce732754d043f3938899e5183e2d0f3d31b571"
+                    "url": "https://api.github.com/repos/thephpleague/csv/zipball/cb491b1ba3c42ff2bcd0113814f4256b42bae845",
+                    "comment": "dist reference: cb491b1ba3c42ff2bcd0113814f4256b42bae845"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/thephpleague/csv.git",
-                    "comment": "source reference: 7fce732754d043f3938899e5183e2d0f3d31b571"
+                    "comment": "source reference: cb491b1ba3c42ff2bcd0113814f4256b42bae845"
                 },
                 {
                     "type": "website",
@@ -4068,11 +4068,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "7fce732754d043f3938899e5183e2d0f3d31b571"
+                    "value": "cb491b1ba3c42ff2bcd0113814f4256b42bae845"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "7fce732754d043f3938899e5183e2d0f3d31b571"
+                    "value": "cb491b1ba3c42ff2bcd0113814f4256b42bae845"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -4081,10 +4081,10 @@
             ]
         },
         {
-            "bom-ref": "league/flysystem-3.30.0.0",
+            "bom-ref": "league/flysystem-3.30.1.0",
             "type": "library",
             "name": "flysystem",
-            "version": "3.30.0",
+            "version": "3.30.1",
             "group": "league",
             "description": "File storage abstraction for PHP",
             "author": "Frank de Jonge",
@@ -4095,17 +4095,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/league/flysystem@3.30.0",
+            "purl": "pkg:composer/league/flysystem@3.30.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/2203e3151755d874bb2943649dae1eb8533ac93e",
-                    "comment": "dist reference: 2203e3151755d874bb2943649dae1eb8533ac93e"
+                    "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/c139fd65c1f796b926f4aec0df37f6caa959a8da",
+                    "comment": "dist reference: c139fd65c1f796b926f4aec0df37f6caa959a8da"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/thephpleague/flysystem.git",
-                    "comment": "source reference: 2203e3151755d874bb2943649dae1eb8533ac93e"
+                    "comment": "source reference: c139fd65c1f796b926f4aec0df37f6caa959a8da"
                 },
                 {
                     "type": "issue-tracker",
@@ -4114,18 +4114,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/thephpleague/flysystem/tree/3.30.0",
+                    "url": "https://github.com/thephpleague/flysystem/tree/3.30.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "2203e3151755d874bb2943649dae1eb8533ac93e"
+                    "value": "c139fd65c1f796b926f4aec0df37f6caa959a8da"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "2203e3151755d874bb2943649dae1eb8533ac93e"
+                    "value": "c139fd65c1f796b926f4aec0df37f6caa959a8da"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -4134,10 +4134,10 @@
             ]
         },
         {
-            "bom-ref": "league/flysystem-aws-s3-v3-3.29.0.0",
+            "bom-ref": "league/flysystem-aws-s3-v3-3.30.1.0",
             "type": "library",
             "name": "flysystem-aws-s3-v3",
-            "version": "3.29.0",
+            "version": "3.30.1",
             "group": "league",
             "description": "AWS S3 filesystem adapter for Flysystem.",
             "author": "Frank de Jonge",
@@ -4148,32 +4148,32 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/league/flysystem-aws-s3-v3@3.29.0",
+            "purl": "pkg:composer/league/flysystem-aws-s3-v3@3.30.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/thephpleague/flysystem-aws-s3-v3/zipball/c6ff6d4606e48249b63f269eba7fabdb584e76a9",
-                    "comment": "dist reference: c6ff6d4606e48249b63f269eba7fabdb584e76a9"
+                    "url": "https://api.github.com/repos/thephpleague/flysystem-aws-s3-v3/zipball/d286e896083bed3190574b8b088b557b59eb66f5",
+                    "comment": "dist reference: d286e896083bed3190574b8b088b557b59eb66f5"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/thephpleague/flysystem-aws-s3-v3.git",
-                    "comment": "source reference: c6ff6d4606e48249b63f269eba7fabdb584e76a9"
+                    "comment": "source reference: d286e896083bed3190574b8b088b557b59eb66f5"
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/thephpleague/flysystem-aws-s3-v3/tree/3.29.0",
+                    "url": "https://github.com/thephpleague/flysystem-aws-s3-v3/tree/3.30.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "c6ff6d4606e48249b63f269eba7fabdb584e76a9"
+                    "value": "d286e896083bed3190574b8b088b557b59eb66f5"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "c6ff6d4606e48249b63f269eba7fabdb584e76a9"
+                    "value": "d286e896083bed3190574b8b088b557b59eb66f5"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -5196,10 +5196,10 @@
             ]
         },
         {
-            "bom-ref": "nikic/php-parser-5.6.1.0",
+            "bom-ref": "nikic/php-parser-5.6.2.0",
             "type": "library",
             "name": "php-parser",
-            "version": "v5.6.1",
+            "version": "v5.6.2",
             "group": "nikic",
             "description": "A PHP parser written in PHP",
             "author": "Nikita Popov",
@@ -5210,17 +5210,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/nikic/php-parser@v5.6.1",
+            "purl": "pkg:composer/nikic/php-parser@v5.6.2",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2",
-                    "comment": "dist reference: f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2"
+                    "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/3a454ca033b9e06b63282ce19562e892747449bb",
+                    "comment": "dist reference: 3a454ca033b9e06b63282ce19562e892747449bb"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/nikic/PHP-Parser.git",
-                    "comment": "source reference: f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2"
+                    "comment": "source reference: 3a454ca033b9e06b63282ce19562e892747449bb"
                 },
                 {
                     "type": "issue-tracker",
@@ -5229,18 +5229,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/nikic/PHP-Parser/tree/v5.6.1",
+                    "url": "https://github.com/nikic/PHP-Parser/tree/v5.6.2",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2"
+                    "value": "3a454ca033b9e06b63282ce19562e892747449bb"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2"
+                    "value": "3a454ca033b9e06b63282ce19562e892747449bb"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -5306,10 +5306,10 @@
             ]
         },
         {
-            "bom-ref": "nunomaduro/termwind-2.3.1.0",
+            "bom-ref": "nunomaduro/termwind-2.3.2.0",
             "type": "library",
             "name": "termwind",
-            "version": "v2.3.1",
+            "version": "v2.3.2",
             "group": "nunomaduro",
             "description": "Its like Tailwind CSS, but for the console.",
             "author": "Nuno Maduro",
@@ -5320,17 +5320,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/nunomaduro/termwind@v2.3.1",
+            "purl": "pkg:composer/nunomaduro/termwind@v2.3.2",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/nunomaduro/termwind/zipball/dfa08f390e509967a15c22493dc0bac5733d9123",
-                    "comment": "dist reference: dfa08f390e509967a15c22493dc0bac5733d9123"
+                    "url": "https://api.github.com/repos/nunomaduro/termwind/zipball/eb61920a53057a7debd718a5b89c2178032b52c0",
+                    "comment": "dist reference: eb61920a53057a7debd718a5b89c2178032b52c0"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/nunomaduro/termwind.git",
-                    "comment": "source reference: dfa08f390e509967a15c22493dc0bac5733d9123"
+                    "comment": "source reference: eb61920a53057a7debd718a5b89c2178032b52c0"
                 },
                 {
                     "type": "issue-tracker",
@@ -5339,18 +5339,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/nunomaduro/termwind/tree/v2.3.1",
+                    "url": "https://github.com/nunomaduro/termwind/tree/v2.3.2",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "dfa08f390e509967a15c22493dc0bac5733d9123"
+                    "value": "eb61920a53057a7debd718a5b89c2178032b52c0"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "dfa08f390e509967a15c22493dc0bac5733d9123"
+                    "value": "eb61920a53057a7debd718a5b89c2178032b52c0"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -5417,10 +5417,10 @@
             ]
         },
         {
-            "bom-ref": "opis/json-schema-2.5.0.0",
+            "bom-ref": "opis/json-schema-2.6.0.0",
             "type": "library",
             "name": "json-schema",
-            "version": "2.5.0",
+            "version": "2.6.0",
             "group": "opis",
             "description": "Json Schema Validator for PHP",
             "author": "Sorin Sarca, Marius Sarca",
@@ -5431,17 +5431,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/opis/json-schema@2.5.0",
+            "purl": "pkg:composer/opis/json-schema@2.6.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/opis/json-schema/zipball/1c59bfd514856a98c01ad0c121f6b915576f9198",
-                    "comment": "dist reference: 1c59bfd514856a98c01ad0c121f6b915576f9198"
+                    "url": "https://api.github.com/repos/opis/json-schema/zipball/8458763e0dd0b6baa310e04f1829fc73da4e8c8a",
+                    "comment": "dist reference: 8458763e0dd0b6baa310e04f1829fc73da4e8c8a"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/opis/json-schema.git",
-                    "comment": "source reference: 1c59bfd514856a98c01ad0c121f6b915576f9198"
+                    "comment": "source reference: 8458763e0dd0b6baa310e04f1829fc73da4e8c8a"
                 },
                 {
                     "type": "website",
@@ -5455,18 +5455,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/opis/json-schema/tree/2.5.0",
+                    "url": "https://github.com/opis/json-schema/tree/2.6.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "1c59bfd514856a98c01ad0c121f6b915576f9198"
+                    "value": "8458763e0dd0b6baa310e04f1829fc73da4e8c8a"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "1c59bfd514856a98c01ad0c121f6b915576f9198"
+                    "value": "8458763e0dd0b6baa310e04f1829fc73da4e8c8a"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -5479,10 +5479,10 @@
             ]
         },
         {
-            "bom-ref": "opis/string-2.0.2.0",
+            "bom-ref": "opis/string-2.1.0.0",
             "type": "library",
             "name": "string",
-            "version": "2.0.2",
+            "version": "2.1.0",
             "group": "opis",
             "description": "Multibyte strings as objects",
             "author": "Marius Sarca, Sorin Sarca",
@@ -5493,17 +5493,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/opis/string@2.0.2",
+            "purl": "pkg:composer/opis/string@2.1.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/opis/string/zipball/ba0b9607b9809462b0e28a11e4881a8d77431feb",
-                    "comment": "dist reference: ba0b9607b9809462b0e28a11e4881a8d77431feb"
+                    "url": "https://api.github.com/repos/opis/string/zipball/3e4d2aaff518ac518530b89bb26ed40f4503635e",
+                    "comment": "dist reference: 3e4d2aaff518ac518530b89bb26ed40f4503635e"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/opis/string.git",
-                    "comment": "source reference: ba0b9607b9809462b0e28a11e4881a8d77431feb"
+                    "comment": "source reference: 3e4d2aaff518ac518530b89bb26ed40f4503635e"
                 },
                 {
                     "type": "website",
@@ -5517,18 +5517,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/opis/string/tree/2.0.2",
+                    "url": "https://github.com/opis/string/tree/2.1.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "ba0b9607b9809462b0e28a11e4881a8d77431feb"
+                    "value": "3e4d2aaff518ac518530b89bb26ed40f4503635e"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "ba0b9607b9809462b0e28a11e4881a8d77431feb"
+                    "value": "3e4d2aaff518ac518530b89bb26ed40f4503635e"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -7398,10 +7398,10 @@
             ]
         },
         {
-            "bom-ref": "psy/psysh-0.12.12.0",
+            "bom-ref": "psy/psysh-0.12.13.0",
             "type": "library",
             "name": "psysh",
-            "version": "v0.12.12",
+            "version": "v0.12.13",
             "group": "psy",
             "description": "An interactive shell for modern PHP.",
             "author": "Justin Hileman",
@@ -7412,17 +7412,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/psy/psysh@v0.12.12",
+            "purl": "pkg:composer/psy/psysh@v0.12.13",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/bobthecow/psysh/zipball/cd23863404a40ccfaf733e3af4db2b459837f7e7",
-                    "comment": "dist reference: cd23863404a40ccfaf733e3af4db2b459837f7e7"
+                    "url": "https://api.github.com/repos/bobthecow/psysh/zipball/d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e",
+                    "comment": "dist reference: d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/bobthecow/psysh.git",
-                    "comment": "source reference: cd23863404a40ccfaf733e3af4db2b459837f7e7"
+                    "comment": "source reference: d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e"
                 },
                 {
                     "type": "website",
@@ -7436,18 +7436,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/bobthecow/psysh/tree/v0.12.12",
+                    "url": "https://github.com/bobthecow/psysh/tree/v0.12.13",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "cd23863404a40ccfaf733e3af4db2b459837f7e7"
+                    "value": "d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "cd23863404a40ccfaf733e3af4db2b459837f7e7"
+                    "value": "d86c2f750e72017a5cdb1b9f1cef468a5cbacd1e"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -9657,10 +9657,10 @@
             ]
         },
         {
-            "bom-ref": "spatie/laravel-ray-1.40.3.0",
+            "bom-ref": "spatie/laravel-ray-1.41.0.0",
             "type": "library",
             "name": "laravel-ray",
-            "version": "1.40.3",
+            "version": "1.41.0",
             "group": "spatie",
             "description": "Easily debug Laravel apps",
             "author": "Freek Van der Herten",
@@ -9671,17 +9671,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/spatie/laravel-ray@1.40.3",
+            "purl": "pkg:composer/spatie/laravel-ray@1.41.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/spatie/laravel-ray/zipball/cd487424e6727984a87f3044abdaee3490856822",
-                    "comment": "dist reference: cd487424e6727984a87f3044abdaee3490856822"
+                    "url": "https://api.github.com/repos/spatie/laravel-ray/zipball/7b9cfdb024a390171397c14dbf321727d940bac5",
+                    "comment": "dist reference: 7b9cfdb024a390171397c14dbf321727d940bac5"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/spatie/laravel-ray.git",
-                    "comment": "source reference: cd487424e6727984a87f3044abdaee3490856822"
+                    "comment": "source reference: 7b9cfdb024a390171397c14dbf321727d940bac5"
                 },
                 {
                     "type": "website",
@@ -9695,18 +9695,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/spatie/laravel-ray/tree/1.40.3",
+                    "url": "https://github.com/spatie/laravel-ray/tree/1.41.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "cd487424e6727984a87f3044abdaee3490856822"
+                    "value": "7b9cfdb024a390171397c14dbf321727d940bac5"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "cd487424e6727984a87f3044abdaee3490856822"
+                    "value": "7b9cfdb024a390171397c14dbf321727d940bac5"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -9781,10 +9781,10 @@
             ]
         },
         {
-            "bom-ref": "spatie/ray-1.42.0.0",
+            "bom-ref": "spatie/ray-1.43.0.0",
             "type": "library",
             "name": "ray",
-            "version": "1.42.0",
+            "version": "1.43.0",
             "group": "spatie",
             "description": "Debug with Ray to fix problems faster",
             "author": "Freek Van der Herten",
@@ -9795,17 +9795,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/spatie/ray@1.42.0",
+            "purl": "pkg:composer/spatie/ray@1.43.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/spatie/ray/zipball/152250ce7c490bf830349fa30ba5200084e95860",
-                    "comment": "dist reference: 152250ce7c490bf830349fa30ba5200084e95860"
+                    "url": "https://api.github.com/repos/spatie/ray/zipball/ee9c0477e0b7e5ff49e62cd1f4f75be27da91dbe",
+                    "comment": "dist reference: ee9c0477e0b7e5ff49e62cd1f4f75be27da91dbe"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/spatie/ray.git",
-                    "comment": "source reference: 152250ce7c490bf830349fa30ba5200084e95860"
+                    "comment": "source reference: ee9c0477e0b7e5ff49e62cd1f4f75be27da91dbe"
                 },
                 {
                     "type": "website",
@@ -9819,18 +9819,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/spatie/ray/tree/1.42.0",
+                    "url": "https://github.com/spatie/ray/tree/1.43.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "152250ce7c490bf830349fa30ba5200084e95860"
+                    "value": "ee9c0477e0b7e5ff49e62cd1f4f75be27da91dbe"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "152250ce7c490bf830349fa30ba5200084e95860"
+                    "value": "ee9c0477e0b7e5ff49e62cd1f4f75be27da91dbe"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11829,10 +11829,10 @@
             ]
         },
         {
-            "bom-ref": "webmozart/assert-1.11.0.0",
+            "bom-ref": "webmozart/assert-1.12.0.0",
             "type": "library",
             "name": "assert",
-            "version": "1.11.0",
+            "version": "1.12.0",
             "group": "webmozart",
             "description": "Assertions to validate method input/output with nice error messages.",
             "author": "Bernhard Schussek",
@@ -11843,17 +11843,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/webmozart/assert@1.11.0",
+            "purl": "pkg:composer/webmozart/assert@1.12.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/webmozarts/assert/zipball/11cb2199493b2f8a3b53e7f19068fc6aac760991",
-                    "comment": "dist reference: 11cb2199493b2f8a3b53e7f19068fc6aac760991"
+                    "url": "https://api.github.com/repos/webmozarts/assert/zipball/541057574806f942c94662b817a50f63f7345360",
+                    "comment": "dist reference: 541057574806f942c94662b817a50f63f7345360"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/webmozarts/assert.git",
-                    "comment": "source reference: 11cb2199493b2f8a3b53e7f19068fc6aac760991"
+                    "comment": "source reference: 541057574806f942c94662b817a50f63f7345360"
                 },
                 {
                     "type": "issue-tracker",
@@ -11862,18 +11862,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/webmozarts/assert/tree/1.11.0",
+                    "url": "https://github.com/webmozarts/assert/tree/1.12.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "11cb2199493b2f8a3b53e7f19068fc6aac760991"
+                    "value": "541057574806f942c94662b817a50f63f7345360"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "11cb2199493b2f8a3b53e7f19068fc6aac760991"
+                    "value": "541057574806f942c94662b817a50f63f7345360"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12087,7 +12087,7 @@
             "ref": "aws/aws-crt-php-1.2.7.0"
         },
         {
-            "ref": "aws/aws-sdk-php-3.356.40.0",
+            "ref": "aws/aws-sdk-php-3.357.1.0",
             "dependsOn": [
                 "aws/aws-crt-php-1.2.7.0",
                 "guzzlehttp/guzzle-7.10.0.0",
@@ -12146,17 +12146,17 @@
             "ref": "composer/spdx-licenses-1.5.9.0"
         },
         {
-            "ref": "cyclonedx/cyclonedx-library-3.7.0.0",
+            "ref": "cyclonedx/cyclonedx-library-3.8.0.0",
             "dependsOn": [
                 "composer/spdx-licenses-1.5.9.0",
-                "opis/json-schema-2.5.0.0",
+                "opis/json-schema-2.6.0.0",
                 "package-url/packageurl-php-1.1.2.0"
             ]
         },
         {
             "ref": "cyclonedx/cyclonedx-php-composer-5.2.3.0",
             "dependsOn": [
-                "cyclonedx/cyclonedx-library-3.7.0.0",
+                "cyclonedx/cyclonedx-library-3.8.0.0",
                 "package-url/packageurl-php-1.1.2.0"
             ]
         },
@@ -12170,10 +12170,10 @@
             "ref": "dasprid/enum-1.0.7.0"
         },
         {
-            "ref": "dedoc/scramble-0.12.35.0",
+            "ref": "dedoc/scramble-0.12.36.0",
             "dependsOn": [
                 "myclabs/deep-copy-1.13.4.0",
-                "nikic/php-parser-5.6.1.0",
+                "nikic/php-parser-5.6.2.0",
                 "phpstan/phpdoc-parser-2.3.0.0",
                 "spatie/laravel-package-tools-1.92.7.0"
             ]
@@ -12218,7 +12218,7 @@
         {
             "ref": "dragonmantank/cron-expression-3.4.0.0",
             "dependsOn": [
-                "webmozart/assert-1.11.0.0"
+                "webmozart/assert-1.12.0.0"
             ]
         },
         {
@@ -12259,7 +12259,7 @@
                 "filament/infolists-3.3.43.0",
                 "filament/notifications-3.3.43.0",
                 "filament/support-3.3.43.0",
-                "league/csv-9.26.0.0",
+                "league/csv-9.27.0.0",
                 "openspout/openspout-4.32.0.0",
                 "spatie/laravel-package-tools-1.92.7.0"
             ]
@@ -12448,12 +12448,12 @@
                 "laravel/prompts-0.3.7.0",
                 "laravel/serializable-closure-2.0.6.0",
                 "league/commonmark-2.7.1.0",
-                "league/flysystem-3.30.0.0",
+                "league/flysystem-3.30.1.0",
                 "league/flysystem-local-3.30.0.0",
                 "league/uri-7.5.1.0",
                 "monolog/monolog-3.9.0.0",
                 "nesbot/carbon-3.10.3.0",
-                "nunomaduro/termwind-2.3.1.0",
+                "nunomaduro/termwind-2.3.2.0",
                 "psr/container-2.0.2.0",
                 "psr/log-3.0.2.0",
                 "psr/simple-cache-3.0.0.0",
@@ -12512,7 +12512,7 @@
         {
             "ref": "laravel/tinker-2.10.1.0",
             "dependsOn": [
-                "psy/psysh-0.12.12.0",
+                "psy/psysh-0.12.13.0",
                 "symfony/var-dumper-7.3.4.0"
             ]
         },
@@ -12533,27 +12533,27 @@
             ]
         },
         {
-            "ref": "league/csv-9.26.0.0"
+            "ref": "league/csv-9.27.0.0"
         },
         {
-            "ref": "league/flysystem-3.30.0.0",
+            "ref": "league/flysystem-3.30.1.0",
             "dependsOn": [
                 "league/flysystem-local-3.30.0.0",
                 "league/mime-type-detection-1.16.0.0"
             ]
         },
         {
-            "ref": "league/flysystem-aws-s3-v3-3.29.0.0",
+            "ref": "league/flysystem-aws-s3-v3-3.30.1.0",
             "dependsOn": [
-                "aws/aws-sdk-php-3.356.40.0",
-                "league/flysystem-3.30.0.0",
+                "aws/aws-sdk-php-3.357.1.0",
+                "league/flysystem-3.30.1.0",
                 "league/mime-type-detection-1.16.0.0"
             ]
         },
         {
             "ref": "league/flysystem-local-3.30.0.0",
             "dependsOn": [
-                "league/flysystem-3.30.0.0",
+                "league/flysystem-3.30.1.0",
                 "league/mime-type-detection-1.16.0.0"
             ]
         },
@@ -12653,18 +12653,18 @@
             "ref": "nette/utils-4.0.8.0"
         },
         {
-            "ref": "nikic/php-parser-5.6.1.0"
+            "ref": "nikic/php-parser-5.6.2.0"
         },
         {
             "ref": "nunomaduro/collision-8.5.0.0",
             "dependsOn": [
                 "filp/whoops-2.18.4.0",
-                "nunomaduro/termwind-2.3.1.0",
+                "nunomaduro/termwind-2.3.2.0",
                 "symfony/console-7.3.4.0"
             ]
         },
         {
-            "ref": "nunomaduro/termwind-2.3.1.0",
+            "ref": "nunomaduro/termwind-2.3.2.0",
             "dependsOn": [
                 "symfony/console-7.3.4.0"
             ]
@@ -12673,19 +12673,19 @@
             "ref": "openspout/openspout-4.32.0.0"
         },
         {
-            "ref": "opis/json-schema-2.5.0.0",
+            "ref": "opis/json-schema-2.6.0.0",
             "dependsOn": [
-                "opis/string-2.0.2.0",
+                "opis/string-2.1.0.0",
                 "opis/uri-1.1.0.0"
             ]
         },
         {
-            "ref": "opis/string-2.0.2.0"
+            "ref": "opis/string-2.1.0.0"
         },
         {
             "ref": "opis/uri-1.1.0.0",
             "dependsOn": [
-                "opis/string-2.0.2.0"
+                "opis/string-2.1.0.0"
             ]
         },
         {
@@ -12769,7 +12769,7 @@
         {
             "ref": "phpunit/php-code-coverage-10.1.16.0",
             "dependsOn": [
-                "nikic/php-parser-5.6.1.0",
+                "nikic/php-parser-5.6.2.0",
                 "phpunit/php-file-iterator-4.1.0.0",
                 "phpunit/php-text-template-3.0.1.0",
                 "sebastian/code-unit-reverse-lookup-3.0.0.0",
@@ -12856,9 +12856,9 @@
             "ref": "psr/simple-cache-3.0.0.0"
         },
         {
-            "ref": "psy/psysh-0.12.12.0",
+            "ref": "psy/psysh-0.12.13.0",
             "dependsOn": [
-                "nikic/php-parser-5.6.1.0",
+                "nikic/php-parser-5.6.2.0",
                 "symfony/console-7.3.4.0",
                 "symfony/var-dumper-7.3.4.0"
             ]
@@ -12911,7 +12911,7 @@
         {
             "ref": "sebastian/complexity-3.2.0.0",
             "dependsOn": [
-                "nikic/php-parser-5.6.1.0"
+                "nikic/php-parser-5.6.2.0"
             ]
         },
         {
@@ -12936,7 +12936,7 @@
         {
             "ref": "sebastian/lines-of-code-2.0.2.0",
             "dependsOn": [
-                "nikic/php-parser-5.6.1.0"
+                "nikic/php-parser-5.6.2.0"
             ]
         },
         {
@@ -13040,10 +13040,10 @@
             "ref": "spatie/laravel-permission-6.21.0.0"
         },
         {
-            "ref": "spatie/laravel-ray-1.40.3.0",
+            "ref": "spatie/laravel-ray-1.41.0.0",
             "dependsOn": [
                 "spatie/backtrace-1.8.1.0",
-                "spatie/ray-1.42.0.0",
+                "spatie/ray-1.43.0.0",
                 "symfony/stopwatch-7.3.0.0",
                 "zbateson/mail-mime-parser-3.0.4.0"
             ]
@@ -13052,7 +13052,7 @@
             "ref": "spatie/macroable-2.0.0.0"
         },
         {
-            "ref": "spatie/ray-1.42.0.0",
+            "ref": "spatie/ray-1.43.0.0",
             "dependsOn": [
                 "ramsey/uuid-4.9.1.0",
                 "spatie/backtrace-1.8.1.0",
@@ -13267,7 +13267,7 @@
             "ref": "voku/portable-ascii-2.0.3.0"
         },
         {
-            "ref": "webmozart/assert-1.11.0.0"
+            "ref": "webmozart/assert-1.12.0.0"
         },
         {
             "ref": "zbateson/mail-mime-parser-3.0.4.0",
@@ -13300,7 +13300,7 @@
                 "amidesfahani/filament-tinyeditor-2.1.1.0",
                 "barryvdh/laravel-dompdf-3.1.1.0",
                 "bezhansalleh/filament-language-switch-3.1.1.0",
-                "dedoc/scramble-0.12.35.0",
+                "dedoc/scramble-0.12.36.0",
                 "dutchcodingcompany/filament-socialite-1.5.0.0",
                 "eightcedars/filament-inactivity-guard-0.4.0.0",
                 "filament/actions-3.3.43.0",
@@ -13315,7 +13315,7 @@
                 "laravel/prompts-0.3.7.0",
                 "laravel/sanctum-4.2.0.0",
                 "laravel/tinker-2.10.1.0",
-                "league/flysystem-aws-s3-v3-3.29.0.0",
+                "league/flysystem-aws-s3-v3-3.30.1.0",
                 "leandrocfe/filament-apex-charts-3.2.1.0",
                 "lucasgiovanny/filament-multiselect-two-sides-2.1.2.0",
                 "outerweb/filament-settings-1.3.0.0",
@@ -13337,7 +13337,7 @@
                 "nunomaduro/collision-8.5.0.0",
                 "phpunit/phpunit-10.5.58.0",
                 "spatie/laravel-ignition-2.9.1.0",
-                "spatie/laravel-ray-1.40.3.0"
+                "spatie/laravel-ray-1.41.0.0"
             ]
         }
     ]
