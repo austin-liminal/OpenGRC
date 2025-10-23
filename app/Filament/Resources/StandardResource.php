@@ -93,10 +93,10 @@ class StandardResource extends Resource
                     ->options(StandardStatus::class)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('standard.form.status.tooltip'))
                     ->native(false),
-                self::taxonomySelect('Department')
+                self::taxonomySelect('Department', 'department')
                     ->nullable()
                     ->columnSpan(1),
-                self::taxonomySelect('Scope')
+                self::taxonomySelect('Scope', 'scope')
                     ->nullable()
                     ->columnSpan(1),
                 TextInput::make('reference_url')
@@ -253,24 +253,12 @@ class StandardResource extends Resource
                         TextEntry::make('taxonomies')
                             ->label('Department')
                             ->formatStateUsing(function (Standard $record) {
-                                $department = $record->taxonomies()
-                                    ->whereHas('parent', function ($query) {
-                                        $query->where('name', 'Department');
-                                    })
-                                    ->first();
-
-                                return $department?->name ?? 'Not assigned';
+                                return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                             }),
                         TextEntry::make('taxonomies')
                             ->label('Scope')
                             ->formatStateUsing(function (Standard $record) {
-                                $scope = $record->taxonomies()
-                                    ->whereHas('parent', function ($query) {
-                                        $query->where('name', 'Scope');
-                                    })
-                                    ->first();
-
-                                return $scope?->name ?? 'Not assigned';
+                                return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                             }),
                         TextEntry::make('description')
                             ->columnSpanFull()

@@ -105,10 +105,10 @@ class ControlResource extends Resource
                     ->searchable()
                     ->nullable()
                     ->columnSpan(1),
-                self::taxonomySelect('Department')
+                self::taxonomySelect('Department', 'department')
                     ->nullable()
                     ->columnSpan(1),
-                self::taxonomySelect('Scope')
+                self::taxonomySelect('Scope', 'scope')
                     ->nullable()
                     ->columnSpan(1),
                 Forms\Components\TextInput::make('title')
@@ -199,32 +199,48 @@ class ControlResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('department')
+                Tables\Columns\TextColumn::make('taxonomy_department')
                     ->label('Department')
-                    ->formatStateUsing(function (Control $record) {
-                        $department = $record->taxonomies()
-                            ->whereHas('parent', function ($query) {
-                                $query->where('name', 'Department');
-                            })
-                            ->first();
-
-                        return $department?->name ?? 'Not assigned';
+                    ->getStateUsing(function (Control $record) {
+                        return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                     })
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('scope')
+                    ->sortable(query: function ($query, string $direction): void {
+                        $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
+                        if (!$departmentParent) return;
+
+                        $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
+                            $join->on('controls.id', '=', 'dept_taxonomables.taxonomable_id')
+                                ->where('dept_taxonomables.taxonomable_type', '=', 'App\\Models\\Control');
+                        })
+                        ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
+                            $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
+                                ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
+                        })
+                        ->orderBy('dept_taxonomies.name', $direction)
+                        ->select('controls.*');
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('taxonomy_scope')
                     ->label('Scope')
-                    ->formatStateUsing(function (Control $record) {
-                        $scope = $record->taxonomies()
-                            ->whereHas('parent', function ($query) {
-                                $query->where('name', 'Scope');
-                            })
-                            ->first();
-
-                        return $scope?->name ?? 'Not assigned';
+                    ->getStateUsing(function (Control $record) {
+                        return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                     })
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(query: function ($query, string $direction): void {
+                        $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
+                        if (!$scopeParent) return;
+
+                        $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
+                            $join->on('controls.id', '=', 'scope_taxonomables.taxonomable_id')
+                                ->where('scope_taxonomables.taxonomable_type', '=', 'App\\Models\\Control');
+                        })
+                        ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
+                            $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
+                                ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
+                        })
+                        ->orderBy('scope_taxonomies.name', $direction)
+                        ->select('controls.*');
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('control.table.columns.created_at'))
                     ->dateTime()
@@ -262,9 +278,7 @@ class ControlResource extends Resource
                 Tables\Filters\SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Department')
-                            ->whereNull('parent_id')
-                            ->first();
+                        $taxonomy = self::getParentTaxonomy('department');
 
                         if (! $taxonomy) {
                             return [];
@@ -287,9 +301,7 @@ class ControlResource extends Resource
                 Tables\Filters\SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Scope')
-                            ->whereNull('parent_id')
-                            ->first();
+                        $taxonomy = self::getParentTaxonomy('scope');
 
                         if (! $taxonomy) {
                             return [];
@@ -367,24 +379,12 @@ class ControlResource extends Resource
                         TextEntry::make('taxonomies')
                             ->label('Department')
                             ->formatStateUsing(function (Control $record) {
-                                $department = $record->taxonomies()
-                                    ->whereHas('parent', function ($query) {
-                                        $query->where('name', 'Department');
-                                    })
-                                    ->first();
-
-                                return $department?->name ?? 'Not assigned';
+                                return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                             }),
                         TextEntry::make('taxonomies')
                             ->label('Scope')
                             ->formatStateUsing(function (Control $record) {
-                                $scope = $record->taxonomies()
-                                    ->whereHas('parent', function ($query) {
-                                        $query->where('name', 'Scope');
-                                    })
-                                    ->first();
-
-                                return $scope?->name ?? 'Not assigned';
+                                return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                             }),
                         TextEntry::make('title')->columnSpanFull(),
                         TextEntry::make('description')

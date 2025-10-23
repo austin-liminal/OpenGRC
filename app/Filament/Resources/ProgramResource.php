@@ -75,10 +75,10 @@ class ProgramResource extends Resource
                         'Pending Review' => __('programs.scope_status.pending_review'),
                     ])
                     ->required(),
-                self::taxonomySelect('Department')
+                self::taxonomySelect('Department', 'department')
                     ->nullable()
                     ->columnSpan(1),
-                self::taxonomySelect('Scope')
+                self::taxonomySelect('Scope', 'scope')
                     ->nullable()
                     ->columnSpan(1),
             ]);
@@ -109,32 +109,48 @@ class ProgramResource extends Resource
                 Tables\Columns\TextColumn::make('scope_status')
                     ->label(__('programs.table.scope_status'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('department')
+                Tables\Columns\TextColumn::make('taxonomy_department')
                     ->label('Department')
-                    ->formatStateUsing(function (Program $record) {
-                        $department = $record->taxonomies()
-                            ->whereHas('parent', function ($query) {
-                                $query->where('name', 'Department');
-                            })
-                            ->first();
-
-                        return $department?->name ?? 'Not assigned';
+                    ->getStateUsing(function (Program $record) {
+                        return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                     })
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('scope')
+                    ->sortable(query: function ($query, string $direction): void {
+                        $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
+                        if (!$departmentParent) return;
+
+                        $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
+                            $join->on('programs.id', '=', 'dept_taxonomables.taxonomable_id')
+                                ->where('dept_taxonomables.taxonomable_type', '=', 'App\\Models\\Program');
+                        })
+                        ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
+                            $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
+                                ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
+                        })
+                        ->orderBy('dept_taxonomies.name', $direction)
+                        ->select('programs.*');
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('taxonomy_scope')
                     ->label('Scope')
-                    ->formatStateUsing(function (Program $record) {
-                        $scope = $record->taxonomies()
-                            ->whereHas('parent', function ($query) {
-                                $query->where('name', 'Scope');
-                            })
-                            ->first();
-
-                        return $scope?->name ?? 'Not assigned';
+                    ->getStateUsing(function (Program $record) {
+                        return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                     })
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(query: function ($query, string $direction): void {
+                        $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
+                        if (!$scopeParent) return;
+
+                        $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
+                            $join->on('programs.id', '=', 'scope_taxonomables.taxonomable_id')
+                                ->where('scope_taxonomables.taxonomable_type', '=', 'App\\Models\\Program');
+                        })
+                        ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
+                            $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
+                                ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
+                        })
+                        ->orderBy('scope_taxonomies.name', $direction)
+                        ->select('programs.*');
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('programs.table.created_at'))
                     ->dateTime()
@@ -150,9 +166,7 @@ class ProgramResource extends Resource
                 Tables\Filters\SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Department')
-                            ->whereNull('parent_id')
-                            ->first();
+                        $taxonomy = self::getParentTaxonomy('department');
 
                         if (! $taxonomy) {
                             return [];
@@ -175,9 +189,7 @@ class ProgramResource extends Resource
                 Tables\Filters\SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Scope')
-                            ->whereNull('parent_id')
-                            ->first();
+                        $taxonomy = self::getParentTaxonomy('scope');
 
                         if (! $taxonomy) {
                             return [];

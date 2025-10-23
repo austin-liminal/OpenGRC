@@ -94,24 +94,12 @@ class ProgramPage extends ViewRecord
                         TextEntry::make('department')
                             ->label('Department')
                             ->formatStateUsing(function ($record) {
-                                $department = $record->taxonomies()
-                                    ->whereHas('parent', function ($query) {
-                                        $query->where('name', 'Department');
-                                    })
-                                    ->first();
-
-                                return $department?->name ?? 'Not assigned';
+                                return ProgramResource::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                             }),
                         TextEntry::make('scope')
                             ->label('Scope')
                             ->formatStateUsing(function ($record) {
-                                $scope = $record->taxonomies()
-                                    ->whereHas('parent', function ($query) {
-                                        $query->where('name', 'Scope');
-                                    })
-                                    ->first();
-
-                                return $scope?->name ?? 'Not assigned';
+                                return ProgramResource::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                             }),
                     ])
                     ->columns(2),

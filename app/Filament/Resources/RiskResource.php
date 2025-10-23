@@ -115,10 +115,10 @@ class RiskResource extends Resource
                     ->enum(RiskStatus::class)
                     ->options(RiskStatus::class)
                     ->required(),
-                self::taxonomySelect('Department')
+                self::taxonomySelect('Department', 'department')
                     ->nullable()
                     ->columnSpan(1),
-                self::taxonomySelect('Scope')
+                self::taxonomySelect('Scope', 'scope')
                     ->nullable()
                     ->columnSpan(1),
             ]);
@@ -166,45 +166,61 @@ class RiskResource extends Resource
                     ->color(function (Risk $record) {
                         return self::getRiskColor($record->residual_likelihood, $record->residual_impact);
                     }),
-                Tables\Columns\TextColumn::make('department')
+                Tables\Columns\TextColumn::make('taxonomy_department')
                     ->label('Department')
-                    ->formatStateUsing(function (Risk $record) {
-                        $department = $record->taxonomies()
-                            ->whereHas('parent', function ($query) {
-                                $query->where('name', 'Department');
-                            })
-                            ->first();
-                        return $department?->name ?? 'Not assigned';
+                    ->getStateUsing(function (Risk $record) {
+                        return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                     })
-                    ->sortable()
+                    ->sortable(query: function ($query, string $direction): void {
+                        $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
+                        if (!$departmentParent) return;
+
+                        $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
+                            $join->on('risks.id', '=', 'dept_taxonomables.taxonomable_id')
+                                ->where('dept_taxonomables.taxonomable_type', '=', 'App\\Models\\Risk');
+                        })
+                        ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
+                            $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
+                                ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
+                        })
+                        ->orderBy('dept_taxonomies.name', $direction)
+                        ->select('risks.*');
+                    })
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('scope')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('taxonomy_scope')
                     ->label('Scope')
-                    ->formatStateUsing(function (Risk $record) {
-                        $scope = $record->taxonomies()
-                            ->whereHas('parent', function ($query) {
-                                $query->where('name', 'Scope');
-                            })
-                            ->first();
-                        return $scope?->name ?? 'Not assigned';
+                    ->getStateUsing(function (Risk $record) {
+                        return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                     })
-                    ->sortable()
+                    ->sortable(query: function ($query, string $direction): void {
+                        $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
+                        if (!$scopeParent) return;
+
+                        $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
+                            $join->on('risks.id', '=', 'scope_taxonomables.taxonomable_id')
+                                ->where('scope_taxonomables.taxonomable_type', '=', 'App\\Models\\Risk');
+                        })
+                        ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
+                            $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
+                                ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
+                        })
+                        ->orderBy('scope_taxonomies.name', $direction)
+                        ->select('risks.*');
+                    })
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Department')
-                            ->whereNull('parent_id')
-                            ->first();
-                        
+                        $taxonomy = self::getParentTaxonomy('department');
+
                         if (!$taxonomy) {
                             return [];
                         }
-                        
+
                         return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
@@ -214,7 +230,7 @@ class RiskResource extends Resource
                         if (!$data['value']) {
                             return;
                         }
-                        
+
                         $query->whereHas('taxonomies', function ($query) use ($data) {
                             $query->where('taxonomy_id', $data['value']);
                         });
@@ -222,14 +238,12 @@ class RiskResource extends Resource
                 Tables\Filters\SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Scope')
-                            ->whereNull('parent_id')
-                            ->first();
-                        
+                        $taxonomy = self::getParentTaxonomy('scope');
+
                         if (!$taxonomy) {
                             return [];
                         }
-                        
+
                         return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
@@ -239,7 +253,7 @@ class RiskResource extends Resource
                         if (!$data['value']) {
                             return;
                         }
-                        
+
                         $query->whereHas('taxonomies', function ($query) use ($data) {
                             $query->where('taxonomy_id', $data['value']);
                         });

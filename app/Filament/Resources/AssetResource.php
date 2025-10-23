@@ -55,13 +55,13 @@ class AssetResource extends Resource
 
                         Forms\Components\Select::make('asset_type_id')
                             ->label('Asset Type')
-                            ->options(fn () => Taxonomy::where('type', 'asset_type')->pluck('name', 'id'))
+                            ->options(fn () => Taxonomy::where('slug', 'asset-type')->first()?->children()->pluck('name', 'id') ?? collect())
                             ->searchable()
                             ->required(),
 
                         Forms\Components\Select::make('status_id')
                             ->label('Status')
-                            ->options(fn () => Taxonomy::where('type', 'asset_status')->pluck('name', 'id'))
+                            ->options(fn () => Taxonomy::where('slug', 'asset-status')->first()?->children()->pluck('name', 'id') ?? collect())
                             ->searchable()
                             ->required(),
                     ])
@@ -267,7 +267,7 @@ class AssetResource extends Resource
 
                         Forms\Components\Select::make('condition_id')
                             ->label('Condition')
-                            ->options(fn () => Taxonomy::where('type', 'asset_condition')->pluck('name', 'id'))
+                            ->options(fn () => Taxonomy::where('slug', 'asset-condition')->first()?->children()->pluck('name', 'id') ?? collect())
                             ->searchable(),
 
                         Forms\Components\Textarea::make('maintenance_notes')
@@ -315,12 +315,12 @@ class AssetResource extends Resource
 
                         Forms\Components\Select::make('compliance_status_id')
                             ->label('Compliance Status')
-                            ->options(fn () => Taxonomy::where('type', 'compliance_status')->pluck('name', 'id'))
+                            ->options(fn () => Taxonomy::where('slug', 'compliance-status')->first()?->children()->pluck('name', 'id') ?? collect())
                             ->searchable(),
 
                         Forms\Components\Select::make('data_classification_id')
                             ->label('Data Classification')
-                            ->options(fn () => Taxonomy::where('type', 'data_classification')->pluck('name', 'id'))
+                            ->options(fn () => Taxonomy::where('slug', 'data-classification')->first()?->children()->pluck('name', 'id') ?? collect())
                             ->searchable(),
                     ])
                     ->columns(2)
@@ -696,12 +696,12 @@ class AssetResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('asset_type_id')
                     ->label('Asset Type')
-                    ->options(fn () => Taxonomy::where('type', 'asset_type')->pluck('name', 'id'))
+                    ->options(fn () => Taxonomy::where('slug', 'asset-type')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
                 Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
-                    ->options(fn () => Taxonomy::where('type', 'asset_status')->pluck('name', 'id'))
+                    ->options(fn () => Taxonomy::where('slug', 'asset-status')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
                 Tables\Filters\SelectFilter::make('assigned_to_user_id')
@@ -769,17 +769,17 @@ class AssetResource extends Resource
 
                 Tables\Filters\SelectFilter::make('condition_id')
                     ->label('Condition')
-                    ->options(fn () => Taxonomy::where('type', 'asset_condition')->pluck('name', 'id'))
+                    ->options(fn () => Taxonomy::where('slug', 'asset-condition')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
                 Tables\Filters\SelectFilter::make('compliance_status_id')
                     ->label('Compliance Status')
-                    ->options(fn () => Taxonomy::where('type', 'compliance_status')->pluck('name', 'id'))
+                    ->options(fn () => Taxonomy::where('slug', 'compliance-status')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
                 Tables\Filters\SelectFilter::make('data_classification_id')
                     ->label('Data Classification')
-                    ->options(fn () => Taxonomy::where('type', 'data_classification')->pluck('name', 'id'))
+                    ->options(fn () => Taxonomy::where('slug', 'data-classification')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
                 Tables\Filters\TernaryFilter::make('encryption_enabled')

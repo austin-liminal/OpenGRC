@@ -13,18 +13,32 @@ class AssetTaxonomySeeder extends Seeder
      */
     public function run(): void
     {
-        $this->createAssetTypeTaxonomies();
-        $this->createAssetStatusTaxonomies();
-        $this->createAssetConditionTaxonomies();
-        $this->createComplianceStatusTaxonomies();
-        $this->createDataClassificationTaxonomies();
+        $this->createAssetTypeTaxonomy();
+        $this->createAssetStatusTaxonomy();
+        $this->createAssetConditionTaxonomy();
+        $this->createComplianceStatusTaxonomy();
+        $this->createDataClassificationTaxonomy();
     }
 
     /**
-     * Create Asset Type taxonomies.
+     * Create Asset Type taxonomy with hierarchical terms.
      */
-    private function createAssetTypeTaxonomies(): void
+    private function createAssetTypeTaxonomy(): void
     {
+        // Create parent taxonomy
+        $parent = Taxonomy::firstOrCreate(
+            [
+                'slug' => 'asset-type',
+                'type' => 'asset',
+            ],
+            [
+                'name' => 'Asset Type',
+                'description' => 'Categories of IT assets',
+                'sort_order' => 1,
+            ]
+        );
+
+        // Create child terms
         $types = [
             ['name' => 'Laptop', 'description' => 'Portable laptop computer'],
             ['name' => 'Desktop', 'description' => 'Desktop computer workstation'],
@@ -42,7 +56,8 @@ class AssetTaxonomySeeder extends Seeder
             Taxonomy::firstOrCreate(
                 [
                     'slug' => Str::slug($typeData['name']),
-                    'type' => 'asset_type',
+                    'type' => 'asset',
+                    'parent_id' => $parent->id,
                 ],
                 [
                     'name' => $typeData['name'],
@@ -54,10 +69,24 @@ class AssetTaxonomySeeder extends Seeder
     }
 
     /**
-     * Create Asset Status taxonomies.
+     * Create Asset Status taxonomy with hierarchical terms.
      */
-    private function createAssetStatusTaxonomies(): void
+    private function createAssetStatusTaxonomy(): void
     {
+        // Create parent taxonomy
+        $parent = Taxonomy::firstOrCreate(
+            [
+                'slug' => 'asset-status',
+                'type' => 'asset',
+            ],
+            [
+                'name' => 'Asset Status',
+                'description' => 'Current status of assets',
+                'sort_order' => 2,
+            ]
+        );
+
+        // Create child terms
         $statuses = [
             ['name' => 'Available', 'description' => 'Asset is available for assignment'],
             ['name' => 'In Use', 'description' => 'Asset is currently assigned and in use'],
@@ -72,7 +101,8 @@ class AssetTaxonomySeeder extends Seeder
             Taxonomy::firstOrCreate(
                 [
                     'slug' => Str::slug($statusData['name']),
-                    'type' => 'asset_status',
+                    'type' => 'asset',
+                    'parent_id' => $parent->id,
                 ],
                 [
                     'name' => $statusData['name'],
@@ -84,10 +114,24 @@ class AssetTaxonomySeeder extends Seeder
     }
 
     /**
-     * Create Asset Condition taxonomies.
+     * Create Asset Condition taxonomy with hierarchical terms.
      */
-    private function createAssetConditionTaxonomies(): void
+    private function createAssetConditionTaxonomy(): void
     {
+        // Create parent taxonomy
+        $parent = Taxonomy::firstOrCreate(
+            [
+                'slug' => 'asset-condition',
+                'type' => 'asset',
+            ],
+            [
+                'name' => 'Asset Condition',
+                'description' => 'Physical condition of assets',
+                'sort_order' => 3,
+            ]
+        );
+
+        // Create child terms
         $conditions = [
             ['name' => 'Excellent', 'description' => 'Asset is in excellent condition'],
             ['name' => 'Good', 'description' => 'Asset is in good condition'],
@@ -100,7 +144,8 @@ class AssetTaxonomySeeder extends Seeder
             Taxonomy::firstOrCreate(
                 [
                     'slug' => Str::slug($conditionData['name']),
-                    'type' => 'asset_condition',
+                    'type' => 'asset',
+                    'parent_id' => $parent->id,
                 ],
                 [
                     'name' => $conditionData['name'],
@@ -112,10 +157,24 @@ class AssetTaxonomySeeder extends Seeder
     }
 
     /**
-     * Create Compliance Status taxonomies.
+     * Create Compliance Status taxonomy with hierarchical terms.
      */
-    private function createComplianceStatusTaxonomies(): void
+    private function createComplianceStatusTaxonomy(): void
     {
+        // Create parent taxonomy
+        $parent = Taxonomy::firstOrCreate(
+            [
+                'slug' => 'compliance-status',
+                'type' => 'asset',
+            ],
+            [
+                'name' => 'Compliance Status',
+                'description' => 'Compliance status of assets',
+                'sort_order' => 4,
+            ]
+        );
+
+        // Create child terms
         $statuses = [
             ['name' => 'Compliant', 'description' => 'Asset meets all compliance requirements'],
             ['name' => 'Non-Compliant', 'description' => 'Asset does not meet compliance requirements'],
@@ -127,7 +186,8 @@ class AssetTaxonomySeeder extends Seeder
             Taxonomy::firstOrCreate(
                 [
                     'slug' => Str::slug($statusData['name']),
-                    'type' => 'compliance_status',
+                    'type' => 'asset',
+                    'parent_id' => $parent->id,
                 ],
                 [
                     'name' => $statusData['name'],
@@ -139,10 +199,24 @@ class AssetTaxonomySeeder extends Seeder
     }
 
     /**
-     * Create Data Classification taxonomies.
+     * Create Data Classification taxonomy with hierarchical terms.
      */
-    private function createDataClassificationTaxonomies(): void
+    private function createDataClassificationTaxonomy(): void
     {
+        // Create parent taxonomy
+        $parent = Taxonomy::firstOrCreate(
+            [
+                'slug' => 'data-classification',
+                'type' => 'asset',
+            ],
+            [
+                'name' => 'Data Classification',
+                'description' => 'Data sensitivity classification levels',
+                'sort_order' => 5,
+            ]
+        );
+
+        // Create child terms
         $classifications = [
             ['name' => 'Public', 'description' => 'Information intended for public disclosure'],
             ['name' => 'Internal', 'description' => 'Information for internal use only'],
@@ -154,7 +228,8 @@ class AssetTaxonomySeeder extends Seeder
             Taxonomy::firstOrCreate(
                 [
                     'slug' => Str::slug($classData['name']),
-                    'type' => 'data_classification',
+                    'type' => 'asset',
+                    'parent_id' => $parent->id,
                 ],
                 [
                     'name' => $classData['name'],

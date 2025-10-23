@@ -397,10 +397,16 @@ class DemoSeeder extends Seeder
             \App\Models\Application::create($appData);
         }
 
-        // Create 25 IT assets with taxonomy support
-        $assetTypeIds = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('type', 'asset_type')->pluck('id', 'name');
-        $assetStatusIds = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('type', 'asset_status')->pluck('id', 'name');
-        $conditionIds = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('type', 'asset_condition')->pluck('id', 'name');
+        // Create 25 IT assets with hierarchical taxonomy support
+        // Get parent taxonomy IDs
+        $assetTypeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'asset-type')->where('type', 'asset')->first();
+        $assetStatusParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'asset-status')->where('type', 'asset')->first();
+        $assetConditionParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'asset-condition')->where('type', 'asset')->first();
+
+        // Get child term IDs by name
+        $assetTypeIds = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $assetTypeParent->id)->pluck('id', 'name');
+        $assetStatusIds = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $assetStatusParent->id)->pluck('id', 'name');
+        $conditionIds = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $assetConditionParent->id)->pluck('id', 'name');
 
         $assetsData = [
             // Laptops

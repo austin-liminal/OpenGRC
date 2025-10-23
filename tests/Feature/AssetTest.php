@@ -23,12 +23,21 @@ class AssetTest extends TestCase
     }
 
     /**
+     * Helper method to get a taxonomy term by parent slug and term name.
+     */
+    private function getTaxonomyTerm(string $parentSlug, string $termName): ?Taxonomy
+    {
+        $parent = Taxonomy::where('slug', $parentSlug)->first();
+        return Taxonomy::where('parent_id', $parent->id)->where('name', $termName)->first();
+    }
+
+    /**
      * Test asset can be created with required fields.
      */
     public function test_asset_can_be_created(): void
     {
-        $assetType = Taxonomy::where('type', 'asset_type')->where('name', 'Laptop')->first();
-        $assetStatus = Taxonomy::where('type', 'asset_status')->where('name', 'In Use')->first();
+        $assetType = $this->getTaxonomyTerm('asset-type', 'Laptop');
+        $assetStatus = $this->getTaxonomyTerm('asset-status', 'In Use');
 
         $asset = Asset::create([
             'asset_tag' => 'LAP-001',
@@ -55,7 +64,7 @@ class AssetTest extends TestCase
      */
     public function test_asset_belongs_to_asset_type_taxonomy(): void
     {
-        $assetType = Taxonomy::where('type', 'asset_type')->where('name', 'Server')->first();
+        $assetType = $this->getTaxonomyTerm('asset-type', 'Server');
 
         $asset = Asset::create([
             'asset_tag' => 'SRV-001',
@@ -74,7 +83,7 @@ class AssetTest extends TestCase
      */
     public function test_asset_belongs_to_status_taxonomy(): void
     {
-        $assetStatus = Taxonomy::where('type', 'asset_status')->where('name', 'In Repair')->first();
+        $assetStatus = $this->getTaxonomyTerm('asset-status', 'In Repair');
 
         $asset = Asset::create([
             'asset_tag' => 'LAP-002',
@@ -93,7 +102,7 @@ class AssetTest extends TestCase
      */
     public function test_asset_belongs_to_condition_taxonomy(): void
     {
-        $condition = Taxonomy::where('type', 'asset_condition')->where('name', 'Excellent')->first();
+        $condition = $this->getTaxonomyTerm('asset-condition', 'Excellent');
 
         $asset = Asset::create([
             'asset_tag' => 'LAP-003',
@@ -113,7 +122,7 @@ class AssetTest extends TestCase
     public function test_asset_can_be_assigned_to_user(): void
     {
         $user = User::factory()->create(['name' => 'John Doe']);
-        $assetType = Taxonomy::where('type', 'asset_type')->where('name', 'Laptop')->first();
+        $assetType = $this->getTaxonomyTerm('asset-type', 'Laptop');
 
         $asset = Asset::create([
             'asset_tag' => 'LAP-004',
@@ -136,7 +145,7 @@ class AssetTest extends TestCase
     public function test_asset_has_many_implementations(): void
     {
         $user = User::factory()->create();
-        $assetType = Taxonomy::where('type', 'asset_type')->where('name', 'Server')->first();
+        $assetType = $this->getTaxonomyTerm('asset-type', 'Server');
 
         $asset = Asset::create([
             'asset_tag' => 'SRV-002',
@@ -232,8 +241,8 @@ class AssetTest extends TestCase
      */
     public function test_asset_by_asset_type_scope(): void
     {
-        $laptopType = Taxonomy::where('type', 'asset_type')->where('name', 'Laptop')->first();
-        $serverType = Taxonomy::where('type', 'asset_type')->where('name', 'Server')->first();
+        $laptopType = $this->getTaxonomyTerm('asset-type', 'Laptop');
+        $serverType = $this->getTaxonomyTerm('asset-type', 'Server');
 
         Asset::create([
             'asset_tag' => 'LAP-010',
@@ -260,8 +269,8 @@ class AssetTest extends TestCase
      */
     public function test_asset_by_status_scope(): void
     {
-        $inUseStatus = Taxonomy::where('type', 'asset_status')->where('name', 'In Use')->first();
-        $retiredStatus = Taxonomy::where('type', 'asset_status')->where('name', 'Retired')->first();
+        $inUseStatus = $this->getTaxonomyTerm('asset-status', 'In Use');
+        $retiredStatus = $this->getTaxonomyTerm('asset-status', 'Retired');
 
         Asset::create([
             'asset_tag' => 'USE-001',
@@ -288,7 +297,7 @@ class AssetTest extends TestCase
      */
     public function test_asset_hardware_specifications_stored_correctly(): void
     {
-        $laptopType = Taxonomy::where('type', 'asset_type')->where('name', 'Laptop')->first();
+        $laptopType = $this->getTaxonomyTerm('asset-type', 'Laptop');
 
         $asset = Asset::create([
             'asset_tag' => 'LAP-100',
@@ -342,7 +351,7 @@ class AssetTest extends TestCase
      */
     public function test_multiple_assets_can_be_linked_to_same_implementation(): void
     {
-        $serverType = Taxonomy::where('type', 'asset_type')->where('name', 'Server')->first();
+        $serverType = $this->getTaxonomyTerm('asset-type', 'Server');
 
         $server1 = Asset::create([
             'asset_tag' => 'SRV-101',
@@ -373,7 +382,7 @@ class AssetTest extends TestCase
      */
     public function test_asset_with_software_licensing_fields(): void
     {
-        $softwareType = Taxonomy::where('type', 'asset_type')->where('name', 'Software License')->first();
+        $softwareType = $this->getTaxonomyTerm('asset-type', 'Software License');
 
         $asset = Asset::create([
             'asset_tag' => 'SW-001',
@@ -397,7 +406,7 @@ class AssetTest extends TestCase
      */
     public function test_asset_compliance_information_stored_correctly(): void
     {
-        $complianceStatus = Taxonomy::where('type', 'compliance_status')->where('name', 'Compliant')->first();
+        $complianceStatus = $this->getTaxonomyTerm('compliance-status', 'Compliant');
 
         $asset = Asset::create([
             'asset_tag' => 'COMP-001',
