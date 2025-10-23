@@ -97,6 +97,15 @@ class Implementation extends Model
     }
 
     /**
+     * The assets that belong to the implementation.
+     */
+    public function assets(): BelongsToMany
+    {
+        return $this->belongsToMany(Asset::class)
+            ->withTimestamps();
+    }
+
+    /**
      * Get the name of the index associated with the model.
      */
     public function searchableAs(): string

@@ -357,6 +357,7 @@ class ImplementationResource extends Resource
             RelationManagers\ControlsRelationManager::class,
             RelationManagers\AuditItemRelationManager::class,
             RelationManagers\RisksRelationManager::class,
+            RelationManagers\AssetsRelationManager::class,
         ];
     }
 
