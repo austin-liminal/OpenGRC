@@ -171,12 +171,17 @@ echo "OpenGRC is ready!"
 echo "Site URL: ${APP_URL}"
 echo "Admin Email: ${ADMIN_EMAIL}"
 
+# Start PHP-FPM
+echo "Starting PHP-FPM..."
+service php8.3-fpm start
+
 # Test Apache configuration
 echo "Testing Apache configuration..."
 /usr/sbin/apache2ctl configtest
 
 # Enable error logging
 echo "Apache error log will be available at /var/log/apache2/error.log"
+echo "PHP-FPM error log will be available at /var/log/php8.3-fpm.log"
 
 # Start Apache in foreground
 exec /usr/sbin/apache2ctl -D FOREGROUND

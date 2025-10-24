@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && add-apt-repository ppa:ondrej/php \
     && apt-get update
 
-# Install Apache2, PHP and required extensions
+# Install Apache2, PHP-FPM and required extensions
 RUN apt-get install -y \
     apache2 \
     php${PHP_VERSION} \
@@ -35,11 +35,11 @@ RUN apt-get install -y \
     php${PHP_VERSION}-bcmath \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-dom \
-    libapache2-mod-php${PHP_VERSION} \
     zip \
     unzip \
     git \
     openssl \
+    sudo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -52,14 +52,27 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Enable Apache modules
+# Configure PHP-FPM pool for performance (optimized for 1GB container)
+RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+    && sed -i 's/pm.max_children = .*/pm.max_children = 20/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+    && sed -i 's/;pm.process_idle_timeout = .*/pm.process_idle_timeout = 10s/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+    && sed -i 's/;pm.max_requests = .*/pm.max_requests = 500/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
+    && sed -i 's/memory_limit = .*/memory_limit = 256M/' /etc/php/${PHP_VERSION}/fpm/php.ini \
+    && sed -i 's/upload_max_filesize = .*/upload_max_filesize = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini \
+    && sed -i 's/post_max_size = .*/post_max_size = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini \
+    && sed -i 's/max_execution_time = .*/max_execution_time = 60/' /etc/php/${PHP_VERSION}/fpm/php.ini
+
+# Enable Apache modules for PHP-FPM
 RUN a2enmod rewrite \
     && a2enmod headers \
     && a2enmod expires \
     && a2enmod ssl \
-    && a2dismod mpm_event \
-    && a2enmod mpm_prefork \
-    && a2enmod php${PHP_VERSION}
+    && a2enmod proxy \
+    && a2enmod proxy_fcgi \
+    && a2enmod setenvif \
+    && a2dismod mpm_prefork \
+    && a2enmod mpm_event \
+    && a2enconf php${PHP_VERSION}-fpm
 
 # Configure Apache to listen on port 443 (HTTPS) and 8080 (HTTP health checks)
 RUN echo 'Listen 443\nListen 8080' > /etc/apache2/ports.conf
@@ -74,6 +87,11 @@ RUN echo '<VirtualHost *:443>\n\
         AllowOverride All\n\
         Require all granted\n\
     </Directory>\n\
+    \n\
+    # PHP-FPM Configuration\n\
+    <FilesMatch \\.php$>\n\
+        SetHandler "proxy:unix:/var/run/php/php8.3-fpm.sock|fcgi://localhost"\n\
+    </FilesMatch>\n\
     \n\
     # Security headers (DigitalOcean load balancer handles HTTPS)\n\
     Header always set X-Frame-Options "SAMEORIGIN"\n\
@@ -94,6 +112,11 @@ RUN echo '<VirtualHost *:8080>\n\
         AllowOverride All\n\
         Require all granted\n\
     </Directory>\n\
+    \n\
+    # PHP-FPM Configuration\n\
+    <FilesMatch \\.php$>\n\
+        SetHandler "proxy:unix:/var/run/php/php8.3-fpm.sock|fcgi://localhost"\n\
+    </FilesMatch>\n\
     \n\
     ErrorLog ${APACHE_LOG_DIR}/health-error.log\n\
     CustomLog ${APACHE_LOG_DIR}/health-access.log combined\n\
