@@ -39,6 +39,7 @@ RUN apt-get install -y \
     zip \
     unzip \
     git \
+    openssl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -134,6 +135,16 @@ RUN npm run build
 # Clean up Node modules after build
 RUN rm -rf node_modules
 
+# Generate self-signed SSL certificate (will be replaced by real certs in production)
+# Must be done as root before switching to www-data user
+RUN mkdir -p /etc/ssl/private \
+    && openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+    -keyout /etc/ssl/private/opengrc.key \
+    -out /etc/ssl/certs/opengrc.crt \
+    -subj "/C=US/ST=State/L=City/O=OpenGRC/CN=localhost" \
+    && chmod 644 /etc/ssl/certs/opengrc.crt \
+    && chmod 600 /etc/ssl/private/opengrc.key
+
 # Create necessary directories and set permissions
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
@@ -144,23 +155,12 @@ RUN mkdir -p storage/framework/cache/data \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache database
 
-# Generate self-signed SSL certificate (will be replaced by real certs in production)
-RUN mkdir -p /etc/ssl/private \
-    && openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-    -keyout /etc/ssl/private/opengrc.key \
-    -out /etc/ssl/certs/opengrc.crt \
-    -subj "/C=US/ST=State/L=City/O=OpenGRC/CN=localhost" \
-    && chmod 600 /etc/ssl/private/opengrc.key
-
 # Copy and set permissions for entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Expose port 443 for HTTPS
 EXPOSE 443
-
-# Switch to www-data user for security
-USER www-data
 
 # Health check using HTTPS
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \

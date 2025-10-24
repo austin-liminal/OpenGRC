@@ -30,3 +30,4 @@ yarn-error.log
 !/storage/framework/cache/.gitkeep
 
 .DS_Store
+app-spec.docker.yaml

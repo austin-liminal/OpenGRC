@@ -11,9 +11,25 @@ FIRST_RUN_FLAG="/var/www/html/storage/.container_initialized"
 #############################################
 
 echo "Checking SSL certificates..."
+
+# Ensure SSL directories exist
+mkdir -p /etc/ssl/certs /etc/ssl/private
+
+# Check if SSL certificates exist, if not create them
+if [ ! -f "/etc/ssl/private/opengrc.key" ] || [ ! -f "/etc/ssl/certs/opengrc.crt" ]; then
+    echo "SSL certificates not found, generating self-signed certificate..."
+    openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+        -keyout /etc/ssl/private/opengrc.key \
+        -out /etc/ssl/certs/opengrc.crt \
+        -subj "/C=US/ST=State/L=City/O=OpenGRC/CN=localhost"
+    chmod 644 /etc/ssl/certs/opengrc.crt
+    chmod 600 /etc/ssl/private/opengrc.key
+    echo "Self-signed SSL certificate generated."
+fi
+
 # Replace SSL certificates if provided via environment
 if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
-    echo "Installing custom SSL certificates..."
+    echo "Installing custom SSL certificates from environment..."
     echo "$SSL_CERT" > /etc/ssl/certs/opengrc.crt
     echo "$SSL_KEY" > /etc/ssl/private/opengrc.key
     chmod 644 /etc/ssl/certs/opengrc.crt
