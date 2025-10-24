@@ -698,7 +698,10 @@ class Deploy extends Command
         }
 
         // Set production permissions (skip in containerized environments)
-        if (PHP_OS === 'Linux' && !file_exists('/.dockerenv')) {
+        // Detect container environment: no node_modules means pre-built Docker image
+        $isContainer = !file_exists(base_path('node_modules'));
+
+        if (PHP_OS === 'Linux' && !$isContainer) {
             $this->info('[INFO] Setting file permissions...');
 
             // Check if set_permissions script exists and run it
@@ -714,8 +717,8 @@ class Deploy extends Command
                 $this->info('[INFO] set_permissions script not found, setting manual permissions');
                 $this->setManualPermissions();
             }
-        } else if (file_exists('/.dockerenv')) {
-            $this->info('[INFO] Skipping permission setting (containerized environment detected)');
+        } else {
+            $this->info('[INFO] Skipping permission setting (containerized environment - permissions set at build time)');
         }
     }
 
