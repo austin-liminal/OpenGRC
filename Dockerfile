@@ -287,7 +287,7 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 443 8080
 
 # Health check using HTTP on port 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=50s --retries=5 \
     CMD curl -f http://localhost:8080/ || exit 1
 
 # Use entrypoint script to handle migrations and start Apache
