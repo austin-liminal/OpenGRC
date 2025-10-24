@@ -119,8 +119,8 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 # Copy package files
 COPY package*.json ./
 
-# Install Node dependencies
-RUN npm ci --only=production
+# Install Node dependencies (including dev dependencies needed for build)
+RUN npm ci
 
 # Copy application code
 COPY . .
