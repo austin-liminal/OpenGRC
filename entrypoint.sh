@@ -173,7 +173,28 @@ echo "Admin Email: ${ADMIN_EMAIL}"
 
 # Start PHP-FPM
 echo "Starting PHP-FPM..."
-service php8.3-fpm start
+mkdir -p /var/run/php
+/usr/sbin/php-fpm8.3 --daemonize --fpm-config /etc/php/8.3/fpm/php-fpm.conf
+
+# Wait for PHP-FPM socket to be ready
+echo "Waiting for PHP-FPM socket..."
+for i in {1..30}; do
+    if [ -S /var/run/php/php8.3-fpm.sock ]; then
+        echo "PHP-FPM socket is ready"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo "ERROR: PHP-FPM socket not available after 30 seconds"
+        echo "Checking PHP-FPM status..."
+        ps aux | grep php-fpm || true
+        echo "Checking socket directory..."
+        ls -la /var/run/php/ || true
+        echo "Checking PHP-FPM logs..."
+        tail -20 /var/log/php8.3-fpm.log || true
+        exit 1
+    fi
+    sleep 1
+done
 
 # Test Apache configuration
 echo "Testing Apache configuration..."
