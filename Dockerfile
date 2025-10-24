@@ -64,10 +64,10 @@ RUN a2enmod rewrite \
 # Configure Apache to listen on port 443 only
 RUN echo 'Listen 443' > /etc/apache2/ports.conf
 
-# Configure SSL with TLS 1.3+
-RUN echo '# SSL Protocol Configuration - TLS 1.3+ Only\n\
-SSLProtocol -all +TLSv1.3\n\
-SSLCipherSuite TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256\n\
+# Configure SSL with TLS 1.2+ (modern, but compatible)
+RUN echo '# SSL Protocol Configuration - TLS 1.2 and 1.3\n\
+SSLProtocol -all +TLSv1.2 +TLSv1.3\n\
+SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384\n\
 SSLHonorCipherOrder off\n\
 SSLSessionTickets off\n\
 SSLOptions +StrictRequire\n\
