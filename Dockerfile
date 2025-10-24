@@ -64,27 +64,10 @@ RUN a2enmod rewrite \
 # Configure Apache to listen on port 443 (HTTPS) and 8080 (HTTP health checks)
 RUN echo 'Listen 443\nListen 8080' > /etc/apache2/ports.conf
 
-# Configure SSL with TLS 1.2+ (modern, but compatible)
-RUN echo '# SSL Protocol Configuration - TLS 1.2 and 1.3\n\
-SSLProtocol -all +TLSv1.2 +TLSv1.3\n\
-SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384\n\
-SSLHonorCipherOrder off\n\
-SSLSessionTickets off\n\
-SSLOptions +StrictRequire\n\
-SSLCompression off\n\
-SSLUseStapling on\n\
-SSLStaplingCache "shmcb:logs/stapling-cache(150000)"\n' > /etc/apache2/conf-available/ssl-params.conf
-
-RUN a2enconf ssl-params
-
-# Configure Apache SSL virtual host
+# Configure HTTP virtual host on port 443 (DigitalOcean handles SSL termination)
 RUN echo '<VirtualHost *:443>\n\
     ServerAdmin webmaster@localhost\n\
     DocumentRoot /var/www/html/public\n\
-    \n\
-    SSLEngine on\n\
-    SSLCertificateFile /etc/ssl/certs/opengrc.crt\n\
-    SSLCertificateKeyFile /etc/ssl/private/opengrc.key\n\
     \n\
     <Directory /var/www/html/public>\n\
         Options Indexes FollowSymLinks\n\
@@ -92,15 +75,14 @@ RUN echo '<VirtualHost *:443>\n\
         Require all granted\n\
     </Directory>\n\
     \n\
-    # Security headers\n\
-    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"\n\
+    # Security headers (DigitalOcean load balancer handles HTTPS)\n\
     Header always set X-Frame-Options "SAMEORIGIN"\n\
     Header always set X-Content-Type-Options "nosniff"\n\
     Header always set Referrer-Policy "strict-origin-when-cross-origin"\n\
     \n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
-</VirtualHost>' > /etc/apache2/sites-available/default-ssl.conf
+</VirtualHost>' > /etc/apache2/sites-available/default-443.conf
 
 # Configure HTTP virtual host on port 8080 for health checks
 RUN echo '<VirtualHost *:8080>\n\
@@ -118,7 +100,7 @@ RUN echo '<VirtualHost *:8080>\n\
 </VirtualHost>' > /etc/apache2/sites-available/health-check.conf
 
 # Enable sites
-RUN a2dissite 000-default.conf && a2ensite default-ssl.conf && a2ensite health-check.conf
+RUN a2dissite 000-default.conf && a2ensite default-443.conf && a2ensite health-check.conf
 
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
