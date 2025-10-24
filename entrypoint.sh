@@ -171,6 +171,12 @@ echo "OpenGRC is ready!"
 echo "Site URL: ${APP_URL}"
 echo "Admin Email: ${ADMIN_EMAIL}"
 
+# Start rsyslog for log forwarding to OpenSearch
+echo "Starting rsyslog for OpenSearch log forwarding..."
+service rsyslog start
+sleep 2
+echo "Rsyslog started - logs will be forwarded to OpenSearch"
+
 # Start PHP-FPM
 echo "Starting PHP-FPM..."
 mkdir -p /var/run/php

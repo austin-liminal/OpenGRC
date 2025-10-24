@@ -42,6 +42,8 @@ RUN apt-get install -y \
     git \
     openssl \
     sudo \
+    rsyslog \
+    rsyslog-gnutls \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -57,6 +59,81 @@ RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Configure rsyslog for OpenSearch forwarding
+RUN echo '# OpenSearch forwarding configuration\n\
+# Load required modules\n\
+module(load="imuxsock")\n\
+module(load="imfile")\n\
+module(load="omfwd")\n\
+\n\
+# Global directives\n\
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat\n\
+$FileOwner root\n\
+$FileGroup adm\n\
+$FileCreateMode 0640\n\
+$DirCreateMode 0755\n\
+$Umask 0022\n\
+\n\
+# Template for OpenSearch (JSON format)\n\
+template(name="OpenSearchTemplate" type="list") {\n\
+    constant(value="{")\n\
+    constant(value="\"@timestamp\":\"")\n\
+    property(name="timereported" dateFormat="rfc3339")\n\
+    constant(value="\",\"host\":\"")\n\
+    property(name="hostname")\n\
+    constant(value="\",\"severity\":\"")\n\
+    property(name="syslogseverity-text")\n\
+    constant(value="\",\"facility\":\"")\n\
+    property(name="syslogfacility-text")\n\
+    constant(value="\",\"program\":\"")\n\
+    property(name="programname")\n\
+    constant(value="\",\"message\":\"")\n\
+    property(name="msg" format="json")\n\
+    constant(value="\"}")\n\
+    constant(value="\\n")\n\
+}\n\
+\n\
+# Input for Laravel logs\n\
+input(type="imfile"\n\
+      File="/var/www/html/storage/logs/laravel.log"\n\
+      Tag="laravel"\n\
+      Severity="info"\n\
+      Facility="local0")\n\
+\n\
+# Input for PHP-FPM logs\n\
+input(type="imfile"\n\
+      File="/var/log/php8.3-fpm.log"\n\
+      Tag="php-fpm"\n\
+      Severity="info"\n\
+      Facility="local1")\n\
+\n\
+# Input for Apache access logs (includes X-Forwarded-For)\n\
+input(type="imfile"\n\
+      File="/var/log/apache2/access.log"\n\
+      Tag="apache-access"\n\
+      Severity="info"\n\
+      Facility="local2")\n\
+\n\
+# Input for Apache error logs\n\
+input(type="imfile"\n\
+      File="/var/log/apache2/error.log"\n\
+      Tag="apache-error"\n\
+      Severity="error"\n\
+      Facility="local3")\n\
+\n\
+# Forward all logs to OpenSearch via TCP with TLS\n\
+action(type="omfwd"\n\
+       Target="og-search-1-do-user-25765278-0.k.db.ondigitalocean.com"\n\
+       Port="25060"\n\
+       Protocol="tcp"\n\
+       StreamDriver="gtls"\n\
+       StreamDriverMode="1"\n\
+       StreamDriverAuthMode="anon"\n\
+       Template="OpenSearchTemplate"\n\
+       action.resumeRetryCount="100"\n\
+       queue.type="linkedList"\n\
+       queue.size="10000")\n' > /etc/rsyslog.d/30-opensearch.conf
+
 # Configure PHP-FPM pool for performance (optimized for 1GB container)
 RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
     && sed -i 's/pm.max_children = .*/pm.max_children = 20/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
@@ -67,6 +144,10 @@ RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/ww
     && sed -i 's/post_max_size = .*/post_max_size = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini \
     && sed -i 's/max_execution_time = .*/max_execution_time = 60/' /etc/php/${PHP_VERSION}/fpm/php.ini
 
+# Configure PHP-FPM to log to file (for rsyslog forwarding)
+RUN sed -i 's|;error_log = log/php8.3-fpm.log|error_log = /var/log/php8.3-fpm.log|' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
+    && sed -i 's|;catch_workers_output = yes|catch_workers_output = yes|' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
+
 # Enable Apache modules for PHP-FPM
 RUN a2enmod rewrite \
     && a2enmod headers \
@@ -75,9 +156,24 @@ RUN a2enmod rewrite \
     && a2enmod proxy \
     && a2enmod proxy_fcgi \
     && a2enmod setenvif \
+    && a2enmod remoteip \
     && a2dismod mpm_prefork \
     && a2enmod mpm_event \
     && a2enconf php${PHP_VERSION}-fpm
+
+# Configure RemoteIP to trust DigitalOcean load balancer
+RUN echo '# Trust DigitalOcean load balancer for X-Forwarded-For\n\
+RemoteIPHeader X-Forwarded-For\n\
+RemoteIPTrustedProxy 10.0.0.0/8\n\
+RemoteIPTrustedProxy 172.16.0.0/12\n\
+RemoteIPTrustedProxy 192.168.0.0/16\n\
+RemoteIPTrustedProxy 100.64.0.0/10\n\
+RemoteIPInternalProxy 10.0.0.0/8\n\
+RemoteIPInternalProxy 172.16.0.0/12\n\
+RemoteIPInternalProxy 192.168.0.0/16\n\
+RemoteIPInternalProxy 100.64.0.0/10' > /etc/apache2/conf-available/remoteip.conf
+
+RUN a2enconf remoteip
 
 # Configure Apache to listen on port 443 (HTTPS) and 8080 (HTTP health checks)
 RUN echo 'Listen 443\nListen 8080' > /etc/apache2/ports.conf
@@ -103,8 +199,11 @@ RUN echo '<VirtualHost *:443>\n\
     Header always set X-Content-Type-Options "nosniff"\n\
     Header always set Referrer-Policy "strict-origin-when-cross-origin"\n\
     \n\
+    # Custom log format with real client IP (from X-Forwarded-For)\n\
+    LogFormat "%a %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\" forwarded_for=\\"%{X-Forwarded-For}i\\"" combined_with_forwarded\n\
+    \n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined_with_forwarded\n\
 </VirtualHost>' > /etc/apache2/sites-available/default-443.conf
 
 # Configure HTTP virtual host on port 8080 for health checks
