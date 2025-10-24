@@ -697,8 +697,8 @@ class Deploy extends Command
             $this->info('[INFO] Skipping asset build (pre-built assets detected)');
         }
 
-        // Set production permissions
-        if (PHP_OS === 'Linux') {
+        // Set production permissions (skip in containerized environments)
+        if (PHP_OS === 'Linux' && !file_exists('/.dockerenv')) {
             $this->info('[INFO] Setting file permissions...');
 
             // Check if set_permissions script exists and run it
@@ -714,6 +714,8 @@ class Deploy extends Command
                 $this->info('[INFO] set_permissions script not found, setting manual permissions');
                 $this->setManualPermissions();
             }
+        } else if (file_exists('/.dockerenv')) {
+            $this->info('[INFO] Skipping permission setting (containerized environment detected)');
         }
     }
 
