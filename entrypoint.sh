@@ -187,5 +187,12 @@ echo "OpenGRC is ready!"
 echo "Site URL: ${APP_URL}"
 echo "Admin Email: ${ADMIN_EMAIL}"
 
+# Test Apache configuration
+echo "Testing Apache configuration..."
+/usr/sbin/apache2ctl configtest
+
+# Enable error logging
+echo "Apache error log will be available at /var/log/apache2/error.log"
+
 # Start Apache in foreground
 exec /usr/sbin/apache2ctl -D FOREGROUND

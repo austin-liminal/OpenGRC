@@ -61,8 +61,8 @@ RUN a2enmod rewrite \
     && a2enmod mpm_prefork \
     && a2enmod php${PHP_VERSION}
 
-# Configure Apache to listen on port 443 only
-RUN echo 'Listen 443' > /etc/apache2/ports.conf
+# Configure Apache to listen on port 443 (HTTPS) and 8080 (HTTP health checks)
+RUN echo 'Listen 443\nListen 8080' > /etc/apache2/ports.conf
 
 # Configure SSL with TLS 1.2+ (modern, but compatible)
 RUN echo '# SSL Protocol Configuration - TLS 1.2 and 1.3\n\
@@ -102,8 +102,23 @@ RUN echo '<VirtualHost *:443>\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/default-ssl.conf
 
-# Enable SSL site and disable default
-RUN a2dissite 000-default.conf && a2ensite default-ssl.conf
+# Configure HTTP virtual host on port 8080 for health checks
+RUN echo '<VirtualHost *:8080>\n\
+    ServerAdmin webmaster@localhost\n\
+    DocumentRoot /var/www/html/public\n\
+    \n\
+    <Directory /var/www/html/public>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    \n\
+    ErrorLog ${APACHE_LOG_DIR}/health-error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/health-access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/health-check.conf
+
+# Enable sites
+RUN a2dissite 000-default.conf && a2ensite default-ssl.conf && a2ensite health-check.conf
 
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -159,12 +174,12 @@ RUN mkdir -p storage/framework/cache/data \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose port 443 for HTTPS
-EXPOSE 443
+# Expose ports: 443 for HTTPS, 8080 for HTTP health checks
+EXPOSE 443 8080
 
-# Health check using HTTPS
+# Health check using HTTP on port 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -fk https://localhost:443/ || exit 1
+    CMD curl -f http://localhost:8080/ || exit 1
 
 # Use entrypoint script to handle migrations and start Apache
 ENTRYPOINT ["/entrypoint.sh"]
