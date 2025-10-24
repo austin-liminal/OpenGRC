@@ -1,147 +1,170 @@
-FROM php:8.3-apache AS base
+FROM ubuntu:24.04
 
-# --------------
-# Install needed Debian/Ubuntu packages
-# ------------------------------------------------
-RUN apt-get clean && apt-get update && apt-get install -y \
-    libpng-dev \
-    libzip-dev \
-    libicu-dev \
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Set versions
+ENV PHP_VERSION=8.3
+ENV NODE_VERSION=20.x
+
+# Install system dependencies and Apache2
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    && add-apt-repository ppa:ondrej/php \
+    && apt-get update
+
+# Install Apache2, PHP and required extensions
+RUN apt-get install -y \
+    apache2 \
+    php${PHP_VERSION} \
+    php${PHP_VERSION}-cli \
+    php${PHP_VERSION}-fpm \
+    php${PHP_VERSION}-common \
+    php${PHP_VERSION}-mysql \
+    php${PHP_VERSION}-sqlite3 \
+    php${PHP_VERSION}-zip \
+    php${PHP_VERSION}-gd \
+    php${PHP_VERSION}-mbstring \
+    php${PHP_VERSION}-curl \
+    php${PHP_VERSION}-xml \
+    php${PHP_VERSION}-bcmath \
+    php${PHP_VERSION}-intl \
+    php${PHP_VERSION}-dom \
+    libapache2-mod-php${PHP_VERSION} \
     zip \
-    unzip 
+    unzip \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo pdo_mysql bcmath intl zip gd
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-##############################
-# 1) Stage: Build everything
-##############################
-
-FROM base AS build
-
-# Install nodejs and npm
-
-ENV NODE_VERSION=20.19.1
-
-RUN apt-get update && apt-get install -y gnupg2
-
-RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
-  && case "${dpkgArch##*-}" in \
-    amd64) ARCH='x64';; \
-    ppc64el) ARCH='ppc64le';; \
-    s390x) ARCH='s390x';; \
-    arm64) ARCH='arm64';; \
-    armhf) ARCH='armv7l';; \
-    i386) ARCH='x86';; \
-    *) echo "unsupported architecture"; exit 1 ;; \
-  esac \
-  # use pre-existing gpg directory, see https://github.com/nodejs/docker-node/pull/1895#issuecomment-1550389150
-  && export GNUPGHOME="$(mktemp -d)" \
-  # gpg keys listed at https://github.com/nodejs/node#release-keys
-  && set -ex \
-  && for key in \
-    C0D6248439F1D5604AAFFB4021D900FFDB233756 \
-    DD792F5973C6DE52C432CBDAC77ABFA00DDBF2B7 \
-    CC68F5A3106FF448322E48ED27F5E38D5B0A215F \
-    8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
-    890C08DB8579162FEE0DF9DB8BEAB4DFCF555EF4 \
-    C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C \
-    108F52B48DB57BB0CC439B2997B01419BD92F80A \
-    A363A499291CBBC940DD62E41F10027AF002F8B0 \
-  ; do \
-      gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key" || \
-      gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" ; \
-  done \
-  && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
-  && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
-  && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-  && gpgconf --kill all \
-  && rm -rf "$GNUPGHOME" \
-  && grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
-  && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
-  && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
-  && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
-  # smoke tests
-  && node --version \
-  && npm --version \
-  && rm -rf /tmp/*
-
-# Copy Composer from official image
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set the working directory
-WORKDIR /var/www/html
+# Enable Apache modules
+RUN a2enmod rewrite \
+    && a2enmod headers \
+    && a2enmod expires \
+    && a2enmod ssl \
+    && a2dismod mpm_event \
+    && a2enmod mpm_prefork \
+    && a2enmod php${PHP_VERSION}
 
-COPY composer.json composer.lock /var/www/html/
+# Configure Apache to listen on port 443 only
+RUN echo 'Listen 443' > /etc/apache2/ports.conf
 
-# Install Composer dependencies
-RUN composer install --no-scripts
+# Configure SSL with TLS 1.3+
+RUN echo '# SSL Protocol Configuration - TLS 1.3+ Only\n\
+SSLProtocol -all +TLSv1.3\n\
+SSLCipherSuite TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256\n\
+SSLHonorCipherOrder off\n\
+SSLSessionTickets off\n\
+SSLOptions +StrictRequire\n\
+SSLCompression off\n\
+SSLUseStapling on\n\
+SSLStaplingCache "shmcb:logs/stapling-cache(150000)"\n' > /etc/apache2/conf-available/ssl-params.conf
 
-# Copy application code
-COPY . .
+RUN a2enconf ssl-params
 
-# Install Composer dependencies (including dev dependencies) and run initial setup
-RUN composer update && php artisan opengrc:install --unattended
+# Configure Apache SSL virtual host
+RUN echo '<VirtualHost *:443>\n\
+    ServerAdmin webmaster@localhost\n\
+    DocumentRoot /var/www/html/public\n\
+    \n\
+    SSLEngine on\n\
+    SSLCertificateFile /etc/ssl/certs/opengrc.crt\n\
+    SSLCertificateKeyFile /etc/ssl/private/opengrc.key\n\
+    \n\
+    <Directory /var/www/html/public>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    \n\
+    # Security headers\n\
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"\n\
+    Header always set X-Frame-Options "SAMEORIGIN"\n\
+    Header always set X-Content-Type-Options "nosniff"\n\
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"\n\
+    \n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/default-ssl.conf
 
-########################################
-# 2) Stage: Final - Production runtime
-########################################
-FROM base AS production
+# Enable SSL site and disable default
+RUN a2dissite 000-default.conf && a2ensite default-ssl.conf
 
-# Copy Composer binary (needed to remove dev dependencies and cache)
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Set ServerName to suppress warnings
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy entire Laravel app (including vendor) from build stage
-COPY --from=build /var/www/html .
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
 
-# Remove PHP development dependencies and clear Composer cache
-RUN composer install --no-dev --optimize-autoloader && \
-    composer clear-cache && \
-    rm -rf /root/.composer/cache
+# Install PHP dependencies (without dev dependencies for production)
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
-# Remove node_modules
-RUN rm -rf /var/www/html/node_modules
+# Copy package files
+COPY package*.json ./
 
-# Make sure storage and bootstrap/cache are writable
-RUN mkdir -p storage/framework/cache/data bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache /var/www/html \
-    && chmod -R 775 storage bootstrap/cache /var/www/html
-    
-# Ensure there's a sqlite file
-RUN touch /var/www/html/database/opengrc.sqlite
+# Install Node dependencies
+RUN npm ci --only=production
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Copy application code
+COPY . .
 
-# Listen on port 8080 instead of 80
-RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf
-EXPOSE 8080
+# Complete Composer installation with autoloader optimization
+RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Update the default vhost to point to /var/www/html/public
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+# Build frontend assets
+RUN npm run build
 
-# Replace the VirtualHost port in 000-default.conf
-RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
+# Clean up Node modules after build
+RUN rm -rf node_modules
 
-# Allow .htaccess overrides and full access
-RUN echo "<Directory /var/www/html/public>\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>\n" >> /etc/apache2/apache2.conf
+# Create necessary directories and set permissions
+RUN mkdir -p storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
+    database \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache database
 
-# Set a server name
-RUN echo "ServerName 0.0.0.0" >> /etc/apache2/apache2.conf
+# Generate self-signed SSL certificate (will be replaced by real certs in production)
+RUN mkdir -p /etc/ssl/private \
+    && openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+    -keyout /etc/ssl/private/opengrc.key \
+    -out /etc/ssl/certs/opengrc.crt \
+    -subj "/C=US/ST=State/L=City/O=OpenGRC/CN=localhost" \
+    && chmod 600 /etc/ssl/private/opengrc.key
 
-COPY ./entrypoint.sh /entrypoint.sh
-
+# Copy and set permissions for entrypoint script
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-RUN mkdir -p /var/www/html/storage/framework/cache/data
-RUN chown -R www-data:www-data /var/www/html/storage/framework/cache/data
+# Expose port 443 for HTTPS
+EXPOSE 443
 
+# Switch to www-data user for security
 USER www-data
 
-# Use shell form instead of exec form to ensure proper execution
-ENTRYPOINT ["/bin/bash", "-c", "/entrypoint.sh"]
+# Health check using HTTPS
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -fk https://localhost:443/ || exit 1
+
+# Use entrypoint script to handle migrations and start Apache
+ENTRYPOINT ["/entrypoint.sh"]
