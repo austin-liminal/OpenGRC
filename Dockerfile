@@ -36,6 +36,8 @@ RUN apt-get install -y \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-dom \
     zip \
+    cron \
+    wget \
     unzip \
     git \
     openssl \
@@ -48,6 +50,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
     && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Trivy vulnerability scanner
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -161,7 +166,7 @@ RUN mkdir -p /etc/ssl/private \
     && openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
     -keyout /etc/ssl/private/opengrc.key \
     -out /etc/ssl/certs/opengrc.crt \
-    -subj "/C=US/ST=State/L=City/O=OpenGRC/CN=localhost" \
+    -subj "/C=US/ST=FL/L=Orlando/O=OpenGRC/CN=localhost" \
     && chmod 644 /etc/ssl/certs/opengrc.crt \
     && chmod 600 /etc/ssl/private/opengrc.key
 
