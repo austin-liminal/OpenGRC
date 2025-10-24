@@ -553,15 +553,15 @@ class Deploy extends Command
 
                 // Seed database
                 $this->info('[INFO] Seeding database with defaults...');
-                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
-                $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
+                $this->call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
+                $this->call('db:seed', ['--class' => 'RolePermissionSeeder', '--force' => true]);
                 $this->info('[SUCCESS] Database seeded');
             } else {
                 $this->info('[INFO] Skipping user creation for update deployment');
 
-                // Ensure settings table is properly initialized for updates
+                // Ensure settings and roles are properly initialized for updates
                 $this->info('[INFO] Ensuring settings are initialized...');
-                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+                $this->call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
                 $this->info('[SUCCESS] Settings initialized');
             }
         }

@@ -3,9 +3,6 @@ set -e
 
 echo "=== OpenGRC Container Starting ==="
 
-# Flag file to track if this is the first run
-FIRST_RUN_FLAG="/var/www/html/storage/.container_initialized"
-
 #############################################
 # EVERY RESTART: SSL Certificate Management
 #############################################
@@ -133,27 +130,14 @@ fi
 # Add accept flag to auto-accept deployment
 DEPLOY_CMD="$DEPLOY_CMD --accept"
 
-# Determine if this is first run or update
-if [ ! -f "$FIRST_RUN_FLAG" ]; then
-    echo "=== First Run Detected - Running Fresh Deployment ==="
-    echo "Executing deployment command..."
-else
-    echo "=== Subsequent Run - Running Update Deployment ==="
-    echo "Executing deployment command..."
-fi
-
 # Execute the deploy command
+echo "=== Running OpenGRC Deployment ==="
+echo "Executing deployment command..."
 eval $DEPLOY_CMD
 
 # Check if deployment was successful
 if [ $? -eq 0 ]; then
     echo "Deployment completed successfully."
-
-    # Create flag file if first run
-    if [ ! -f "$FIRST_RUN_FLAG" ]; then
-        touch "$FIRST_RUN_FLAG"
-        echo "First run flag created."
-    fi
 else
     echo "ERROR: Deployment failed!"
     exit 1
