@@ -50,14 +50,19 @@ RUN apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Wazuh Agent
+# Install Wazuh Manager and Agent (self-contained in one container)
 RUN curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import \
     && chmod 644 /usr/share/keyrings/wazuh.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list \
     && apt-get update \
-    && WAZUH_MANAGER="${WAZUH_MANAGER_IP:-wazuh-manager}" apt-get install -y wazuh-agent \
+    && apt-get install -y wazuh-manager \
+    && WAZUH_MANAGER="127.0.0.1" apt-get install -y wazuh-agent \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Configure Wazuh Manager to enable JSON alerts and auto-enrollment
+RUN sed -i 's/<json_output>no<\/json_output>/<json_output>yes<\/json_output>/' /var/ossec/etc/ossec.conf \
+    && sed -i 's/<use_source_ip>no<\/use_source_ip>/<use_source_ip>yes<\/use_source_ip>/' /var/ossec/etc/ossec.conf
 
 # Install Node.js and npm
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
@@ -196,7 +201,7 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
 \n\
 [INPUT]\n\
     Name              tail\n\
-    Path              /host/var/ossec/logs/alerts/alerts.json\n\
+    Path              /var/ossec/logs/alerts/alerts.json\n\
     Tag               wazuh-alerts\n\
     Parser            json\n\
     Refresh_Interval  5\n\

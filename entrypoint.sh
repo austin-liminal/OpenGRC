@@ -183,32 +183,55 @@ else
     echo "WARNING: rsyslog failed to start"
 fi
 
-# Configure and start Wazuh Agent
-# Default to Docker host gateway IP if WAZUH_MANAGER_IP not set
-if [ -z "$WAZUH_MANAGER_IP" ]; then
-    # Try to detect Docker host IP (gateway)
-    WAZUH_MANAGER_IP=$(ip route | grep default | awk '{print $3}')
-    echo "WAZUH_MANAGER_IP not set, auto-detected host gateway: $WAZUH_MANAGER_IP"
-fi
+# Start Wazuh Manager and Agent (self-contained in one container)
+echo "=== Starting Wazuh Manager and Agent ==="
 
-if [ -n "$WAZUH_MANAGER_IP" ]; then
-    echo "Configuring Wazuh Agent to connect to manager at $WAZUH_MANAGER_IP..."
+# Create necessary directories
+mkdir -p /var/ossec/logs /var/ossec/queue/rids /var/ossec/queue/diff /var/ossec/var/run /var/ossec/logs/alerts
 
-    # Update ossec.conf with manager IP
-    sed -i "s/<address>.*<\/address>/<address>$WAZUH_MANAGER_IP<\/address>/" /var/ossec/etc/ossec.conf
+# Start Wazuh Manager first
+echo "Starting Wazuh Manager..."
+/var/ossec/bin/wazuh-control start 2>&1
+
+# Wait for Manager to initialize
+sleep 5
+
+# Check if Manager is running
+if pgrep wazuh-managerd > /dev/null; then
+    echo "✓ Wazuh Manager started successfully (PID: $(pgrep wazuh-managerd))"
+    echo "  Manager listening on port 1514 (agent connections)"
+
+    # Register the agent with auto-enrollment
+    echo "Registering Wazuh Agent with Manager..."
+
+    # The agent should auto-register since we installed with WAZUH_MANAGER="127.0.0.1"
+    # Update agent config to point to localhost
+    sed -i 's/<address>.*<\/address>/<address>127.0.0.1<\/address>/' /var/ossec/etc/ossec.conf
 
     # Start Wazuh Agent
     echo "Starting Wazuh Agent..."
-    /var/ossec/bin/wazuh-control start
+    /var/ossec/bin/agent-auth -m 127.0.0.1 2>&1 || echo "Agent auth may have already completed during install"
+    /var/ossec/bin/wazuh-control restart 2>&1
 
-    # Verify Wazuh Agent is running
+    # Wait for agent startup
+    sleep 3
+
+    # Verify Agent is running
     if pgrep wazuh-agentd > /dev/null; then
-        echo "Wazuh Agent started successfully - monitoring and sending logs to $WAZUH_MANAGER_IP"
+        echo "✓ Wazuh Agent started successfully (PID: $(pgrep wazuh-agentd))"
+        echo "  Agent connected to local Manager at 127.0.0.1:1514"
+        echo "  Alerts will be written to /var/ossec/logs/alerts/alerts.json"
     else
-        echo "WARNING: Wazuh Agent failed to start"
+        echo "✗ WARNING: Wazuh Agent failed to start"
+        echo "  Last 20 lines of ossec.log:"
+        tail -20 /var/ossec/logs/ossec.log 2>/dev/null || echo "  No ossec.log found"
     fi
 else
-    echo "Could not determine Wazuh Manager IP - Wazuh Agent will not be started"
+    echo "✗ ERROR: Wazuh Manager failed to start"
+    echo "  Last 20 lines of ossec.log:"
+    tail -20 /var/ossec/logs/ossec.log 2>/dev/null || echo "  No ossec.log found"
+    echo "  Checking for error messages:"
+    grep -i error /var/ossec/logs/ossec.log 2>/dev/null || echo "  No error log found"
 fi
 
 # Start Fluent Bit for log forwarding to OpenSearch
