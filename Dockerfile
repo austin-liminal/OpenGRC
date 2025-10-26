@@ -45,8 +45,10 @@ RUN apt-get install -y \
     rsyslog \
     rsyslog-gnutls \
     rsyslog-relp \
+    ca-certificates \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ls -la /usr/lib/x86_64-linux-gnu/rsyslog/ || echo "Rsyslog modules directory not found"
 
 # Install Node.js and npm
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
