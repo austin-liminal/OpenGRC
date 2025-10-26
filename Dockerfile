@@ -40,7 +40,7 @@ RUN apt-get install -y \
     wget \
     unzip \
     git \
-    gvim \
+    vim \
     openssl \
     sudo \
     ca-certificates \
