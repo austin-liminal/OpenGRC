@@ -174,7 +174,7 @@ RUN /var/www/html/enterprise-deploy/setup-cron.sh
 EXPOSE 80
 
 # Health check using HTTP on port 80
-HEALTHCHECK --interval=30s --timeout=3s --start-period=50s --retries=5 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=5 \
     CMD curl -f http://localhost/ || exit 1
 
 # Use entrypoint script to handle migrations and start Apache
