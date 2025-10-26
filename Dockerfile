@@ -46,6 +46,7 @@ RUN apt-get install -y \
     ca-certificates \
     rsyslog \
     gnupg \
+    net-tools \
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -62,7 +63,9 @@ RUN curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyr
 
 # Configure Wazuh Manager to enable JSON alerts and auto-enrollment
 RUN sed -i 's/<json_output>no<\/json_output>/<json_output>yes<\/json_output>/' /var/ossec/etc/ossec.conf \
-    && sed -i 's/<use_source_ip>no<\/use_source_ip>/<use_source_ip>yes<\/use_source_ip>/' /var/ossec/etc/ossec.conf
+    && sed -i 's/<use_source_ip>no<\/use_source_ip>/<use_source_ip>yes<\/use_source_ip>/' /var/ossec/etc/ossec.conf \
+    && sed -i '/<auth>/,/<\/auth>/d' /var/ossec/etc/ossec.conf \
+    && sed -i 's|</ossec_config>|  <auth>\n    <disabled>no</disabled>\n    <port>1515</port>\n    <use_source_ip>no</use_source_ip>\n    <force_insert>yes</force_insert>\n    <force_time>0</force_time>\n    <purge>yes</purge>\n    <use_password>no</use_password>\n    <ciphers>HIGH:!ADH:!EXP:!MD5:!RC4:!3DES:!CAMELLIA:@STRENGTH</ciphers>\n    <ssl_agent_ca></ssl_agent_ca>\n    <ssl_verify_host>no</ssl_verify_host>\n    <ssl_manager_cert>/var/ossec/etc/sslmanager.cert</ssl_manager_cert>\n    <ssl_manager_key>/var/ossec/etc/sslmanager.key</ssl_manager_key>\n    <ssl_auto_negotiate>no</ssl_auto_negotiate>\n  </auth>\n</ossec_config>|' /var/ossec/etc/ossec.conf
 
 # Install Node.js and npm
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
