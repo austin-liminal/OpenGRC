@@ -66,7 +66,6 @@ RUN echo '# OpenSearch forwarding configuration\n\
 module(load="imuxsock")\n\
 module(load="imfile")\n\
 module(load="immark" interval="3600")\n\
-module(load="omfwd")\n\
 \n\
 # Global directives\n\
 $ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat\n\
