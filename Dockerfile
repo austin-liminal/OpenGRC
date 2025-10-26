@@ -105,46 +105,45 @@ RUN mkdir -p /etc/fluent-bit && \
     Skip_Empty_Lines  On\n\
 \n\
 [FILTER]\n\
-    Name              record_modifier\n\
-    Match             *\n\
-    Record ecs.version 8.11.0\n\
-    Record service.name opengrc\n\
-    Record service.type application\n\
-    Record event.created ${FLUENT_TIME}\n\
+    Name                modify\n\
+    Match               *\n\
+    Add                 ecs_version 8.11.0\n\
+    Add                 service_name opengrc\n\
+    Add                 service_type application\n\
 \n\
 [FILTER]\n\
-    Name              record_modifier\n\
-    Match             laravel\n\
-    Record event.dataset laravel.log\n\
-    Record log.logger laravel\n\
+    Name                modify\n\
+    Match               laravel\n\
+    Add                 dataset laravel.log\n\
+    Add                 logger laravel\n\
 \n\
 [FILTER]\n\
-    Name              record_modifier\n\
-    Match             php-fpm\n\
-    Record event.dataset php.fpm\n\
-    Record log.logger php-fpm\n\
+    Name                modify\n\
+    Match               php-fpm\n\
+    Add                 dataset php.fpm\n\
+    Add                 logger php-fpm\n\
 \n\
 [FILTER]\n\
-    Name              record_modifier\n\
-    Match             apache-access\n\
-    Record event.dataset apache.access\n\
-    Record log.logger apache\n\
-    Record event.category web\n\
-    Record event.type access\n\
+    Name                modify\n\
+    Match               apache-access\n\
+    Add                 dataset apache.access\n\
+    Add                 logger apache\n\
+    Add                 category web\n\
+    Add                 type access\n\
 \n\
 [FILTER]\n\
-    Name              record_modifier\n\
-    Match             apache-error\n\
-    Record event.dataset apache.error\n\
-    Record log.logger apache\n\
-    Record event.category web\n\
-    Record event.type error\n\
+    Name                modify\n\
+    Match               apache-error\n\
+    Add                 dataset apache.error\n\
+    Add                 logger apache\n\
+    Add                 category web\n\
+    Add                 type error\n\
 \n\
 [FILTER]\n\
-    Name              record_modifier\n\
-    Match             syslog\n\
-    Record event.dataset system.syslog\n\
-    Record log.logger syslog\n\
+    Name                modify\n\
+    Match               syslog\n\
+    Add                 dataset system.syslog\n\
+    Add                 logger syslog\n\
 \n\
 [OUTPUT]\n\
     Name              opensearch\n\
