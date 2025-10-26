@@ -104,6 +104,85 @@ RUN mkdir -p /etc/fluent-bit && \
     Refresh_Interval  5\n\
     Skip_Empty_Lines  On\n\
 \n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             *\n\
+    Add               ecs.version 8.11.0\n\
+    Add               service.name opengrc\n\
+    Add               service.type application\n\
+\n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             laravel\n\
+    Add               event.dataset laravel.log\n\
+    Add               log.logger laravel\n\
+\n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             php-fpm\n\
+    Add               event.dataset php.fpm\n\
+    Add               log.logger php-fpm\n\
+\n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             apache-access\n\
+    Add               event.dataset apache.access\n\
+    Add               log.logger apache\n\
+    Add               event.category web\n\
+    Add               event.type access\n\
+\n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             apache-error\n\
+    Add               event.dataset apache.error\n\
+    Add               log.logger apache\n\
+    Add               event.category web\n\
+    Add               event.type error\n\
+\n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             syslog\n\
+    Add               event.dataset system.syslog\n\
+    Add               log.logger syslog\n\
+\n\
+[FILTER]\n\
+    Name              nest\n\
+    Match             *\n\
+    Operation         nest\n\
+    Wildcard          log*\n\
+    Nest_under        log\n\
+    Remove_prefix     log.\n\
+\n\
+[FILTER]\n\
+    Name              nest\n\
+    Match             *\n\
+    Operation         nest\n\
+    Wildcard          event*\n\
+    Nest_under        event\n\
+    Remove_prefix     event.\n\
+\n\
+[FILTER]\n\
+    Name              nest\n\
+    Match             *\n\
+    Operation         nest\n\
+    Wildcard          service*\n\
+    Nest_under        service\n\
+    Remove_prefix     service.\n\
+\n\
+[FILTER]\n\
+    Name              nest\n\
+    Match             *\n\
+    Operation         nest\n\
+    Wildcard          ecs*\n\
+    Nest_under        ecs\n\
+    Remove_prefix     ecs.\n\
+\n\
+[FILTER]\n\
+    Name              modify\n\
+    Match             *\n\
+    Rename            log message\n\
+    Add               @timestamp ${FLUENT_TIME}\n\
+\n\
 [OUTPUT]\n\
     Name              opensearch\n\
     Match             *\n\
