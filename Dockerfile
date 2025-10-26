@@ -227,7 +227,7 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
 \n\
 [FILTER]\n\
     Name                lua\n\
-    Match               *\n\
+    Match               apache-access\n\
     script              /etc/fluent-bit/ecs-transform.lua\n\
     call                transform_to_ecs\n\
 \n\
@@ -242,7 +242,8 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
     Type              _doc\n\
     tls               On\n\
     tls.verify        Off\n\
-    Suppress_Type_Name On\n' > /etc/fluent-bit/fluent-bit.conf
+    Suppress_Type_Name On\n\
+    Pipeline          ecs-transform\n' > /etc/fluent-bit/fluent-bit.conf
 
 # Configure PHP-FPM pool for performance (optimized for 1GB container)
 RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
