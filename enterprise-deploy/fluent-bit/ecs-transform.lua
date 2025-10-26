@@ -99,6 +99,16 @@ function transform_to_ecs(tag, timestamp, record)
         end
     end
 
+    -- Remove original parsed fields to avoid duplicates and type conflicts
+    record["client_ip"] = nil
+    record["response_code"] = nil
+    record["http_method"] = nil
+    record["http_version"] = nil
+    record["bytes"] = nil
+    record["referrer"] = nil
+    record["user_agent_parsed"] = nil
+    record["client_geo"] = nil
+
     -- Return code 2 means: record modified, keep the same timestamp
     return 2, timestamp, record
 end
