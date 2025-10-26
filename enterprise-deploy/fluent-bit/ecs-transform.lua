@@ -62,7 +62,7 @@ function transform_to_ecs(tag, timestamp, record)
     end
 
     -- Map user_agent to user_agent.original (preserving user_agent_parsed if it exists)
-    if record["user_agent"] ~= nil then
+    if record["user_agent"] ~= nil and type(record["user_agent"]) == "string" then
         local ua_str = record["user_agent"]
         record["user_agent"] = {}
         record["user_agent"]["original"] = ua_str
@@ -78,12 +78,15 @@ function transform_to_ecs(tag, timestamp, record)
         record["client"]["address"] = record["client_ip"]
     end
 
-    -- Map bytes to http.response.body.bytes
-    if record["bytes"] ~= nil then
-        record["http"] = record["http"] or {}
-        record["http"]["response"] = record["http"]["response"] or {}
-        record["http"]["response"]["body"] = record["http"]["response"]["body"] or {}
-        record["http"]["response"]["body"]["bytes"] = tonumber(record["bytes"])
+    -- Map bytes to http.response.body.bytes (handle dash for missing values)
+    if record["bytes"] ~= nil and record["bytes"] ~= "-" then
+        local bytes_num = tonumber(record["bytes"])
+        if bytes_num ~= nil then
+            record["http"] = record["http"] or {}
+            record["http"]["response"] = record["http"]["response"] or {}
+            record["http"]["response"]["body"] = record["http"]["response"]["body"] or {}
+            record["http"]["response"]["body"]["bytes"] = bytes_num
+        end
     end
 
     -- Copy user_agent_parsed to user_agent if it exists
