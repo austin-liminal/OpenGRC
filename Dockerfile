@@ -40,15 +40,13 @@ RUN apt-get install -y \
     wget \
     unzip \
     git \
+    gvim \
     openssl \
     sudo \
-    rsyslog \
-    rsyslog-gnutls \
-    rsyslog-relp \
     ca-certificates \
+    && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && ls -la /usr/lib/x86_64-linux-gnu/rsyslog/ || echo "Rsyslog modules directory not found"
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js and npm
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
@@ -62,65 +60,54 @@ RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configure rsyslog for OpenSearch forwarding
-RUN echo '# OpenSearch forwarding configuration\n\
-# Load required modules\n\
-module(load="imuxsock")\n\
-module(load="imfile")\n\
-module(load="immark" interval="3600")\n\
+# Configure Fluent Bit for OpenSearch log forwarding
+RUN mkdir -p /etc/fluent-bit && \
+    echo '[SERVICE]\n\
+    Flush        5\n\
+    Daemon       Off\n\
+    Log_Level    info\n\
+    Parsers_File parsers.conf\n\
 \n\
-# Global directives\n\
-$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat\n\
-$FileOwner root\n\
-$FileGroup adm\n\
-$FileCreateMode 0640\n\
-$DirCreateMode 0755\n\
-$Umask 0022\n\
+[INPUT]\n\
+    Name              tail\n\
+    Path              /var/www/html/storage/logs/laravel.log\n\
+    Tag               laravel\n\
+    Refresh_Interval  5\n\
+    Skip_Empty_Lines  On\n\
 \n\
-# Template for OpenSearch (JSON format)\n\
-template(name="OpenSearchTemplate" type="string"\n\
-  string="{\\"@timestamp\\":\\"%timereported:::date-rfc3339%\\",\\"host\\":\\"%hostname%\\",\\"severity\\":\\"%syslogseverity-text%\\",\\"facility\\":\\"%syslogfacility-text%\\",\\"program\\":\\"%programname%\\",\\"message\\":\\"%msg:::json%\\"}\\n")\n\
+[INPUT]\n\
+    Name              tail\n\
+    Path              /var/log/php8.3-fpm.log\n\
+    Tag               php-fpm\n\
+    Refresh_Interval  5\n\
+    Skip_Empty_Lines  On\n\
 \n\
-# Input for Laravel logs\n\
-input(type="imfile"\n\
-      File="/var/www/html/storage/logs/laravel.log"\n\
-      Tag="laravel"\n\
-      Severity="info"\n\
-      Facility="local0")\n\
+[INPUT]\n\
+    Name              tail\n\
+    Path              /var/log/apache2/access.log\n\
+    Tag               apache-access\n\
+    Refresh_Interval  5\n\
+    Skip_Empty_Lines  On\n\
 \n\
-# Input for PHP-FPM logs\n\
-input(type="imfile"\n\
-      File="/var/log/php8.3-fpm.log"\n\
-      Tag="php-fpm"\n\
-      Severity="info"\n\
-      Facility="local1")\n\
+[INPUT]\n\
+    Name              tail\n\
+    Path              /var/log/apache2/error.log\n\
+    Tag               apache-error\n\
+    Refresh_Interval  5\n\
+    Skip_Empty_Lines  On\n\
 \n\
-# Input for Apache access logs (includes X-Forwarded-For)\n\
-input(type="imfile"\n\
-      File="/var/log/apache2/access.log"\n\
-      Tag="apache-access"\n\
-      Severity="info"\n\
-      Facility="local2")\n\
-\n\
-# Input for Apache error logs\n\
-input(type="imfile"\n\
-      File="/var/log/apache2/error.log"\n\
-      Tag="apache-error"\n\
-      Severity="error"\n\
-      Facility="local3")\n\
-\n\
-# Forward all logs to OpenSearch via TCP with TLS\n\
-action(type="omfwd"\n\
-       Target="private-og-search-1-do-user-25765278-0.k.db.ondigitalocean.com"\n\
-       Port="25060"\n\
-       Protocol="tcp"\n\
-       StreamDriver="gtls"\n\
-       StreamDriverMode="1"\n\
-       StreamDriverAuthMode="anon"\n\
-       Template="OpenSearchTemplate"\n\
-       action.resumeRetryCount="100"\n\
-       queue.type="linkedList"\n\
-       queue.size="10000")\n' > /etc/rsyslog.d/30-opensearch.conf
+[OUTPUT]\n\
+    Name              es\n\
+    Match             *\n\
+    Host              ${OPENSEARCH_HOST}\n\
+    Port              ${OPENSEARCH_PORT}\n\
+    HTTP_User         ${OPENSEARCH_USER}\n\
+    HTTP_Passwd       ${OPENSEARCH_PASSWORD}\n\
+    Index             opengrc-logs\n\
+    Type              _doc\n\
+    tls               On\n\
+    tls.verify        Off\n\
+    Suppress_Type_Name On\n' > /etc/fluent-bit/fluent-bit.conf
 
 # Configure PHP-FPM pool for performance (optimized for 1GB container)
 RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \

@@ -171,16 +171,17 @@ echo "OpenGRC is ready!"
 echo "Site URL: ${APP_URL}"
 echo "Admin Email: ${ADMIN_EMAIL}"
 
-# Start rsyslog for log forwarding to OpenSearch
-echo "Starting rsyslog for OpenSearch log forwarding..."
-/usr/sbin/rsyslogd
+# Start Fluent Bit for log forwarding to OpenSearch
+echo "Starting Fluent Bit for OpenSearch log forwarding..."
+/opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf &
+FLUENT_BIT_PID=$!
 sleep 2
 
-# Verify rsyslog is running
-if pgrep rsyslogd > /dev/null; then
-    echo "Rsyslog started successfully - logs will be forwarded to OpenSearch"
+# Verify Fluent Bit is running
+if kill -0 $FLUENT_BIT_PID 2>/dev/null; then
+    echo "Fluent Bit started successfully (PID: $FLUENT_BIT_PID) - logs will be forwarded to OpenSearch"
 else
-    echo "WARNING: Rsyslog failed to start - logs will not be forwarded"
+    echo "WARNING: Fluent Bit failed to start - logs will not be forwarded"
 fi
 
 # Start PHP-FPM
