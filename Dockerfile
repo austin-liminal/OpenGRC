@@ -75,44 +75,70 @@ RUN mkdir -p /etc/fluent-bit && \
     if record["response_code"] ~= nil then\n\
         record["http"] = record["http"] or {}\n\
         record["http"]["response"] = record["http"]["response"] or {}\n\
-        record["http"]["response"]["status_code"] = record["response_code"]\n\
+        record["http"]["response"]["status_code"] = tonumber(record["response_code"])\n\
     end\n\
     \n\
-    -- Map other common Fluent Bit fields to ECS\n\
-    if record["method"] ~= nil then\n\
+    -- Map http_method to http.request.method\n\
+    if record["http_method"] ~= nil then\n\
         record["http"] = record["http"] or {}\n\
         record["http"]["request"] = record["http"]["request"] or {}\n\
-        record["http"]["request"]["method"] = record["method"]\n\
+        record["http"]["request"]["method"] = record["http_method"]\n\
     end\n\
     \n\
-    if record["path"] ~= nil then\n\
-        record["url"] = record["url"] or {}\n\
-        record["url"]["path"] = record["path"]\n\
+    -- Map http_version to http.version\n\
+    if record["http_version"] ~= nil then\n\
+        record["http"] = record["http"] or {}\n\
+        record["http"]["version"] = record["http_version"]\n\
     end\n\
     \n\
-    if record["referer"] ~= nil then\n\
+    -- Map url to url.path and url.original\n\
+    if record["url"] ~= nil then\n\
+        local url_str = record["url"]\n\
+        record["url"] = {}\n\
+        record["url"]["path"] = url_str\n\
+        record["url"]["original"] = url_str\n\
+    end\n\
+    \n\
+    -- Map referrer to http.request.referrer\n\
+    if record["referrer"] ~= nil then\n\
         record["http"] = record["http"] or {}\n\
         record["http"]["request"] = record["http"]["request"] or {}\n\
-        record["http"]["request"]["referrer"] = record["referer"]\n\
+        record["http"]["request"]["referrer"] = record["referrer"]\n\
     end\n\
     \n\
+    -- Map user_agent to user_agent.original (already have user_agent_parsed)\n\
     if record["user_agent"] ~= nil then\n\
-        record["user_agent_obj"] = record["user_agent_obj"] or {}\n\
-        record["user_agent_obj"]["original"] = record["user_agent"]\n\
+        local ua_str = record["user_agent"]\n\
+        record["user_agent"] = {}\n\
+        record["user_agent"]["original"] = ua_str\n\
     end\n\
     \n\
+    -- Map client_ip to source.ip and client.ip\n\
     if record["client_ip"] ~= nil then\n\
-        record["communication"] = record["communication"] or {}\n\
-        record["communication"]["source"] = record["communication"]["source"] or {}\n\
-        record["communication"]["source"]["ip"] = record["client_ip"]\n\
         record["source"] = record["source"] or {}\n\
         record["source"]["ip"] = record["client_ip"]\n\
+        record["source"]["address"] = record["client_ip"]\n\
+        record["client"] = record["client"] or {}\n\
+        record["client"]["ip"] = record["client_ip"]\n\
+        record["client"]["address"] = record["client_ip"]\n\
     end\n\
     \n\
-    if record["bytes_sent"] ~= nil then\n\
+    -- Map bytes to http.response.body.bytes\n\
+    if record["bytes"] ~= nil then\n\
         record["http"] = record["http"] or {}\n\
         record["http"]["response"] = record["http"]["response"] or {}\n\
-        record["http"]["response"]["bytes"] = tonumber(record["bytes_sent"])\n\
+        record["http"]["response"]["body"] = record["http"]["response"]["body"] or {}\n\
+        record["http"]["response"]["body"]["bytes"] = tonumber(record["bytes"])\n\
+    end\n\
+    \n\
+    -- Copy user_agent_parsed to user_agent if it exists\n\
+    if record["user_agent_parsed"] ~= nil then\n\
+        if record["user_agent"] == nil or type(record["user_agent"]) ~= "table" then\n\
+            record["user_agent"] = {}\n\
+        end\n\
+        for k, v in pairs(record["user_agent_parsed"]) do\n\
+            record["user_agent"][k] = v\n\
+        end\n\
     end\n\
     \n\
     return 2, timestamp, record\n\
