@@ -115,8 +115,9 @@ RUN echo 'Listen 80' > /etc/apache2/ports.conf
 COPY enterprise-deploy/apache/opengrc.conf /etc/apache2/sites-available/
 
 # Disable default site and enable OpenGRC site
-RUN a2dissite 000-default.conf default-ssl.conf || true
-RUN a2ensite opengrc.conf
+RUN a2ensite opengrc
+RUN a2dissite 000-default default-ssl || true
+
 
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
