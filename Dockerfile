@@ -44,6 +44,7 @@ RUN apt-get install -y \
     sudo \
     rsyslog \
     rsyslog-gnutls \
+    rsyslog-relp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
