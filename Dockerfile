@@ -64,6 +64,7 @@ RUN echo '# OpenSearch forwarding configuration\n\
 # Load required modules\n\
 module(load="imuxsock")\n\
 module(load="imfile")\n\
+module(load="immark" interval="3600")\n\
 module(load="omfwd")\n\
 \n\
 # Global directives\n\
@@ -75,23 +76,8 @@ $DirCreateMode 0755\n\
 $Umask 0022\n\
 \n\
 # Template for OpenSearch (JSON format)\n\
-template(name="OpenSearchTemplate" type="list") {\n\
-    constant(value="{")\n\
-    constant(value="\"@timestamp\":\"")\n\
-    property(name="timereported" dateFormat="rfc3339")\n\
-    constant(value="\",\"host\":\"")\n\
-    property(name="hostname")\n\
-    constant(value="\",\"severity\":\"")\n\
-    property(name="syslogseverity-text")\n\
-    constant(value="\",\"facility\":\"")\n\
-    property(name="syslogfacility-text")\n\
-    constant(value="\",\"program\":\"")\n\
-    property(name="programname")\n\
-    constant(value="\",\"message\":\"")\n\
-    property(name="msg" format="json")\n\
-    constant(value="\"}")\n\
-    constant(value="\\n")\n\
-}\n\
+template(name="OpenSearchTemplate" type="string"\n\
+  string="{\\"@timestamp\\":\\"%timereported:::date-rfc3339%\\",\\"host\\":\\"%hostname%\\",\\"severity\\":\\"%syslogseverity-text%\\",\\"facility\\":\\"%syslogfacility-text%\\",\\"program\\":\\"%programname%\\",\\"message\\":\\"%msg:::json%\\"}\\n")\n\
 \n\
 # Input for Laravel logs\n\
 input(type="imfile"\n\
@@ -276,8 +262,10 @@ RUN mkdir -p storage/framework/cache/data \
     storage/logs \
     bootstrap/cache \
     database \
+    && touch storage/logs/laravel.log \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache database
+    && chmod -R 775 storage bootstrap/cache database \
+    && chmod 664 storage/logs/laravel.log
 
 # Copy and set permissions for entrypoint script
 COPY entrypoint.sh /entrypoint.sh
