@@ -8,19 +8,31 @@ ENV TZ=UTC
 ENV PHP_VERSION=8.3
 ENV NODE_VERSION=20.x
 
-# Install system dependencies and Apache2
+# Add all APT repositories and GPG keys first
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     ca-certificates \
     curl \
     gnupg \
     lsb-release \
+    # Add PHP repository (Ondřej Surý's PPA)
     && add-apt-repository ppa:ondrej/php \
-    && apt-get update
+    # Add Wazuh repository
+    && curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import \
+    && chmod 644 /usr/share/keyrings/wazuh.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list \
+    # Add Node.js repository
+    && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
+    # Final update with all repositories
+    && apt-get update \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Apache2, PHP-FPM and required extensions
-RUN apt-get install -y \
+# Install all packages in a single layer (PHP, Apache, Wazuh, Node.js, utilities)
+RUN apt-get update && apt-get install -y \
+    # Apache2
     apache2 \
+    # PHP and extensions
     php${PHP_VERSION} \
     php${PHP_VERSION}-cli \
     php${PHP_VERSION}-fpm \
@@ -35,6 +47,11 @@ RUN apt-get install -y \
     php${PHP_VERSION}-bcmath \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-dom \
+    # Node.js (from NodeSource repository)
+    nodejs \
+    # Wazuh Manager
+    wazuh-manager \
+    # System utilities
     zip \
     cron \
     wget \
@@ -43,38 +60,18 @@ RUN apt-get install -y \
     vim \
     openssl \
     sudo \
-    ca-certificates \
     rsyslog \
-    gnupg \
     net-tools \
+    # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
+    # Install Trivy vulnerability scanner
+    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
+    # Cleanup
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Wazuh Manager and Agent (self-contained in one container)
-RUN curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import \
-    && chmod 644 /usr/share/keyrings/wazuh.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list \
-    && apt-get update \
-    && apt-get install -y wazuh-manager \
-    && WAZUH_MANAGER="127.0.0.1" apt-get install -y wazuh-agent \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Configure Wazuh Manager to enable JSON alerts and auto-enrollment
-RUN sed -i 's/<json_output>no<\/json_output>/<json_output>yes<\/json_output>/' /var/ossec/etc/ossec.conf \
-    && sed -i 's/<use_source_ip>no<\/use_source_ip>/<use_source_ip>yes<\/use_source_ip>/' /var/ossec/etc/ossec.conf \
-    && sed -i '/<auth>/,/<\/auth>/d' /var/ossec/etc/ossec.conf \
-    && sed -i 's|</ossec_config>|  <auth>\n    <disabled>no</disabled>\n    <port>1515</port>\n    <use_source_ip>no</use_source_ip>\n    <force_insert>yes</force_insert>\n    <force_time>0</force_time>\n    <purge>yes</purge>\n    <use_password>no</use_password>\n    <ciphers>HIGH:!ADH:!EXP:!MD5:!RC4:!3DES:!CAMELLIA:@STRENGTH</ciphers>\n    <ssl_agent_ca></ssl_agent_ca>\n    <ssl_verify_host>no</ssl_verify_host>\n    <ssl_manager_cert>/var/ossec/etc/sslmanager.cert</ssl_manager_cert>\n    <ssl_manager_key>/var/ossec/etc/sslmanager.key</ssl_manager_key>\n    <ssl_auto_negotiate>no</ssl_auto_negotiate>\n  </auth>\n</ossec_config>|' /var/ossec/etc/ossec.conf
-
-# Install Node.js and npm
-RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Trivy vulnerability scanner
-RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+# Configure Wazuh Manager to enable JSON alerts
+RUN sed -i 's/<json_output>no<\/json_output>/<json_output>yes<\/json_output>/' /var/ossec/etc/ossec.conf
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
