@@ -111,7 +111,7 @@ input(type="imfile"\n\
 \n\
 # Forward all logs to OpenSearch via TCP with TLS\n\
 action(type="omfwd"\n\
-       Target="og-search-1-do-user-25765278-0.k.db.ondigitalocean.com"\n\
+       Target="private-og-search-1-do-user-25765278-0.k.db.ondigitalocean.com"\n\
        Port="25060"\n\
        Protocol="tcp"\n\
        StreamDriver="gtls"\n\
