@@ -44,6 +44,7 @@ RUN apt-get install -y \
     openssl \
     sudo \
     ca-certificates \
+    rsyslog \
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -96,14 +97,21 @@ RUN mkdir -p /etc/fluent-bit && \
     Refresh_Interval  5\n\
     Skip_Empty_Lines  On\n\
 \n\
+[INPUT]\n\
+    Name              tail\n\
+    Path              /var/log/syslog\n\
+    Tag               syslog\n\
+    Refresh_Interval  5\n\
+    Skip_Empty_Lines  On\n\
+\n\
 [OUTPUT]\n\
-    Name              es\n\
+    Name              opensearch\n\
     Match             *\n\
     Host              ${OPENSEARCH_HOST}\n\
     Port              ${OPENSEARCH_PORT}\n\
     HTTP_User         ${OPENSEARCH_USER}\n\
     HTTP_Passwd       ${OPENSEARCH_PASSWORD}\n\
-    Index             opengrc-logs\n\
+    Index             logs\n\
     Type              _doc\n\
     tls               On\n\
     tls.verify        Off\n\
@@ -174,11 +182,14 @@ RUN echo '<VirtualHost *:443>\n\
     Header always set X-Content-Type-Options "nosniff"\n\
     Header always set Referrer-Policy "strict-origin-when-cross-origin"\n\
     \n\
-    # Custom log format with real client IP (from X-Forwarded-For)\n\
-    LogFormat "%a %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\" forwarded_for=\\"%{X-Forwarded-For}i\\"" combined_with_forwarded\n\
+    # Custom log format using X-Forwarded-For as source IP when available\n\
+    LogFormat "%{X-Forwarded-For}i %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\"" forwarded\n\
+    LogFormat "%a %l %u %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\"" combined\n\
+    SetEnvIf X-Forwarded-For "^.*\\..*" forwarded\n\
     \n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined_with_forwarded\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log forwarded env=forwarded\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined env=!forwarded\n\
 </VirtualHost>' > /etc/apache2/sites-available/default-443.conf
 
 # Configure HTTP virtual host on port 8080 for health checks

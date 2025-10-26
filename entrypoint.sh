@@ -171,6 +171,18 @@ echo "OpenGRC is ready!"
 echo "Site URL: ${APP_URL}"
 echo "Admin Email: ${ADMIN_EMAIL}"
 
+# Start rsyslog for system logging
+echo "Starting rsyslog..."
+/usr/sbin/rsyslogd
+sleep 1
+
+# Verify rsyslog is running
+if pgrep rsyslogd > /dev/null; then
+    echo "rsyslog started successfully - system logs will be written to /var/log/syslog"
+else
+    echo "WARNING: rsyslog failed to start"
+fi
+
 # Start Fluent Bit for log forwarding to OpenSearch
 echo "Starting Fluent Bit for OpenSearch log forwarding..."
 /opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf &
