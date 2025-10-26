@@ -67,10 +67,6 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy Fluent Bit configuration files
-COPY enterprise-deploy/fluent-bit/*.conf /etc/fluent-bit/
-COPY enterprise-deploy/fluent-bit/*.lua /etc/fluent-bit/
-
 # Configure PHP-FPM pool for performance (optimized for 1GB container)
 RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
     && sed -i 's/pm.max_children = .*/pm.max_children = 20/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
@@ -115,39 +111,12 @@ RUN a2enconf remoteip
 # Configure Apache to listen on port 80
 RUN echo 'Listen 80' > /etc/apache2/ports.conf
 
-# Configure HTTP virtual host on port 80 (DigitalOcean load balancer forwards here after SSL termination)
-RUN echo '<VirtualHost *:80>\n\
-    ServerAdmin webmaster@localhost\n\
-    DocumentRoot /var/www/html/public\n\
-    \n\
-    <Directory /var/www/html/public>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-    \n\
-    # PHP-FPM Configuration\n\
-    <FilesMatch \\.php$>\n\
-        SetHandler "proxy:unix:/var/run/php/php8.3-fpm.sock|fcgi://localhost"\n\
-    </FilesMatch>\n\
-    \n\
-    # Security headers (DigitalOcean load balancer handles HTTPS)\n\
-    Header always set X-Frame-Options "SAMEORIGIN"\n\
-    Header always set X-Content-Type-Options "nosniff"\n\
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"\n\
-    \n\
-    # Custom log format using X-Forwarded-For as source IP when available\n\
-    LogFormat "%{X-Forwarded-For}i %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\"" forwarded\n\
-    LogFormat "%a %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\"" combined\n\
-    SetEnvIf X-Forwarded-For "^.*\\..*" forwarded\n\
-    \n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log forwarded env=forwarded\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined env=!forwarded\n\
-</VirtualHost>' > /etc/apache2/sites-available/default-http.conf
+# Copy Apache virtual host configuration
+COPY enterprise-deploy/apache/opengrc.conf /etc/apache2/sites-available/
 
-# Enable site
-RUN a2dissite 000-default.conf && a2ensite default-http.conf
+# Disable default site and enable OpenGRC site
+RUN a2dissite 000-default.conf default-ssl.conf || true
+RUN a2ensite opengrc.conf
 
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -195,6 +164,11 @@ RUN mkdir -p storage/framework/cache/data \
 # Copy enterprise deployment scripts
 COPY enterprise-deploy/ /var/www/html/enterprise-deploy/
 RUN chmod +x /var/www/html/enterprise-deploy/*.sh
+
+# Copy Fluent Bit configuration files (must be after enterprise-deploy is copied)
+RUN mkdir -p /etc/fluent-bit
+COPY enterprise-deploy/fluent-bit/*.conf /etc/fluent-bit/
+COPY enterprise-deploy/fluent-bit/*.lua /etc/fluent-bit/
 
 # Set up Trivy daily vulnerability scan cron job
 RUN /var/www/html/enterprise-deploy/setup-cron.sh
