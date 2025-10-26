@@ -2,39 +2,7 @@
 set -e
 
 echo "=== OpenGRC Container Starting ==="
-
-#############################################
-# EVERY RESTART: SSL Certificate Management
-#############################################
-
-echo "Checking SSL certificates..."
-
-# Ensure SSL directories exist
-mkdir -p /etc/ssl/certs /etc/ssl/private
-
-# Check if SSL certificates exist, if not create them
-if [ ! -f "/etc/ssl/private/opengrc.key" ] || [ ! -f "/etc/ssl/certs/opengrc.crt" ]; then
-    echo "SSL certificates not found, generating self-signed certificate..."
-    openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-        -keyout /etc/ssl/private/opengrc.key \
-        -out /etc/ssl/certs/opengrc.crt \
-        -subj "/C=US/ST=State/L=City/O=OpenGRC/CN=localhost"
-    chmod 644 /etc/ssl/certs/opengrc.crt
-    chmod 600 /etc/ssl/private/opengrc.key
-    echo "Self-signed SSL certificate generated."
-fi
-
-# Replace SSL certificates if provided via environment
-if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
-    echo "Installing custom SSL certificates from environment..."
-    echo "$SSL_CERT" > /etc/ssl/certs/opengrc.crt
-    echo "$SSL_KEY" > /etc/ssl/private/opengrc.key
-    chmod 644 /etc/ssl/certs/opengrc.crt
-    chmod 600 /etc/ssl/private/opengrc.key
-    echo "Custom SSL certificates installed."
-else
-    echo "Using default self-signed certificate."
-fi
+echo "DigitalOcean load balancer handles SSL termination"
 
 #############################################
 # VALIDATE REQUIRED ENVIRONMENT VARIABLES
@@ -166,10 +134,11 @@ fi
 # START APPLICATION
 #############################################
 
-echo "=== Starting Apache on port 443 (HTTPS) ==="
+echo "=== Starting Apache on port 80 (HTTP) ==="
 echo "OpenGRC is ready!"
 echo "Site URL: ${APP_URL}"
 echo "Admin Email: ${ADMIN_EMAIL}"
+echo "Note: DigitalOcean load balancer handles SSL/TLS termination"
 
 # Start rsyslog for system logging
 echo "Starting rsyslog..."
@@ -181,35 +150,6 @@ if pgrep rsyslogd > /dev/null; then
     echo "rsyslog started successfully - system logs will be written to /var/log/syslog"
 else
     echo "WARNING: rsyslog failed to start"
-fi
-
-# Start Wazuh Manager (monitors localhost)
-echo "=== Starting Wazuh Manager ==="
-
-# Create necessary directories
-mkdir -p /var/ossec/logs /var/ossec/queue/rids /var/ossec/queue/diff /var/ossec/var/run /var/ossec/logs/alerts
-
-# Start Wazuh Manager
-echo "Starting Wazuh Manager..."
-/var/ossec/bin/wazuh-control start 2>&1
-
-# Wait for Manager to initialize
-sleep 5
-
-# Check if Manager is running
-if pgrep wazuh-managerd > /dev/null; then
-    echo "✓ Wazuh Manager started successfully (PID: $(pgrep wazuh-managerd))"
-    echo "  Manager monitoring localhost"
-    echo "  Alerts will be written to /var/ossec/logs/alerts/alerts.json"
-
-    # Show status
-    /var/ossec/bin/wazuh-control status 2>/dev/null || true
-else
-    echo "✗ WARNING: Wazuh Manager failed to start"
-    echo "  Last 30 lines of ossec.log:"
-    tail -30 /var/ossec/logs/ossec.log 2>/dev/null || echo "  No ossec.log found"
-    echo "  Checking for error messages:"
-    grep -i error /var/ossec/logs/ossec.log 2>/dev/null || echo "  No error log found"
 fi
 
 # Start Fluent Bit for log forwarding to OpenSearch

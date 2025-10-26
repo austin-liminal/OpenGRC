@@ -20,6 +20,9 @@ yarn-error.log
 /.idea
 /.vscode
 
+# Trivy vulnerability scan results
+/public/ops/vuln.json
+
 # Project exclude paths
 /storage/app/
 /storage/framework/sessions/*

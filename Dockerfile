@@ -8,27 +8,22 @@ ENV TZ=UTC
 ENV PHP_VERSION=8.3
 ENV NODE_VERSION=20.x
 
-# Add all APT repositories and GPG keys first
-RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release \
-    # Add PHP repository (Ondřej Surý's PPA)
+# Install repository management tools and add custom repositories
+# Step 1: Update base Ubuntu repos and install tools needed to add repos
+# Step 2: Add PHP and Node.js repos (both scripts do their own apt-get update)
+# Step 3: Clean up to minimize layer size
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        software-properties-common \
+        curl \
+        ca-certificates \
+        gnupg \
     && add-apt-repository ppa:ondrej/php \
-    # Add Wazuh repository
-    && curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import \
-    && chmod 644 /usr/share/keyrings/wazuh.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list \
-    # Add Node.js repository
     && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
-    # Final update with all repositories
-    && apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install all packages in a single layer (PHP, Apache, Wazuh, Node.js, utilities)
+# Install all application packages (repos already configured above)
 RUN apt-get update && apt-get install -y \
     # Apache2
     apache2 \
@@ -49,8 +44,6 @@ RUN apt-get update && apt-get install -y \
     php${PHP_VERSION}-dom \
     # Node.js (from NodeSource repository)
     nodejs \
-    # Wazuh Manager
-    wazuh-manager \
     # System utilities
     zip \
     cron \
@@ -62,6 +55,7 @@ RUN apt-get update && apt-get install -y \
     sudo \
     rsyslog \
     net-tools \
+    jq \
     # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     # Install Trivy vulnerability scanner
@@ -69,9 +63,6 @@ RUN apt-get update && apt-get install -y \
     # Cleanup
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Configure Wazuh Manager to enable JSON alerts
-RUN sed -i 's/<json_output>no<\/json_output>/<json_output>yes<\/json_output>/' /var/ossec/etc/ossec.conf
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -199,14 +190,6 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
     Refresh_Interval  5\n\
     Skip_Empty_Lines  On\n\
 \n\
-[INPUT]\n\
-    Name              tail\n\
-    Path              /var/ossec/logs/alerts/alerts.json\n\
-    Tag               wazuh-alerts\n\
-    Parser            json\n\
-    Refresh_Interval  5\n\
-    Skip_Empty_Lines  On\n\
-\n\
 [FILTER]\n\
     Name                modify\n\
     Match               *\n\
@@ -247,13 +230,6 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
     Match               syslog\n\
     Add                 dataset system.syslog\n\
     Add                 logger syslog\n\
-\n\
-[FILTER]\n\
-    Name                modify\n\
-    Match               wazuh-alerts\n\
-    Add                 dataset wazuh.alerts\n\
-    Add                 logger wazuh\n\
-    Add                 data_source wazuh\n\
 \n\
 [FILTER]\n\
     Name                lua\n\
@@ -316,11 +292,11 @@ RemoteIPInternalProxy 100.64.0.0/10' > /etc/apache2/conf-available/remoteip.conf
 
 RUN a2enconf remoteip
 
-# Configure Apache to listen on port 443 (HTTPS) and 8080 (HTTP health checks)
-RUN echo 'Listen 443\nListen 8080' > /etc/apache2/ports.conf
+# Configure Apache to listen on port 80
+RUN echo 'Listen 80' > /etc/apache2/ports.conf
 
-# Configure HTTP virtual host on port 443 (DigitalOcean handles SSL termination)
-RUN echo '<VirtualHost *:443>\n\
+# Configure HTTP virtual host on port 80 (DigitalOcean load balancer forwards here after SSL termination)
+RUN echo '<VirtualHost *:80>\n\
     ServerAdmin webmaster@localhost\n\
     DocumentRoot /var/www/html/public\n\
     \n\
@@ -348,30 +324,10 @@ RUN echo '<VirtualHost *:443>\n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
     CustomLog ${APACHE_LOG_DIR}/access.log forwarded env=forwarded\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined env=!forwarded\n\
-</VirtualHost>' > /etc/apache2/sites-available/default-443.conf
+</VirtualHost>' > /etc/apache2/sites-available/default-http.conf
 
-# Configure HTTP virtual host on port 8080 for health checks
-RUN echo '<VirtualHost *:8080>\n\
-    ServerAdmin webmaster@localhost\n\
-    DocumentRoot /var/www/html/public\n\
-    \n\
-    <Directory /var/www/html/public>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-    \n\
-    # PHP-FPM Configuration\n\
-    <FilesMatch \\.php$>\n\
-        SetHandler "proxy:unix:/var/run/php/php8.3-fpm.sock|fcgi://localhost"\n\
-    </FilesMatch>\n\
-    \n\
-    ErrorLog ${APACHE_LOG_DIR}/health-error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/health-access.log combined\n\
-</VirtualHost>' > /etc/apache2/sites-available/health-check.conf
-
-# Enable sites
-RUN a2dissite 000-default.conf && a2ensite default-443.conf && a2ensite health-check.conf
+# Enable site
+RUN a2dissite 000-default.conf && a2ensite default-http.conf
 
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -403,17 +359,8 @@ RUN npm run build
 # Clean up Node modules after build
 RUN rm -rf node_modules
 
-# Generate self-signed SSL certificate (will be replaced by real certs in production)
-# Must be done as root before switching to www-data user
-RUN mkdir -p /etc/ssl/private \
-    && openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-    -keyout /etc/ssl/private/opengrc.key \
-    -out /etc/ssl/certs/opengrc.crt \
-    -subj "/C=US/ST=FL/L=Orlando/O=OpenGRC/CN=localhost" \
-    && chmod 644 /etc/ssl/certs/opengrc.crt \
-    && chmod 600 /etc/ssl/private/opengrc.key
-
 # Create necessary directories and set permissions
+# Note: SSL is handled by DigitalOcean load balancer, no certificates needed in container
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/views \
@@ -425,16 +372,19 @@ RUN mkdir -p storage/framework/cache/data \
     && chmod -R 775 storage bootstrap/cache database \
     && chmod 664 storage/logs/laravel.log
 
-# Copy and set permissions for entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Copy enterprise deployment scripts
+COPY enterprise-deploy/ /var/www/html/enterprise-deploy/
+RUN chmod +x /var/www/html/enterprise-deploy/*.sh
 
-# Expose ports: 443 for HTTPS, 8080 for HTTP health checks
-EXPOSE 443 8080
+# Set up Trivy daily vulnerability scan cron job
+RUN /var/www/html/enterprise-deploy/setup-cron.sh
 
-# Health check using HTTP on port 8080
+# Expose port 80 (DigitalOcean load balancer forwards to this port)
+EXPOSE 80
+
+# Health check using HTTP on port 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=50s --retries=5 \
-    CMD curl -f http://localhost:8080/ || exit 1
+    CMD curl -f http://localhost/ || exit 1
 
 # Use entrypoint script to handle migrations and start Apache
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/var/www/html/enterprise-deploy/entrypoint.sh"]
