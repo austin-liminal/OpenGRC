@@ -63,6 +63,60 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Configure Fluent Bit for OpenSearch log forwarding
 RUN mkdir -p /etc/fluent-bit && \
+    echo 'function transform_to_ecs(tag, timestamp, record)\n\
+    -- Map client_geo to communication.source.geo\n\
+    if record["client_geo"] ~= nil then\n\
+        record["communication"] = record["communication"] or {}\n\
+        record["communication"]["source"] = record["communication"]["source"] or {}\n\
+        record["communication"]["source"]["geo"] = record["client_geo"]\n\
+    end\n\
+    \n\
+    -- Map response_code to http.response.status_code\n\
+    if record["response_code"] ~= nil then\n\
+        record["http"] = record["http"] or {}\n\
+        record["http"]["response"] = record["http"]["response"] or {}\n\
+        record["http"]["response"]["status_code"] = record["response_code"]\n\
+    end\n\
+    \n\
+    -- Map other common Fluent Bit fields to ECS\n\
+    if record["method"] ~= nil then\n\
+        record["http"] = record["http"] or {}\n\
+        record["http"]["request"] = record["http"]["request"] or {}\n\
+        record["http"]["request"]["method"] = record["method"]\n\
+    end\n\
+    \n\
+    if record["path"] ~= nil then\n\
+        record["url"] = record["url"] or {}\n\
+        record["url"]["path"] = record["path"]\n\
+    end\n\
+    \n\
+    if record["referer"] ~= nil then\n\
+        record["http"] = record["http"] or {}\n\
+        record["http"]["request"] = record["http"]["request"] or {}\n\
+        record["http"]["request"]["referrer"] = record["referer"]\n\
+    end\n\
+    \n\
+    if record["user_agent"] ~= nil then\n\
+        record["user_agent_obj"] = record["user_agent_obj"] or {}\n\
+        record["user_agent_obj"]["original"] = record["user_agent"]\n\
+    end\n\
+    \n\
+    if record["client_ip"] ~= nil then\n\
+        record["communication"] = record["communication"] or {}\n\
+        record["communication"]["source"] = record["communication"]["source"] or {}\n\
+        record["communication"]["source"]["ip"] = record["client_ip"]\n\
+        record["source"] = record["source"] or {}\n\
+        record["source"]["ip"] = record["client_ip"]\n\
+    end\n\
+    \n\
+    if record["bytes_sent"] ~= nil then\n\
+        record["http"] = record["http"] or {}\n\
+        record["http"]["response"] = record["http"]["response"] or {}\n\
+        record["http"]["response"]["bytes"] = tonumber(record["bytes_sent"])\n\
+    end\n\
+    \n\
+    return 2, timestamp, record\n\
+end' > /etc/fluent-bit/ecs-transform.lua && \
     echo '[SERVICE]\n\
     Flush        5\n\
     Daemon       Off\n\
@@ -144,6 +198,12 @@ RUN mkdir -p /etc/fluent-bit && \
     Match               syslog\n\
     Add                 dataset system.syslog\n\
     Add                 logger syslog\n\
+\n\
+[FILTER]\n\
+    Name                lua\n\
+    Match               *\n\
+    script              /etc/fluent-bit/ecs-transform.lua\n\
+    call                transform_to_ecs\n\
 \n\
 [OUTPUT]\n\
     Name              opensearch\n\
