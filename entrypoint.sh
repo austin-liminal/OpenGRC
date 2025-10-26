@@ -183,6 +183,34 @@ else
     echo "WARNING: rsyslog failed to start"
 fi
 
+# Configure and start Wazuh Agent
+# Default to Docker host gateway IP if WAZUH_MANAGER_IP not set
+if [ -z "$WAZUH_MANAGER_IP" ]; then
+    # Try to detect Docker host IP (gateway)
+    WAZUH_MANAGER_IP=$(ip route | grep default | awk '{print $3}')
+    echo "WAZUH_MANAGER_IP not set, auto-detected host gateway: $WAZUH_MANAGER_IP"
+fi
+
+if [ -n "$WAZUH_MANAGER_IP" ]; then
+    echo "Configuring Wazuh Agent to connect to manager at $WAZUH_MANAGER_IP..."
+
+    # Update ossec.conf with manager IP
+    sed -i "s/<address>.*<\/address>/<address>$WAZUH_MANAGER_IP<\/address>/" /var/ossec/etc/ossec.conf
+
+    # Start Wazuh Agent
+    echo "Starting Wazuh Agent..."
+    /var/ossec/bin/wazuh-control start
+
+    # Verify Wazuh Agent is running
+    if pgrep wazuh-agentd > /dev/null; then
+        echo "Wazuh Agent started successfully - monitoring and sending logs to $WAZUH_MANAGER_IP"
+    else
+        echo "WARNING: Wazuh Agent failed to start"
+    fi
+else
+    echo "Could not determine Wazuh Manager IP - Wazuh Agent will not be started"
+fi
+
 # Start Fluent Bit for log forwarding to OpenSearch
 echo "Starting Fluent Bit for OpenSearch log forwarding..."
 /opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf &

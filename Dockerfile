@@ -45,7 +45,17 @@ RUN apt-get install -y \
     sudo \
     ca-certificates \
     rsyslog \
+    gnupg \
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Wazuh Agent
+RUN curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import \
+    && chmod 644 /usr/share/keyrings/wazuh.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list \
+    && apt-get update \
+    && WAZUH_MANAGER="${WAZUH_MANAGER_IP:-wazuh-manager}" apt-get install -y wazuh-agent \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -184,6 +194,14 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
     Refresh_Interval  5\n\
     Skip_Empty_Lines  On\n\
 \n\
+[INPUT]\n\
+    Name              tail\n\
+    Path              /host/var/ossec/logs/alerts/alerts.json\n\
+    Tag               wazuh-alerts\n\
+    Parser            json\n\
+    Refresh_Interval  5\n\
+    Skip_Empty_Lines  On\n\
+\n\
 [FILTER]\n\
     Name                modify\n\
     Match               *\n\
@@ -224,6 +242,13 @@ end' > /etc/fluent-bit/ecs-transform.lua && \
     Match               syslog\n\
     Add                 dataset system.syslog\n\
     Add                 logger syslog\n\
+\n\
+[FILTER]\n\
+    Name                modify\n\
+    Match               wazuh-alerts\n\
+    Add                 dataset wazuh.alerts\n\
+    Add                 logger wazuh\n\
+    Add                 data_source wazuh\n\
 \n\
 [FILTER]\n\
     Name                lua\n\
