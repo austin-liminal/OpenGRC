@@ -173,9 +173,15 @@ echo "Admin Email: ${ADMIN_EMAIL}"
 
 # Start rsyslog for log forwarding to OpenSearch
 echo "Starting rsyslog for OpenSearch log forwarding..."
-service rsyslog start
+/usr/sbin/rsyslogd
 sleep 2
-echo "Rsyslog started - logs will be forwarded to OpenSearch"
+
+# Verify rsyslog is running
+if pgrep rsyslogd > /dev/null; then
+    echo "Rsyslog started successfully - logs will be forwarded to OpenSearch"
+else
+    echo "WARNING: Rsyslog failed to start - logs will not be forwarded"
+fi
 
 # Start PHP-FPM
 echo "Starting PHP-FPM..."
