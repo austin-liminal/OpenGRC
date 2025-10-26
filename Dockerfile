@@ -111,12 +111,8 @@ RUN a2enconf remoteip
 # Configure Apache to listen on port 80
 RUN echo 'Listen 80' > /etc/apache2/ports.conf
 
-# Copy Apache virtual host configuration
-COPY enterprise-deploy/apache/opengrc.conf /etc/apache2/sites-available/
-
-# Disable default site and enable OpenGRC site
-RUN a2ensite opengrc
-RUN a2dissite 000-default default-ssl || true
+# Overwrite the default Apache site with OpenGRC configuration
+COPY enterprise-deploy/apache/opengrc.conf /etc/apache2/sites-available/000-default.conf
 
 
 # Set ServerName to suppress warnings
