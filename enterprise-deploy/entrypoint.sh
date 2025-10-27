@@ -153,67 +153,43 @@ else
 fi
 
 #############################################
-# AIDE: Initialize database and run check
+# FIM: File Integrity Monitoring
 #############################################
 
-echo "=== AIDE File Integrity Monitoring Setup ==="
+echo "=== FIM: File Integrity Monitoring Setup ==="
 
-# Disable AIDE capabilities for container environment
-export AIDE_NO_CAPSNG=1
+# Check if FIM database exists
+if [ ! -f /var/lib/fim/checksums.db ]; then
+    echo "FIM baseline not found. Creating baseline..."
 
-# Check if AIDE database exists
-if [ ! -f /var/lib/aide/aide.db ]; then
-    echo "AIDE database not found. Initializing AIDE database..."
-    echo "This will take a few minutes on first launch..."
+    # Create baseline
+    if /usr/local/bin/fim-init; then
+        echo "FIM baseline created successfully"
 
-    # Initialize AIDE database (with capabilities disabled for containers)
-    if aideinit -y -f; then
-        # Move the new database to the proper location
-        if [ -f /var/lib/aide/aide.db.new ]; then
-            mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-            echo "AIDE database initialized successfully at /var/lib/aide/aide.db"
-
-            # Log to syslog
-            logger -t aide-init -p local6.info "AIDE database initialized successfully on container startup"
-
-            # Run initial check to establish baseline
-            echo "Running initial AIDE integrity check..."
-            if /usr/local/bin/aide-check; then
-                echo "Initial AIDE check completed - baseline established"
-            else
-                echo "WARNING: Initial AIDE check reported changes (expected on first run)"
-            fi
+        # Run initial check
+        echo "Running initial integrity check..."
+        if /usr/local/bin/fim-check; then
+            echo "✓ Initial FIM check passed"
         else
-            echo "ERROR: AIDE database initialization failed - aide.db.new not found"
-            logger -t aide-init -p local6.err "AIDE database initialization failed"
+            echo "Note: Some changes detected (expected on first run)"
         fi
     else
-        echo "ERROR: aideinit command failed"
-        logger -t aide-init -p local6.err "aideinit command failed"
+        echo "WARNING: FIM initialization failed"
+        logger -t fim-init -p local6.err "FIM initialization failed"
     fi
 else
-    echo "AIDE database found at /var/lib/aide/aide.db"
+    echo "FIM baseline found - running integrity check..."
 
     # Run integrity check on startup
-    echo "Running AIDE integrity check on container startup..."
-    if /usr/local/bin/aide-check; then
-        echo "AIDE integrity check passed - no changes detected"
-        logger -t aide-startup -p local6.info "AIDE startup check passed - no changes detected"
+    if /usr/local/bin/fim-check; then
+        echo "✓ FIM check passed - no changes detected"
     else
-        echo "WARNING: AIDE detected file changes since last database update"
-        echo "Review /var/log/aide/aide-check.log for details"
-        logger -t aide-startup -p local6.alert "AIDE startup check detected file changes"
+        echo "⚠️  FIM detected file changes"
+        echo "Review /var/log/fim/fim.log for details"
     fi
 fi
 
-# Display database info
-if [ -f /var/lib/aide/aide.db ]; then
-    DB_SIZE=$(du -h /var/lib/aide/aide.db | cut -f1)
-    DB_DATE=$(stat -c %y /var/lib/aide/aide.db | cut -d' ' -f1)
-    echo "AIDE database size: $DB_SIZE (created: $DB_DATE)"
-fi
-
-echo "AIDE monitoring active - logs: /var/log/aide/"
+echo "FIM monitoring active - logs: /var/log/fim/"
 echo ""
 
 # Start Fluent Bit for log forwarding to OpenSearch
