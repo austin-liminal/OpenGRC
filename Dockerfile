@@ -169,6 +169,10 @@ RUN mkdir -p /etc/fluent-bit
 COPY enterprise-deploy/fluent-bit/*.conf /etc/fluent-bit/
 COPY enterprise-deploy/fluent-bit/*.lua /etc/fluent-bit/
 
+# Copy Trivy vulnerability scanning script
+COPY enterprise-deploy/trivy-scan.sh /usr/local/bin/trivy-scan
+RUN chmod 0755 /usr/local/bin/trivy-scan
+
 # Copy FIM (File Integrity Monitoring) scripts
 RUN mkdir -p /var/lib/fim /var/log/fim
 COPY enterprise-deploy/fim/fim-init.sh /usr/local/bin/fim-init

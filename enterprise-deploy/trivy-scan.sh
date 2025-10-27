@@ -16,6 +16,7 @@ mkdir -p "$(dirname "$OUTPUT_FILE")"
 
 # Log scan start
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Trivy vulnerability scan" >> "$LOG_FILE"
+logger -t trivy-scan -p local6.info "Starting Trivy vulnerability scan"
 
 # Run Trivy scan
 trivy rootfs "$SCAN_TARGET" \
@@ -34,6 +35,13 @@ chmod 644 "$OUTPUT_FILE"
 # Log completion
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Trivy scan completed. Results written to $OUTPUT_FILE" >> "$LOG_FILE"
 
-# Optional: Print summary to stdout
-VULN_COUNT=$(jq '.Results[]?.Vulnerabilities | length' "$OUTPUT_FILE" 2>/dev/null | awk '{s+=$1} END {print s}')
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Found $VULN_COUNT vulnerabilities (HIGH/CRITICAL)" >> "$LOG_FILE"
+# Count vulnerabilities and log summary
+VULN_COUNT=$(jq '[.Results[]?.Vulnerabilities // []] | add | length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+
+if [ "$VULN_COUNT" = "0" ] || [ -z "$VULN_COUNT" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✓ No HIGH/CRITICAL vulnerabilities found" >> "$LOG_FILE"
+    logger -t trivy-scan -p local6.info "Trivy scan completed: No HIGH/CRITICAL vulnerabilities found"
+else
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ⚠️  Found $VULN_COUNT HIGH/CRITICAL vulnerabilities" >> "$LOG_FILE"
+    logger -t trivy-scan -p local6.warn "Trivy scan completed: $VULN_COUNT HIGH/CRITICAL vulnerabilities found"
+fi
