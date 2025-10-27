@@ -4,6 +4,9 @@
 
 set -o pipefail
 
+# Disable AIDE capabilities for container environment
+export AIDE_NO_CAPSNG=1
+
 # Configuration
 AIDE_BIN="/usr/bin/aide"
 AIDE_DB="/var/lib/aide/aide.db"

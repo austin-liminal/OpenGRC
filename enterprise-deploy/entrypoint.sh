@@ -158,12 +158,15 @@ fi
 
 echo "=== AIDE File Integrity Monitoring Setup ==="
 
+# Disable AIDE capabilities for container environment
+export AIDE_NO_CAPSNG=1
+
 # Check if AIDE database exists
 if [ ! -f /var/lib/aide/aide.db ]; then
     echo "AIDE database not found. Initializing AIDE database..."
     echo "This will take a few minutes on first launch..."
 
-    # Initialize AIDE database
+    # Initialize AIDE database (with capabilities disabled for containers)
     if aideinit -y -f; then
         # Move the new database to the proper location
         if [ -f /var/lib/aide/aide.db.new ]; then

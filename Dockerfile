@@ -179,6 +179,11 @@ RUN chmod 0600 /etc/aide/aide.conf \
     && chmod 0700 /var/lib/aide \
     && chmod 0755 /var/log/aide
 
+# Configure AIDE for container environment (disable capabilities)
+RUN sed -i 's|^#!/bin/bash|#!/bin/bash\n# Disable capabilities for container environment\nexport AIDE_NO_CAPSNG=1|' /usr/bin/aideinit \
+    && echo '# AIDE container configuration' > /etc/default/aide \
+    && echo 'AIDE_NO_CAPSNG=1' >> /etc/default/aide
+
 # Configure rsyslog for AIDE alerts
 RUN echo '# AIDE alerts with high priority\n\
 :programname, isequal, "aide" /var/log/aide/aide.log\n\
