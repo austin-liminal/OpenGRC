@@ -152,6 +152,67 @@ else
     echo "WARNING: rsyslog failed to start"
 fi
 
+#############################################
+# AIDE: Initialize database and run check
+#############################################
+
+echo "=== AIDE File Integrity Monitoring Setup ==="
+
+# Check if AIDE database exists
+if [ ! -f /var/lib/aide/aide.db ]; then
+    echo "AIDE database not found. Initializing AIDE database..."
+    echo "This will take a few minutes on first launch..."
+
+    # Initialize AIDE database
+    if aideinit -y -f; then
+        # Move the new database to the proper location
+        if [ -f /var/lib/aide/aide.db.new ]; then
+            mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+            echo "AIDE database initialized successfully at /var/lib/aide/aide.db"
+
+            # Log to syslog
+            logger -t aide-init -p local6.info "AIDE database initialized successfully on container startup"
+
+            # Run initial check to establish baseline
+            echo "Running initial AIDE integrity check..."
+            if /usr/local/bin/aide-check; then
+                echo "Initial AIDE check completed - baseline established"
+            else
+                echo "WARNING: Initial AIDE check reported changes (expected on first run)"
+            fi
+        else
+            echo "ERROR: AIDE database initialization failed - aide.db.new not found"
+            logger -t aide-init -p local6.err "AIDE database initialization failed"
+        fi
+    else
+        echo "ERROR: aideinit command failed"
+        logger -t aide-init -p local6.err "aideinit command failed"
+    fi
+else
+    echo "AIDE database found at /var/lib/aide/aide.db"
+
+    # Run integrity check on startup
+    echo "Running AIDE integrity check on container startup..."
+    if /usr/local/bin/aide-check; then
+        echo "AIDE integrity check passed - no changes detected"
+        logger -t aide-startup -p local6.info "AIDE startup check passed - no changes detected"
+    else
+        echo "WARNING: AIDE detected file changes since last database update"
+        echo "Review /var/log/aide/aide-check.log for details"
+        logger -t aide-startup -p local6.alert "AIDE startup check detected file changes"
+    fi
+fi
+
+# Display database info
+if [ -f /var/lib/aide/aide.db ]; then
+    DB_SIZE=$(du -h /var/lib/aide/aide.db | cut -f1)
+    DB_DATE=$(stat -c %y /var/lib/aide/aide.db | cut -d' ' -f1)
+    echo "AIDE database size: $DB_SIZE (created: $DB_DATE)"
+fi
+
+echo "AIDE monitoring active - logs: /var/log/aide/"
+echo ""
+
 # Start Fluent Bit for log forwarding to OpenSearch
 echo "Starting Fluent Bit for OpenSearch log forwarding..."
 /opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf &

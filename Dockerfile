@@ -56,6 +56,9 @@ RUN apt-get update && apt-get install -y \
     rsyslog \
     net-tools \
     jq \
+    # Security tools
+    aide \
+    aide-common \
     # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     # Install Trivy vulnerability scanner
@@ -166,6 +169,24 @@ RUN chmod +x /var/www/html/enterprise-deploy/*.sh
 RUN mkdir -p /etc/fluent-bit
 COPY enterprise-deploy/fluent-bit/*.conf /etc/fluent-bit/
 COPY enterprise-deploy/fluent-bit/*.lua /etc/fluent-bit/
+
+# Copy AIDE configuration and setup
+RUN mkdir -p /etc/aide /var/lib/aide /var/log/aide /var/run/aide
+COPY enterprise-deploy/aide/aide.conf /etc/aide/aide.conf
+COPY enterprise-deploy/aide/aide-check.sh /usr/local/bin/aide-check
+RUN chmod 0600 /etc/aide/aide.conf \
+    && chmod 0755 /usr/local/bin/aide-check \
+    && chmod 0700 /var/lib/aide \
+    && chmod 0755 /var/log/aide
+
+# Configure rsyslog for AIDE alerts
+RUN echo '# AIDE alerts with high priority\n\
+:programname, isequal, "aide" /var/log/aide/aide.log\n\
+:programname, isequal, "aide-check" /var/log/aide/aide-check.log\n\
+\n\
+# Stop processing if it'"'"'s an AIDE message to prevent duplicates\n\
+:programname, isequal, "aide" stop\n\
+:programname, isequal, "aide-check" stop' > /etc/rsyslog.d/30-aide.conf
 
 # Set up Trivy daily vulnerability scan cron job
 RUN /var/www/html/enterprise-deploy/setup-cron.sh
