@@ -56,6 +56,10 @@ RUN apt-get update && apt-get install -y \
     rsyslog \
     net-tools \
     jq \
+    # Security scanning
+    clamav \
+    clamav-daemon \
+    clamav-freshclam \
     # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     # Install Trivy vulnerability scanner
@@ -177,7 +181,16 @@ RUN chmod 0755 /usr/local/bin/fim-init /usr/local/bin/fim-check \
     && chmod 0700 /var/lib/fim \
     && chmod 0755 /var/log/fim
 
-# Configure rsyslog for FIM alerts
+# Copy ClamAV malware scanning scripts
+RUN mkdir -p /var/log/clamav /var/lib/clamav
+COPY enterprise-deploy/clamav/clamav-scan.sh /usr/local/bin/clamav-scan
+COPY enterprise-deploy/clamav/setup-clamav-cron.sh /var/www/html/enterprise-deploy/setup-clamav-cron.sh
+RUN chmod 0755 /usr/local/bin/clamav-scan \
+    && chmod 0755 /var/www/html/enterprise-deploy/setup-clamav-cron.sh \
+    && chmod 0755 /var/log/clamav \
+    && chown -R clamav:clamav /var/lib/clamav /var/log/clamav
+
+# Configure rsyslog for FIM and ClamAV alerts
 RUN echo '# FIM alerts\n\
 :programname, isequal, "fim-init" /var/log/fim/fim.log\n\
 :programname, isequal, "fim-check" /var/log/fim/fim.log\n\
@@ -186,9 +199,16 @@ RUN echo '# FIM alerts\n\
 :programname, isequal, "fim-init" stop\n\
 :programname, isequal, "fim-check" stop' > /etc/rsyslog.d/30-fim.conf
 
-# Set up cron jobs (Trivy vulnerability scans and FIM checks)
+RUN echo '# ClamAV alerts\n\
+:programname, isequal, "clamav-scan" /var/log/clamav/scan.log\n\
+\n\
+# Stop processing if it'"'"'s a ClamAV message to prevent duplicates\n\
+:programname, isequal, "clamav-scan" stop' > /etc/rsyslog.d/31-clamav.conf
+
+# Set up cron jobs (Trivy, FIM, and ClamAV)
 RUN /var/www/html/enterprise-deploy/setup-cron.sh \
-    && /var/www/html/enterprise-deploy/setup-fim-cron.sh
+    && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
+    && /var/www/html/enterprise-deploy/setup-clamav-cron.sh
 
 # Expose port 80 (DigitalOcean load balancer forwards to this port)
 EXPOSE 80

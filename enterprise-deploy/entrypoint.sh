@@ -162,6 +162,7 @@ if pgrep cron > /dev/null; then
     echo "cron started successfully - scheduled tasks active"
     echo "  - Trivy vulnerability scans: daily at 2 AM"
     echo "  - FIM integrity checks: hourly"
+    echo "  - ClamAV malware scans: daily at 11 PM"
 else
     echo "WARNING: cron failed to start"
 fi
