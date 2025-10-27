@@ -57,9 +57,7 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     jq \
     # Security scanning
-    clamav \
-    clamav-daemon \
-    clamav-freshclam \
+    yara \
     # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     # Install Trivy vulnerability scanner
@@ -181,16 +179,19 @@ RUN chmod 0755 /usr/local/bin/fim-init /usr/local/bin/fim-check \
     && chmod 0700 /var/lib/fim \
     && chmod 0755 /var/log/fim
 
-# Copy ClamAV malware scanning scripts
-RUN mkdir -p /var/log/clamav /var/lib/clamav
-COPY enterprise-deploy/clamav/clamav-scan.sh /usr/local/bin/clamav-scan
-COPY enterprise-deploy/clamav/setup-clamav-cron.sh /var/www/html/enterprise-deploy/setup-clamav-cron.sh
-RUN chmod 0755 /usr/local/bin/clamav-scan \
-    && chmod 0755 /var/www/html/enterprise-deploy/setup-clamav-cron.sh \
-    && chmod 0755 /var/log/clamav \
-    && chown -R clamav:clamav /var/lib/clamav /var/log/clamav
+# Copy YARA malware scanning scripts and rules
+RUN mkdir -p /var/log/yara /etc/yara/rules
+COPY enterprise-deploy/yara/yara-scan.sh /usr/local/bin/yara-scan
+COPY enterprise-deploy/yara/setup-yara-cron.sh /var/www/html/enterprise-deploy/setup-yara-cron.sh
+COPY enterprise-deploy/yara/yara-exceptions.conf /etc/yara/yara-exceptions.conf
+COPY enterprise-deploy/yara/rules/*.yar /etc/yara/rules/
+RUN chmod 0755 /usr/local/bin/yara-scan \
+    && chmod 0755 /var/www/html/enterprise-deploy/setup-yara-cron.sh \
+    && chmod 0755 /var/log/yara \
+    && chmod 0644 /etc/yara/rules/*.yar \
+    && chmod 0644 /etc/yara/yara-exceptions.conf
 
-# Configure rsyslog for FIM and ClamAV alerts
+# Configure rsyslog for FIM and YARA alerts
 RUN echo '# FIM alerts\n\
 :programname, isequal, "fim-init" /var/log/fim/fim.log\n\
 :programname, isequal, "fim-check" /var/log/fim/fim.log\n\
@@ -199,16 +200,16 @@ RUN echo '# FIM alerts\n\
 :programname, isequal, "fim-init" stop\n\
 :programname, isequal, "fim-check" stop' > /etc/rsyslog.d/30-fim.conf
 
-RUN echo '# ClamAV alerts\n\
-:programname, isequal, "clamav-scan" /var/log/clamav/scan.log\n\
+RUN echo '# YARA alerts\n\
+:programname, isequal, "yara-scan" /var/log/yara/scan.log\n\
 \n\
-# Stop processing if it'"'"'s a ClamAV message to prevent duplicates\n\
-:programname, isequal, "clamav-scan" stop' > /etc/rsyslog.d/31-clamav.conf
+# Stop processing if it'"'"'s a YARA message to prevent duplicates\n\
+:programname, isequal, "yara-scan" stop' > /etc/rsyslog.d/31-yara.conf
 
-# Set up cron jobs (Trivy, FIM, and ClamAV)
+# Set up cron jobs (Trivy, FIM, and YARA)
 RUN /var/www/html/enterprise-deploy/setup-cron.sh \
     && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
-    && /var/www/html/enterprise-deploy/setup-clamav-cron.sh
+    && /var/www/html/enterprise-deploy/setup-yara-cron.sh
 
 # Expose port 80 (DigitalOcean load balancer forwards to this port)
 EXPOSE 80
