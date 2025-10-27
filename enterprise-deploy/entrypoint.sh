@@ -152,6 +152,20 @@ else
     echo "WARNING: rsyslog failed to start"
 fi
 
+# Start cron for scheduled tasks (Trivy, FIM)
+echo "Starting cron daemon..."
+/usr/sbin/cron
+sleep 1
+
+# Verify cron is running
+if pgrep cron > /dev/null; then
+    echo "cron started successfully - scheduled tasks active"
+    echo "  - Trivy vulnerability scans: daily at 2 AM"
+    echo "  - FIM integrity checks: hourly"
+else
+    echo "WARNING: cron failed to start"
+fi
+
 #############################################
 # FIM: File Integrity Monitoring
 #############################################

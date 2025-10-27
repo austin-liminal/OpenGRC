@@ -22,6 +22,16 @@ FIM runs automatically when the container starts:
 
 1. **First launch**: Creates baseline checksums (~1-2 seconds)
 2. **Subsequent launches**: Checks files against baseline
+3. **Hourly checks**: Cron job runs `fim-check` every hour
+
+### Scheduled Checks
+
+FIM automatically runs every hour via cron:
+
+- **Schedule**: Top of every hour (0 * * * *)
+- **Command**: `/usr/local/bin/fim-check`
+- **Logs**: `/var/log/fim/fim-check.log`
+- **Cron file**: `/etc/cron.d/fim`
 
 ### Manual Commands
 
@@ -31,6 +41,12 @@ fim-init
 
 # Check for changes
 fim-check
+
+# View cron schedule
+cat /etc/cron.d/fim
+
+# View hourly check logs
+tail -f /var/log/fim/fim-check.log
 ```
 
 ## Monitored Files

@@ -171,7 +171,9 @@ COPY enterprise-deploy/fluent-bit/*.lua /etc/fluent-bit/
 RUN mkdir -p /var/lib/fim /var/log/fim
 COPY enterprise-deploy/fim/fim-init.sh /usr/local/bin/fim-init
 COPY enterprise-deploy/fim/fim-check.sh /usr/local/bin/fim-check
+COPY enterprise-deploy/fim/setup-fim-cron.sh /var/www/html/enterprise-deploy/setup-fim-cron.sh
 RUN chmod 0755 /usr/local/bin/fim-init /usr/local/bin/fim-check \
+    && chmod 0755 /var/www/html/enterprise-deploy/setup-fim-cron.sh \
     && chmod 0700 /var/lib/fim \
     && chmod 0755 /var/log/fim
 
@@ -184,8 +186,9 @@ RUN echo '# FIM alerts\n\
 :programname, isequal, "fim-init" stop\n\
 :programname, isequal, "fim-check" stop' > /etc/rsyslog.d/30-fim.conf
 
-# Set up Trivy daily vulnerability scan cron job
-RUN /var/www/html/enterprise-deploy/setup-cron.sh
+# Set up cron jobs (Trivy vulnerability scans and FIM checks)
+RUN /var/www/html/enterprise-deploy/setup-cron.sh \
+    && /var/www/html/enterprise-deploy/setup-fim-cron.sh
 
 # Expose port 80 (DigitalOcean load balancer forwards to this port)
 EXPOSE 80
