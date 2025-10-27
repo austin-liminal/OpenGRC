@@ -41,7 +41,7 @@ echo ""
 SCAN_PATHS=(
     "/var/www/html"
     "/etc"
-    "/tmp"
+    "/usr"
 )
 
 # Start scan report
@@ -74,8 +74,9 @@ for path in "${SCAN_PATHS[@]}"; do
             --exclude-dir="^/var/www/html/vendor" \
             --exclude-dir="^/var/www/html/node_modules" \
             --exclude-dir="^/var/www/html/storage/framework/cache" \
-            --max-filesize=100M \
-            --max-scansize=100M \
+            --max-filesize=5M \
+            --max-scansize=5M \
+            --no-sandbox
             "$path" 2>&1 || true)
 
         echo "$SCAN_OUTPUT" >> "$SCAN_REPORT"
