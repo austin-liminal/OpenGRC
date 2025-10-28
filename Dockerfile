@@ -58,8 +58,6 @@ RUN apt-get update && apt-get install -y \
     jq \
     # Security scanning
     yara \
-    # ModSecurity WAF
-    libapache2-mod-security2 \
     # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     # Install Trivy vulnerability scanner
@@ -216,45 +214,6 @@ RUN echo '# YARA alerts\n\
 RUN /var/www/html/enterprise-deploy/setup-cron.sh \
     && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
     && /var/www/html/enterprise-deploy/setup-yara-cron.sh
-
-# Configure ModSecurity WAF
-# The libapache2-mod-security2 package includes modsecurity-crs, so we just clean up problematic files
-RUN echo "Checking CRS installation..." \
-    && ls -la /usr/share/modsecurity-crs/ || echo "CRS directory not found" \
-    && ls -la /etc/modsecurity/ || echo "ModSecurity config directory not found" \
-    && find /usr/share -name "*modsecurity*" -type d \
-    && find /usr/share -name "crs-setup.conf*" 2>/dev/null || echo "No crs-setup found yet"
-
-# Copy ModSecurity configuration files
-RUN mkdir -p /etc/modsecurity
-COPY enterprise-deploy/modsecurity/modsecurity.conf /etc/modsecurity/modsecurity.conf
-COPY enterprise-deploy/modsecurity/laravel-exclusions.conf /etc/modsecurity/laravel-exclusions.conf
-
-# Create a minimal CRS setup configuration to avoid duplicate rule IDs
-# RUN echo '# OWASP CRS v3.3.5 Configuration - Minimal setup for ModSecurity 2.9.x' > /etc/modsecurity/crs-setup.conf \
-#     && echo 'SecAction "id:900000,phase:1,nolog,pass,t:none"' >> /etc/modsecurity/crs-setup.conf \
-#     && echo 'SecAction "id:900001,phase:1,nolog,pass,t:none,setvar:tx.paranoia_level=1"' >> /etc/modsecurity/crs-setup.conf \
-#     && echo 'SecAction "id:900110,phase:1,nolog,pass,t:none,setvar:tx.inbound_anomaly_score_threshold=5"' >> /etc/modsecurity/crs-setup.conf \
-#     && echo 'SecAction "id:900111,phase:1,nolog,pass,t:none,setvar:tx.outbound_anomaly_score_threshold=4"' >> /etc/modsecurity/crs-setup.conf \
-#     && echo "SecAction \"id:900230,phase:1,nolog,pass,t:none,setvar:'tx.allowed_http_versions=HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0'\"" >> /etc/modsecurity/crs-setup.conf \
-#     && echo "SecAction \"id:900240,phase:1,nolog,pass,t:none,setvar:'tx.allowed_methods=GET HEAD POST OPTIONS PUT PATCH DELETE'\"" >> /etc/modsecurity/crs-setup.conf
-
-# Copy Apache ModSecurity configuration
-COPY enterprise-deploy/apache/modsecurity-enabled.conf /etc/apache2/modsecurity-enabled.conf
-COPY enterprise-deploy/apache/modsecurity-disabled.conf /etc/apache2/modsecurity-disabled.conf
-COPY enterprise-deploy/configure-waf.sh /var/www/html/enterprise-deploy/configure-waf.sh
-RUN chmod +x /var/www/html/enterprise-deploy/configure-waf.sh
-
-# Copy unicode mapping for ModSecurity
-RUN cp /usr/share/modsecurity-crs/crs-setup.conf.example /tmp/unicode.mapping.example || \
-    echo "20127" > /etc/modsecurity/unicode.mapping
-
-# Configure rsyslog for ModSecurity alerts
-RUN echo '# ModSecurity WAF alerts\n\
-:programname, isequal, "modsecurity" /var/log/modsecurity/modsecurity.log\n\
-\n\
-# Stop processing if it'"'"'s a ModSecurity message to prevent duplicates\n\
-:programname, isequal, "modsecurity" stop' > /etc/rsyslog.d/32-modsecurity.conf
 
 # Expose port 80 (DigitalOcean load balancer forwards to this port)
 EXPOSE 80
