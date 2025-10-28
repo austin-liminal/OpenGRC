@@ -242,8 +242,8 @@ RUN echo '# OWASP CRS v3.3.5 Configuration - Minimal setup for ModSecurity 2.9.x
     && echo 'SecAction "id:900001,phase:1,nolog,pass,t:none,setvar:tx.paranoia_level=1"' >> /etc/modsecurity/crs-setup.conf \
     && echo 'SecAction "id:900110,phase:1,nolog,pass,t:none,setvar:tx.inbound_anomaly_score_threshold=5"' >> /etc/modsecurity/crs-setup.conf \
     && echo 'SecAction "id:900111,phase:1,nolog,pass,t:none,setvar:tx.outbound_anomaly_score_threshold=4"' >> /etc/modsecurity/crs-setup.conf \
-    && echo 'SecAction "id:900230,phase:1,nolog,pass,t:none,setvar:tx.allowed_http_versions=HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0"' >> /etc/modsecurity/crs-setup.conf \
-    && echo 'SecAction "id:900240,phase:1,nolog,pass,t:none,setvar:tx.allowed_methods=GET HEAD POST OPTIONS PUT PATCH DELETE"' >> /etc/modsecurity/crs-setup.conf
+    && echo "SecAction \"id:900230,phase:1,nolog,pass,t:none,setvar:'tx.allowed_http_versions=HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0'\"" >> /etc/modsecurity/crs-setup.conf \
+    && echo "SecAction \"id:900240,phase:1,nolog,pass,t:none,setvar:'tx.allowed_methods=GET HEAD POST OPTIONS PUT PATCH DELETE'\"" >> /etc/modsecurity/crs-setup.conf
 
 # Copy Apache ModSecurity configuration
 COPY enterprise-deploy/apache/modsecurity-enabled.conf /etc/apache2/modsecurity-enabled.conf
