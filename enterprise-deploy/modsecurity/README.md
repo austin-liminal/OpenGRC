@@ -22,8 +22,8 @@ ModSecurity is an open-source Web Application Firewall (WAF) that provides prote
 ### Configuration Files
 
 - **`modsecurity.conf`** - Main ModSecurity configuration
-- **`crs-setup.conf`** - OWASP Core Rule Set (CRS) configuration
 - **`laravel-exclusions.conf`** - Laravel-specific rule exclusions to prevent false positives
+- **CRS Setup** - Uses the default OWASP CRS `crs-setup.conf.example` from the distribution
 
 ### Apache Configuration
 
@@ -72,7 +72,7 @@ OpenGRC uses the [OWASP ModSecurity Core Rule Set](https://github.com/corerulese
 - **Level 3** - High protection
 - **Level 4** - Maximum protection, more false positives
 
-To change paranoia level, edit [`crs-setup.conf`](crs-setup.conf):
+To change paranoia level, edit `/etc/modsecurity/crs-setup.conf` in the running container or modify the Dockerfile:
 ```apache
 setvar:tx.paranoia_level=2
 ```

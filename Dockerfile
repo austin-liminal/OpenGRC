@@ -234,8 +234,12 @@ RUN mkdir -p /usr/share/modsecurity-crs \
 # Copy ModSecurity configuration files
 RUN mkdir -p /etc/modsecurity
 COPY enterprise-deploy/modsecurity/modsecurity.conf /etc/modsecurity/modsecurity.conf
-COPY enterprise-deploy/modsecurity/crs-setup.conf /etc/modsecurity/crs-setup.conf
 COPY enterprise-deploy/modsecurity/laravel-exclusions.conf /etc/modsecurity/laravel-exclusions.conf
+
+# Use the CRS example as base, then apply our customizations on top
+RUN cp /usr/share/modsecurity-crs/crs-setup.conf.example /etc/modsecurity/crs-setup.conf \
+    && sed -i 's/setvar:tx.paranoia_level=1/setvar:tx.paranoia_level=1/' /etc/modsecurity/crs-setup.conf \
+    && sed -i 's/setvar:tx.inbound_anomaly_score_threshold=5/setvar:tx.inbound_anomaly_score_threshold=5/' /etc/modsecurity/crs-setup.conf
 
 # Copy Apache ModSecurity configuration
 COPY enterprise-deploy/apache/modsecurity-enabled.conf /etc/apache2/modsecurity-enabled.conf

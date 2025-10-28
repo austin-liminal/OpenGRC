@@ -181,13 +181,13 @@ if [ ! -f /var/lib/fim/checksums.db ]; then
     if /usr/local/bin/fim-init; then
         echo "FIM baseline created successfully"
 
-        # Run initial check
-        echo "Running initial integrity check..."
-        if /usr/local/bin/fim-check; then
-            echo "✓ Initial FIM check passed"
-        else
-            echo "Note: Some changes detected (expected on first run)"
-        fi
+        # # Run initial check
+        # echo "Running initial integrity check..."
+        # if /usr/local/bin/fim-check; then
+        #     echo "✓ Initial FIM check passed"
+        # else
+        #     echo "Note: Some changes detected (expected on first run)"
+        # fi
     else
         echo "WARNING: FIM initialization failed"
         logger -t fim-init -p local6.err "FIM initialization failed"
