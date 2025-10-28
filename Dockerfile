@@ -58,6 +58,8 @@ RUN apt-get update && apt-get install -y \
     jq \
     # Security scanning
     yara \
+    # ModSecurity WAF
+    libapache2-mod-security2 \
     # Install Fluent Bit
     && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
     # Install Trivy vulnerability scanner
@@ -214,6 +216,35 @@ RUN echo '# YARA alerts\n\
 RUN /var/www/html/enterprise-deploy/setup-cron.sh \
     && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
     && /var/www/html/enterprise-deploy/setup-yara-cron.sh
+
+# Configure ModSecurity WAF
+RUN git clone --depth 1 https://github.com/coreruleset/coreruleset.git /tmp/crs \
+    && mv /tmp/crs/rules /usr/share/modsecurity-crs \
+    && mv /tmp/crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf.example \
+    && rm -rf /tmp/crs
+
+# Copy ModSecurity configuration files
+RUN mkdir -p /etc/modsecurity
+COPY enterprise-deploy/modsecurity/modsecurity.conf /etc/modsecurity/modsecurity.conf
+COPY enterprise-deploy/modsecurity/crs-setup.conf /etc/modsecurity/crs-setup.conf
+COPY enterprise-deploy/modsecurity/laravel-exclusions.conf /etc/modsecurity/laravel-exclusions.conf
+
+# Copy Apache ModSecurity configuration
+COPY enterprise-deploy/apache/modsecurity-enabled.conf /etc/apache2/modsecurity-enabled.conf
+COPY enterprise-deploy/apache/modsecurity-disabled.conf /etc/apache2/modsecurity-disabled.conf
+COPY enterprise-deploy/configure-waf.sh /var/www/html/enterprise-deploy/configure-waf.sh
+RUN chmod +x /var/www/html/enterprise-deploy/configure-waf.sh
+
+# Copy unicode mapping for ModSecurity
+RUN cp /usr/share/modsecurity-crs/crs-setup.conf.example /tmp/unicode.mapping.example || \
+    echo "20127" > /etc/modsecurity/unicode.mapping
+
+# Configure rsyslog for ModSecurity alerts
+RUN echo '# ModSecurity WAF alerts\n\
+:programname, isequal, "modsecurity" /var/log/modsecurity/modsecurity.log\n\
+\n\
+# Stop processing if it'"'"'s a ModSecurity message to prevent duplicates\n\
+:programname, isequal, "modsecurity" stop' > /etc/rsyslog.d/32-modsecurity.conf
 
 # Expose port 80 (DigitalOcean load balancer forwards to this port)
 EXPOSE 80

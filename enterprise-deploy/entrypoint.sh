@@ -245,6 +245,13 @@ for i in {1..30}; do
     sleep 1
 done
 
+#############################################
+# MODSECURITY: Configure WAF
+#############################################
+
+echo "=== Configuring ModSecurity WAF ==="
+/var/www/html/enterprise-deploy/configure-waf.sh
+
 # Test Apache configuration
 echo "Testing Apache configuration..."
 /usr/sbin/apache2ctl configtest
