@@ -27,6 +27,8 @@ RUN apt-get update \
 RUN apt-get update && apt-get install -y \
     # Apache2
     apache2 \
+    # ModSecurity2 Install
+    libapache2-mod-security2 \
     # PHP and extensions
     php${PHP_VERSION} \
     php${PHP_VERSION}-cli \
@@ -94,6 +96,7 @@ RUN a2enmod rewrite \
     && a2enmod remoteip \
     && a2dismod mpm_prefork \
     && a2enmod mpm_event \
+    && a2enmod security2 \    
     && a2enconf php${PHP_VERSION}-fpm
 
 # Configure RemoteIP to trust DigitalOcean load balancer
