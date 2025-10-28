@@ -218,9 +218,10 @@ RUN /var/www/html/enterprise-deploy/setup-cron.sh \
     && /var/www/html/enterprise-deploy/setup-yara-cron.sh
 
 # Configure ModSecurity WAF
-RUN git clone --depth 1 https://github.com/coreruleset/coreruleset.git /tmp/crs \
-    && mv /tmp/crs/rules /usr/share/modsecurity-crs \
-    && mv /tmp/crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf.example \
+RUN mkdir -p /usr/share/modsecurity-crs \
+    && git clone --depth 1 https://github.com/coreruleset/coreruleset.git /tmp/crs \
+    && cp -r /tmp/crs/rules /usr/share/modsecurity-crs/ \
+    && cp /tmp/crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf.example \
     && rm -rf /tmp/crs
 
 # Copy ModSecurity configuration files
