@@ -223,13 +223,9 @@ RUN mkdir -p /usr/share/modsecurity-crs \
     && cp -r /tmp/crs/rules /usr/share/modsecurity-crs/ \
     && cp /tmp/crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf.example \
     && rm -rf /tmp/crs \
-    && rm -f /usr/share/modsecurity-crs/rules/REQUEST-903.9001-DRUPAL-EXCLUSION-RULES.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/REQUEST-903.9002-WORDPRESS-EXCLUSION-RULES.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/REQUEST-903.9003-NEXTCLOUD-EXCLUSION-RULES.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/REQUEST-903.9004-DOKUWIKI-EXCLUSION-RULES.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/REQUEST-903.9005-CPANEL-EXCLUSION-RULES.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/REQUEST-903.9006-XENFORO-EXCLUSION-RULES.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/RESPONSE-959.100-EXCLUSION-RULES-AFTER-CRS.conf
+    && rm -f /usr/share/modsecurity-crs/rules/*-903.9*.conf \
+    && rm -f /usr/share/modsecurity-crs/rules/*-959.100-*.conf \
+    && echo "Remaining 903 rules:" && ls -la /usr/share/modsecurity-crs/rules/*903* || true
 
 # Copy ModSecurity configuration files
 RUN mkdir -p /etc/modsecurity
