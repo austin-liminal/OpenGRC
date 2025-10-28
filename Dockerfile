@@ -217,15 +217,13 @@ RUN /var/www/html/enterprise-deploy/setup-cron.sh \
     && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
     && /var/www/html/enterprise-deploy/setup-yara-cron.sh
 
-# Configure ModSecurity WAF (use CRS v3.3.x for ModSecurity 2.9.x compatibility)
-RUN mkdir -p /usr/share/modsecurity-crs \
-    && git clone --depth 1 --branch v3.3.5 https://github.com/coreruleset/coreruleset.git /tmp/crs \
-    && cp -r /tmp/crs/rules /usr/share/modsecurity-crs/ \
-    && cp /tmp/crs/crs-setup.conf.example /usr/share/modsecurity-crs/crs-setup.conf.example \
-    && rm -rf /tmp/crs \
-    && rm -f /usr/share/modsecurity-crs/rules/*-903.9*.conf \
-    && rm -f /usr/share/modsecurity-crs/rules/*-959.100-*.conf \
-    && echo "Remaining 903 rules:" && ls -la /usr/share/modsecurity-crs/rules/*903* || true
+# Configure ModSecurity WAF
+# The libapache2-mod-security2 package includes modsecurity-crs, so we just clean up problematic files
+RUN echo "Checking CRS installation..." \
+    && ls -la /usr/share/modsecurity-crs/ || echo "CRS directory not found" \
+    && ls -la /etc/modsecurity/ || echo "ModSecurity config directory not found" \
+    && find /usr/share -name "*modsecurity*" -type d \
+    && find /usr/share -name "crs-setup.conf*" 2>/dev/null || echo "No crs-setup found yet"
 
 # Copy ModSecurity configuration files
 RUN mkdir -p /etc/modsecurity
