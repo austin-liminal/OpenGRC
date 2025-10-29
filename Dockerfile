@@ -8,6 +8,8 @@ ENV TZ=UTC
 ENV PHP_VERSION=8.3
 ENV NODE_VERSION=20.x
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # Install repository management tools and add custom repositories
 # Step 1: Update base Ubuntu repos and install tools needed to add repos
 # Step 2: Add PHP and Node.js repos (both scripts do their own apt-get update)
