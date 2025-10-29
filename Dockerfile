@@ -124,15 +124,11 @@ RUN echo 'Listen 80' > /etc/apache2/ports.conf
 # Overwrite the default Apache site with OpenGRC configuration
 COPY enterprise-deploy/apache/opengrc.conf /etc/apache2/sites-available/000-default.conf
 
-
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Set working directory
 WORKDIR /var/www/html
-
-# Copy composer files first for better caching
-#COPY composer.json composer.lock ./
 
 # Copy application code
 COPY . .
