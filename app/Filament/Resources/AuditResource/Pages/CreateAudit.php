@@ -117,10 +117,10 @@ class CreateAudit extends CreateRecord
                         ->required(),
                     Hidden::make('status')
                         ->default(WorkflowStatus::NOTSTARTED),
-                    AuditResource::taxonomySelect('Department')
+                    AuditResource::taxonomySelect('Department', 'department')
                         ->nullable()
                         ->columnSpan(1),
-                    AuditResource::taxonomySelect('Scope')
+                    AuditResource::taxonomySelect('Scope', 'scope')
                         ->nullable()
                         ->columnSpan(1),
                 ]),
