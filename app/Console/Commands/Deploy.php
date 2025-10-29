@@ -86,6 +86,7 @@ class Deploy extends Command
             $this->displaySuccess();
         } catch (\Exception $e) {
             $this->error('Deployment failed: '.$e->getMessage());
+            exit(1); // Exit with error code
         }
     }
 
@@ -455,10 +456,14 @@ class Deploy extends Command
         if ($config['app_key']) {
             $this->info('[INFO] Setting custom application key...');
             $this->updateEnv(['APP_KEY' => $config['app_key']]);
+            // Clear config cache to reload APP_KEY
+            $this->call('config:clear');
             $this->info('[SUCCESS] Custom application key set');
         } else {
             $this->info('[INFO] Generating application security key...');
             $this->call('key:generate');
+            // Clear config cache to reload APP_KEY
+            $this->call('config:clear');
             $this->info('[SUCCESS] Application key generated');
         }
 
@@ -548,15 +553,15 @@ class Deploy extends Command
 
                 // Seed database
                 $this->info('[INFO] Seeding database with defaults...');
-                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
-                $this->call('db:seed', ['--class' => 'RolePermissionSeeder']);
+                $this->call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
+                $this->call('db:seed', ['--class' => 'RolePermissionSeeder', '--force' => true]);
                 $this->info('[SUCCESS] Database seeded');
             } else {
                 $this->info('[INFO] Skipping user creation for update deployment');
 
-                // Ensure settings table is properly initialized for updates
+                // Ensure settings and roles are properly initialized for updates
                 $this->info('[INFO] Ensuring settings are initialized...');
-                $this->call('db:seed', ['--class' => 'SettingsSeeder']);
+                $this->call('db:seed', ['--class' => 'SettingsSeeder', '--force' => true]);
                 $this->info('[SUCCESS] Settings initialized');
             }
         }
@@ -679,17 +684,24 @@ class Deploy extends Command
         $this->call('storage:link');
         $this->info('[SUCCESS] Storage linked');
 
-        // Build assets
-        $this->info('[INFO] Building front-end assets...');
-        exec('npm install && npm run build', $output, $returnCode);
-        if ($returnCode === 0) {
-            $this->info('[SUCCESS] Front-end assets built');
+        // Build assets (skip in containerized environments where assets are pre-built)
+        if (file_exists(base_path('node_modules'))) {
+            $this->info('[INFO] Building front-end assets...');
+            exec('npm install && npm run build', $output, $returnCode);
+            if ($returnCode === 0) {
+                $this->info('[SUCCESS] Front-end assets built');
+            } else {
+                $this->warn('[WARNING] Asset building may have failed. Check manually.');
+            }
         } else {
-            $this->warn('[WARNING] Asset building may have failed. Check manually.');
+            $this->info('[INFO] Skipping asset build (pre-built assets detected)');
         }
 
-        // Set production permissions
-        if (PHP_OS === 'Linux') {
+        // Set production permissions (skip in containerized environments)
+        // Detect container environment: no node_modules means pre-built Docker image
+        $isContainer = !file_exists(base_path('node_modules'));
+
+        if (PHP_OS === 'Linux' && !$isContainer) {
             $this->info('[INFO] Setting file permissions...');
 
             // Check if set_permissions script exists and run it
@@ -705,6 +717,8 @@ class Deploy extends Command
                 $this->info('[INFO] set_permissions script not found, setting manual permissions');
                 $this->setManualPermissions();
             }
+        } else {
+            $this->info('[INFO] Skipping permission setting (containerized environment - permissions set at build time)');
         }
     }
 
