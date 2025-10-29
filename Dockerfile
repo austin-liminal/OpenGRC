@@ -18,6 +18,7 @@ RUN apt-get update \
         curl \
         ca-certificates \
         gnupg \
+        apt-utils \
     && add-apt-repository ppa:ondrej/php \
     && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
     && apt-get clean \
@@ -29,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     apache2 \
     # ModSecurity2 Install
     libapache2-mod-security2 \
+    modsecurity-crs \
     # PHP and extensions
     php${PHP_VERSION} \
     php${PHP_VERSION}-cli \
@@ -112,6 +114,7 @@ RemoteIPInternalProxy 192.168.0.0/16\n\
 RemoteIPInternalProxy 100.64.0.0/10' > /etc/apache2/conf-available/remoteip.conf
 
 RUN a2enconf remoteip
+RUN a2enconf security
 
 # Configure Apache to listen on port 80
 RUN echo 'Listen 80' > /etc/apache2/ports.conf
