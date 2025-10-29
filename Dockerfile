@@ -132,7 +132,10 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 WORKDIR /var/www/html
 
 # Copy composer files first for better caching
-COPY composer.json composer.lock ./
+#COPY composer.json composer.lock ./
+
+# Copy application code
+COPY . .
 
 # Install PHP dependencies (without dev dependencies for production)
 RUN composer install
@@ -142,9 +145,6 @@ COPY package*.json ./
 
 # Install Node dependencies (including dev dependencies needed for build)
 RUN npm ci
-
-# Copy application code
-COPY . .
 
 # Complete Composer installation with autoloader optimization
 RUN composer dump-autoload --optimize --classmap-authoritative
