@@ -133,7 +133,7 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies (without dev dependencies for production)
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN composer install
 
 # Copy package files
 COPY package*.json ./

@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "##################################"
 echo "=== OpenGRC Container Starting ==="
-echo "DigitalOcean load balancer handles SSL termination"
+echo "##################################"
 
 #############################################
 # VALIDATE REQUIRED ENVIRONMENT VARIABLES
@@ -134,12 +135,6 @@ fi
 # START APPLICATION
 #############################################
 
-echo "=== Starting Apache on port 80 (HTTP) ==="
-echo "OpenGRC is ready!"
-echo "Site URL: ${APP_URL}"
-echo "Admin Email: ${ADMIN_EMAIL}"
-echo "Note: DigitalOcean load balancer handles SSL/TLS termination"
-
 # Start rsyslog for system logging
 echo "Starting rsyslog..."
 /usr/sbin/rsyslogd
@@ -250,8 +245,11 @@ echo "Testing Apache configuration..."
 /usr/sbin/apache2ctl configtest
 
 # Enable error logging
-echo "Apache error log will be available at /var/log/apache2/error.log"
-echo "PHP-FPM error log will be available at /var/log/php8.3-fpm.log"
-
 # Start Apache in foreground
+echo "Starting Apache..."
 exec /usr/sbin/apache2ctl -D FOREGROUND
+
+
+echo "##################################"
+echo "=== OpenGRC Container Complete ==="
+echo "##################################"
