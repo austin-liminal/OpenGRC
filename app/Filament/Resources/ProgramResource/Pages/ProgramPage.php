@@ -111,7 +111,6 @@ class ProgramPage extends ViewRecord
                             ->placeholder('No description provided'),
                     ])
                     ->collapsible()
-                    ->collapsed()
                     ->hidden(fn ($record) => empty($record->description)),
             ]);
     }

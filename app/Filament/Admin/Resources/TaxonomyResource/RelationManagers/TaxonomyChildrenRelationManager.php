@@ -11,12 +11,25 @@ use Filament\Tables\Table;
 class TaxonomyChildrenRelationManager extends RelationManager
 {
     protected static string $relationship = 'children';
-    
+
     protected static ?string $title = 'Terms';
-    
+
     protected static ?string $modelLabel = 'term';
-    
+
     protected static ?string $pluralModelLabel = 'terms';
+
+    /**
+     * Protected system taxonomy slugs whose child terms cannot be deleted
+     */
+    protected static array $protectedParentSlugs = [
+        'scope',
+        'department',
+        'asset-type',
+        'asset-status',
+        'asset-condition',
+        'compliance-status',
+        'data-classification',
+    ];
 
     public function form(Form $form): Form
     {
@@ -26,10 +39,7 @@ class TaxonomyChildrenRelationManager extends RelationManager
                     ->required()
                     ->maxLength(255)
                     ->label('Term Name'),
-                Forms\Components\TextInput::make('slug')
-                    ->maxLength(255)
-                    ->label('Slug')
-                    ->helperText('Auto-generated if empty'),
+                Forms\Components\Hidden::make('slug'),
                 Forms\Components\Textarea::make('description')
                     ->maxLength(1000)
                     ->columnSpanFull()

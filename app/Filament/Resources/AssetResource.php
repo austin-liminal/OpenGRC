@@ -137,7 +137,7 @@ class AssetResource extends Resource
                             ->options(User::pluck('name', 'id'))
                             ->searchable(),
 
-                        Forms\Components\DateTimePicker::make('assigned_at')
+                        Forms\Components\DatePicker::make('assigned_at')
                             ->label('Assigned Date'),
 
                         Forms\Components\TextInput::make('building')

@@ -25,6 +25,19 @@ class TaxonomyResource extends Resource
 
     protected static ?int $navigationSort = 30;
 
+    /**
+     * Protected system taxonomy slugs that cannot be deleted
+     */
+    protected static array $protectedTaxonomySlugs = [
+        'scope',
+        'department',
+        'asset-type',
+        'asset-status',
+        'asset-condition',
+        'compliance-status',
+        'data-classification',
+    ];
+
     public static function form(Form $form): Form
     {
         return $form
@@ -43,11 +56,7 @@ class TaxonomyResource extends Resource
                         }
                     }),
                 Forms\Components\Hidden::make('type'),
-                Forms\Components\TextInput::make('slug')
-                    ->unique('taxonomies', 'slug', ignoreRecord: true)
-                    ->maxLength(255)
-                    ->label('Slug')
-                    ->helperText('URL-friendly version of the name (auto-generated if empty)'),
+                Forms\Components\Hidden::make('slug'),
                 Forms\Components\Textarea::make('description')
                     ->maxLength(1000)
                     ->columnSpanFull()
@@ -95,11 +104,20 @@ class TaxonomyResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->hidden(fn (Taxonomy $record): bool => in_array($record->slug, self::$protectedTaxonomySlugs))
+                    ->disabled(fn (Taxonomy $record): bool => in_array($record->slug, self::$protectedTaxonomySlugs)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                if (!in_array($record->slug, self::$protectedTaxonomySlugs)) {
+                                    $record->delete();
+                                }
+                            });
+                        }),
                 ]),
             ]);
     }

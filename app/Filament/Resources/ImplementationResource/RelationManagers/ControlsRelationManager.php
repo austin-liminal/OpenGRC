@@ -41,7 +41,7 @@ class ControlsRelationManager extends RelationManager
                     })
                     ->recordTitle(function ($record) {
                         // Concatenate code and title for the option label
-                        return "({$record->code}) {$record->title}";
+                        return strip_tags("({$record->code}) {$record->title}");
                     })
                     ->recordSelectSearchColumns(['code', 'title']),
             ])
