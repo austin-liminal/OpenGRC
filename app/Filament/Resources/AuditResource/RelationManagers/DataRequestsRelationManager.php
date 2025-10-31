@@ -9,7 +9,10 @@ use App\Http\Controllers\QueueController;
 use App\Models\DataRequest;
 use App\Models\User;
 use App\Notifications\DropdownNotification;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -121,13 +124,95 @@ class DataRequestsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->label('Create Data Request')
+                    ->modalHeading('Create New Data Request')
                     ->disabled(function () {
                         return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                     })
-                    ->hidden()
-                    ->after(function (DataRequest $record, Tables\Actions\Action $action) {
-                        DataRequestResource::createResponses($record);
-                    }),
+                    ->form([
+                        Select::make('audit_items')
+                            ->label('Audit Item(s)')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->options(function () {
+                                $audit = $this->getOwnerRecord();
+
+                                return $audit->auditItems()
+                                    ->with('auditable')
+                                    ->get()
+                                    ->mapWithKeys(function ($item) {
+                                        $label = $item->auditable
+                                            ? $item->auditable->code.' - '.$item->auditable->title
+                                            : 'Item #'.$item->id;
+
+                                        return [$item->id => $label];
+                                    })
+                                    ->toArray();
+                            })
+                            ->required()
+                            ->helperText('Select one or more audit items for this data request'),
+                        TextInput::make('code')
+                            ->label('Request Code')
+                            ->maxLength(255)
+                            ->helperText('Optional. If left blank, will default to Request-{id} after creation.')
+                            ->nullable(),
+                        RichEditor::make('details')
+                            ->label('Request Details')
+                            ->disableToolbarButtons([
+                                'image',
+                                'attachFiles',
+                            ])
+                            ->required()
+                            ->columnSpanFull()
+                            ->helperText('Describe what information or evidence is being requested'),
+                        Select::make('assigned_to_id')
+                            ->label('Assign To')
+                            ->options(User::whereNotNull('name')->pluck('name', 'id')->toArray())
+                            ->searchable()
+                            ->required()
+                            ->helperText('User responsible for responding to this request'),
+                        DatePicker::make('due_at')
+                            ->label('Due Date')
+                            ->required()
+                            ->helperText('When should this request be completed?'),
+                    ])
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['created_by_id'] = auth()->id();
+                        $data['audit_id'] = $this->getOwnerRecord()->id;
+
+                        return $data;
+                    })
+                    ->using(function (array $data, string $model): DataRequest {
+                        // Extract audit items and due date before creating the data request
+                        $auditItems = $data['audit_items'];
+                        $dueAt = $data['due_at'];
+                        unset($data['audit_items'], $data['due_at']);
+
+                        // Create the data request
+                        $dataRequest = $model::create($data);
+
+                        // Set the code if not provided
+                        if (empty($dataRequest->code)) {
+                            $dataRequest->code = 'Request-'.$dataRequest->id;
+                            $dataRequest->save();
+                        }
+
+                        // Attach the audit items
+                        $dataRequest->auditItems()->attach($auditItems);
+
+                        // Create the response
+                        DataRequestResource::createResponses($dataRequest, $dueAt);
+
+                        return $dataRequest;
+                    })
+                    ->successNotificationTitle('Data Request Created')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->title('Data Request Created')
+                            ->body('The data request has been created and assigned successfully.')
+                    ),
                 Tables\Actions\Action::make('import_irl')
                     ->label('Import IRL')
                     ->color('primary')
