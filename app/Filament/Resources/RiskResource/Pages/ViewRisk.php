@@ -15,13 +15,21 @@ class ViewRisk extends ViewRecord
         return [
             Actions\EditAction::make('Update Risk')
                 ->slideOver()
-                ->after(
-                    function ($record) {
-                        $record->inherent_risk = $record->inherent_likelihood * $record->inherent_impact;
-                        $record->residual_risk = $record->residual_likelihood * $record->residual_impact;
-                        $record->save();
-                    }
-                ),
+                ->using(function (Actions\EditAction $action, array $data, $record) {
+                    // Calculate risk scores before saving
+                    $data['inherent_risk'] = $data['inherent_likelihood'] * $data['inherent_impact'];
+                    $data['residual_risk'] = $data['residual_likelihood'] * $data['residual_impact'];
+
+                    // Update the record
+                    $record->update($data);
+
+                    return $record;
+                })
+                ->successNotificationTitle('Risk updated successfully')
+                ->after(function () {
+                    // Refresh the view page to show updated data
+                    $this->fillForm();
+                }),
         ];
 
     }

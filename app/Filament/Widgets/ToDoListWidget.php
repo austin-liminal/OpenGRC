@@ -16,7 +16,7 @@ class ToDoListWidget extends BaseWidget
     {
         return $table
             ->query(
-                DataRequestResponse::query()->where('requestee_id', auth()->id())->take(5)
+                DataRequestResponse::query()->where('requestee_id', auth()->id())->take(5)->whereIn('status', ['pending', 'in_progress'])->orderBy('due_at', 'asc')
             )
             ->heading(trans('widgets.todo.heading'))
             ->emptyStateHeading(new HtmlString(trans('widgets.todo.empty_heading')))
@@ -30,6 +30,7 @@ class ToDoListWidget extends BaseWidget
                     ->label(trans('widgets.todo.request_details'))
                     ->url(fn (DataRequestResponse $record) => route('filament.app.resources.data-request-responses.edit', $record))
                     ->limit(120)
+                    ->html()
                     ->wrap(),
                 Tables\Columns\TextColumn::make('status')
                     ->label(trans('widgets.todo.status'))
@@ -52,13 +53,4 @@ class ToDoListWidget extends BaseWidget
             ])
             ->paginated(false);
     }
-
-    //    protected function getEmptyState(): bool
-    //    {
-    //        if ( auth()->user()->openTodos()->count() === 0 ) {
-    //            return true;
-    //        }
-    //
-    //        return false;
-    //    }
 }
