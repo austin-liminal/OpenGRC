@@ -19,12 +19,11 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Trivy vulnerability scan" >> "$LOG
 logger -t trivy-scan -p local6.info "Starting Trivy vulnerability scan"
 
 # Run Trivy scan
-trivy rootfs "$SCAN_TARGET" \
+/usr/local/bin/trivy rootfs "$SCAN_TARGET" \
     --config "$CONFIG_FILE" \
     --scanners vuln \
     --pkg-types os \
     --skip-dirs /home,/var,/tmp,/proc,/sys,/mnt,/dev,/run \
-    --severity HIGH,CRITICAL \
     --format json \
     --output "$OUTPUT_FILE" 2>&1 | tee -a "$LOG_FILE"
 

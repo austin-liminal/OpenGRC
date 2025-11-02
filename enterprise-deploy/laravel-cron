@@ -1,0 +1,6 @@
+# Laravel Scheduler - runs every minute
+* * * * * www-data cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
+
+# Laravel Queue Worker - runs every minute, stops when empty
+* * * * * www-data cd /var/www/html && php artisan queue:work --stop-when-empty >> /dev/null 2>&1
+

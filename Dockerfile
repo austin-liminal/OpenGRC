@@ -214,8 +214,10 @@ RUN echo '# YARA alerts\n\
 # Stop processing if it'"'"'s a YARA message to prevent duplicates\n\
 :programname, isequal, "yara-scan" stop' > /etc/rsyslog.d/31-yara.conf
 
-# Set up cron jobs (Trivy, FIM, and YARA)
-RUN /var/www/html/enterprise-deploy/setup-cron.sh \
+# Set up cron jobs (Laravel, Trivy, FIM, and YARA)
+COPY enterprise-deploy/laravel-cron /etc/cron.d/laravel-cron
+RUN chmod 0644 /etc/cron.d/laravel-cron \
+    && /var/www/html/enterprise-deploy/setup-cron.sh \
     && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
     && /var/www/html/enterprise-deploy/setup-yara-cron.sh
 
