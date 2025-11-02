@@ -1,0 +1,34 @@
+# Trivy Vulnerability Scanner Configuration
+# Daily scan of OS packages for HIGH and CRITICAL vulnerabilities
+
+scan:
+  # Scan for vulnerabilities only (no secrets, misconfigs, etc.)
+  scanners:
+    - vuln
+
+  # Only scan OS packages
+  pkg-types:
+    - os
+
+  # Skip directories that don't need scanning
+  skip-dirs:
+    - /home
+    - /var
+    - /tmp
+    - /proc
+    - /sys
+    - /mnt
+    - /dev
+    - /run
+
+vulnerability:
+  # Only report HIGH and CRITICAL severity vulnerabilities
+  severity:
+    - HIGH
+    - CRITICAL
+
+# Output format
+format: json
+
+# Timeout for scanning
+timeout: 30m

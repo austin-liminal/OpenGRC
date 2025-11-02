@@ -20,6 +20,9 @@ yarn-error.log
 /.idea
 /.vscode
 
+# Trivy vulnerability scan results
+/public/ops/vuln.json
+
 # Project exclude paths
 /storage/app/
 /storage/framework/sessions/*
@@ -30,3 +33,4 @@ yarn-error.log
 !/storage/framework/cache/.gitkeep
 
 .DS_Store
+app-spec.docker.yaml

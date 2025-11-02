@@ -1,5 +1,60 @@
+# Dependencies (will be installed during build)
 node_modules
-public/build
 vendor
+
+# Build artifacts (will be generated during build)
+public/build
+public/hot
+
+# Environment and configuration
 .env
+.env.*
+!.env.example
+
+# IDE and OS files
 .DS_Store
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Testing
+tests
+phpunit.xml
+.phpunit.result.cache
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Storage (will be created fresh)
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+!storage/app/.gitignore
+!storage/framework/.gitignore
+!storage/framework/cache/.gitignore
+!storage/logs/.gitignore
+
+# Database
+database/opengrc.sqlite
+database/opengrc.sqlite-shm
+database/opengrc.sqlite-wal
+
+# CI/CD
+.github
+.gitlab-ci.yml
+docker-compose.yml
+
+# Misc
+Dockerfile
+.dockerignore
