@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Http;
 use Illuminate\Http\Client\RequestException;
 use Storage;
+use Illuminate\Support\Facades\Log;
 
 class BundleController extends Controller
 {
@@ -76,35 +77,64 @@ class BundleController extends Controller
 
     public static function importBundle(Bundle $bundle): void
     {
+        \Log::info('Importing bundle: '.$bundle->code);
 
         try {
-            // Using throw() will cause an exception if the response is not a successful (2xx) status
             $response = Http::get($bundle->repo_url)->throw();
-            $bundle_content = json_decode($response->body());
+
+            // GitHub raw URLs return application/octet-stream, so we need to force decode
+            // Clean invalid UTF-8 sequences that might break JSON parsing
+            $body = mb_convert_encoding($response->body(), 'UTF-8', 'UTF-8');
+            $bundle_content = json_decode($body, true);
+
+            // Debug: Check if JSON parsing failed
+            if ($bundle_content === null) {
+                \Log::error('JSON decode failed', [
+                    'url' => $bundle->repo_url,
+                    'status' => $response->status(),
+                    'content_type' => $response->header('Content-Type'),
+                    'body_preview' => substr($response->body(), 0, 500),
+                ]);
+                throw new \Exception('Failed to decode JSON response from: ' . $bundle->repo_url);
+            }
+
+            // Validate required fields exist
+            if (!isset($bundle_content['code']) || !isset($bundle_content['controls'])) {
+                \Log::error('Invalid bundle structure', [
+                    'url' => $bundle->repo_url,
+                    'keys' => array_keys($bundle_content),
+                ]);
+                throw new \Exception('Bundle JSON is missing required fields (code or controls)');
+            }
 
             $standard = Standard::updateOrCreate(
                 ['code' => $bundle->code],
                 [
-                    'code' => $bundle_content->code,
-                    'name' => $bundle_content->name,
-                    'authority' => $bundle_content->authority,
-                    'description' => $bundle_content->description,
+                    'code' => $bundle_content['code'],
+                    'name' => $bundle_content['name'],
+                    'authority' => $bundle_content['authority'],
+                    'description' => $bundle_content['description'],
                 ]
             );
 
-            foreach ($bundle_content->controls as $control) {
+
+
+            \Log::info('Importing bundle: '.$bundle->code);
+
+            foreach ($bundle_content['controls'] as $control) {
+
                 $standard->controls()->updateOrCreate(
-                    ['code' => $control->code],
+                    ['code' => $control['code']],
                     [
 
-                        'title' => $control->title,
-                        'code' => $control->code,
-                        'description' => $control->description,
-                        'discussion' => $control->discussion,
-                        'test' => $control->test,
-                        'type' => $control->type,
-                        'category' => $control->category,
-                        'enforcement' => $control->enforcement,
+                        'title' => $control['title'],
+                        'code' => $control['code'],
+                        'description' => $control['description'],
+                        'discussion' => $control['discussion'] ?? null,
+                        'test' => $control['test'] ?? null,
+                        'type' => $control['type'],
+                        'category' => $control['category'],
+                        'enforcement' => $control['enforcement'],
                     ]
                 );
             }
@@ -113,10 +143,33 @@ class BundleController extends Controller
 
         } catch (RequestException $e) {
             // Catch exceptions such as 4xx/5xx HTTP status codes or connection issues
-            dd('Download failed: '.$e->getMessage());
+            \Log::error('Bundle download failed', [
+                'bundle' => $bundle->code,
+                'url' => $bundle->repo_url,
+                'error' => $e->getMessage(),
+            ]);
+
+            Notification::make()
+                ->title('Bundle Import Failed')
+                ->body('Download failed: ' . $e->getMessage())
+                ->color('danger')
+                ->send();
+            return;
         } catch (\Exception $e) {
             // Catch any other potential exceptions
-            dd('An unexpected error occurred: '.$e->getMessage());
+            \Log::error('Bundle import error', [
+                'bundle' => $bundle->code,
+                'url' => $bundle->repo_url,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            Notification::make()
+                ->title('Bundle Import Failed')
+                ->body('An unexpected error occurred: ' . $e->getMessage())
+                ->color('danger')
+                ->send();
+            return;
         }
 
         Notification::make()
@@ -126,3 +179,4 @@ class BundleController extends Controller
 
     }
 }
+
