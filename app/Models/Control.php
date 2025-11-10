@@ -112,6 +112,15 @@ class Control extends Model
     }
 
     /**
+     * The policies that belong to the control.
+     */
+    public function policies(): BelongsToMany
+    {
+        return $this->belongsToMany(Policy::class, 'control_policy')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the audit items for the control.
      */
     public function auditItems(): MorphMany
