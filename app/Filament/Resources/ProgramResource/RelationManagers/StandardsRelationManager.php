@@ -37,7 +37,8 @@ class StandardsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
-                    ->preloadRecordSelect(),
+                    ->preloadRecordSelect()
+                    ->label('Relate to Standard'),
             ])
             ->actions([
                 Tables\Actions\DetachAction::make(),

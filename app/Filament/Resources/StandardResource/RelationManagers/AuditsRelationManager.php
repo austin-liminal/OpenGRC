@@ -12,16 +12,6 @@ class AuditsRelationManager extends RelationManager
 {
     protected static string $relationship = 'audits';
 
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-            ]);
-    }
-
     public function table(Table $table): Table
     {
         return $table
@@ -34,6 +24,10 @@ class AuditsRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\ViewAction::make()->hiddenLabel()
                     ->url(fn ($record) => route('filament.app.resources.audits.view', $record)),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()->label('Add New Audit')
+                    ->url(fn ($livewire) => route('filament.app.resources.audits.create', ['standard' => $livewire->ownerRecord])),
             ]);
     }
 }

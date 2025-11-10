@@ -2,8 +2,7 @@
 
 namespace App\Filament\Resources\StandardResource\RelationManagers;
 
-use App\Enums\Applicability;
-use Filament\Forms;
+use App\Filament\Resources\ControlResource;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -15,44 +14,7 @@ class ControlsRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        return $form
-            ->columns(2)
-            ->schema([
-                Forms\Components\TextInput::make('code')
-                    ->required()
-                    ->maxLength(255)
-                    ->placeholder('e.g. 3.1.1')
-                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Give the control a unique ID or Code.'),
-                Forms\Components\Select::make('applicability')
-                    ->default(Applicability::UNKNOWN)
-                    ->required()
-                    ->enum(Applicability::class)
-                    ->options(Applicability::class)
-                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select the relevance of this standard to your organization.')
-                    ->native(false),
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->columnSpanFull()
-                    ->maxLength(1024)
-                    ->placeholder('e.g. Limit system access to authorized users, processes acting on behalf of authorized users, and devices (including other systems).')
-                    ->hint('Enter the title of the control.')
-                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'This should be a succinct description of the control.'),
-                Forms\Components\RichEditor::make('description')
-                    ->required()
-                    ->disableToolbarButtons([
-                        'image',
-                        'attachFiles',
-                    ])
-                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Describe the control in detail.')
-                    ->columnSpanFull(),
-                Forms\Components\RichEditor::make('discussion')
-                    ->columnSpanFull()
-                    ->disableToolbarButtons([
-                        'image',
-                        'attachFiles',
-                    ])
-                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Provide any explanation, discussion, context, or relevant information to help someone understand the intent of this control.'),
-            ]);
+        return ControlResource::form($form);
     }
 
     public function table(Table $table): Table

@@ -37,6 +37,7 @@ class RisksRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
+                    ->label('Relate to Risk')
                     ->preloadRecordSelect(),
             ])
             ->actions([
