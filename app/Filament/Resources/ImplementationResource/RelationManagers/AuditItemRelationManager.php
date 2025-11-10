@@ -20,16 +20,6 @@ class AuditItemRelationManager extends RelationManager
         return auth()->check() && auth()->user()->can('Read Audits');
     }
 
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('effectiveness')
-                    ->required()
-                    ->maxLength(255),
-            ]);
-    }
-
     public function table(Table $table): Table
     {
         return $table

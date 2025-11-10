@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Filament\Resources\ApplicationResource;
 
 class ApplicationsRelationManager extends RelationManager
 {
@@ -16,16 +17,7 @@ class ApplicationsRelationManager extends RelationManager
 
     public function form(Forms\Form $form): Forms\Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')->required()->maxLength(255),
-                Forms\Components\Select::make('owner_id')->relationship('owner', 'name')->searchable()->preload()->required(),
-                Forms\Components\Select::make('type')->enum(ApplicationType::class)->options(collect(ApplicationType::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))->required(),
-                Forms\Components\Textarea::make('description')->maxLength(65535),
-                Forms\Components\Select::make('status')->enum(ApplicationStatus::class)->options(collect(ApplicationStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))->required(),
-                Forms\Components\TextInput::make('url')->maxLength(512),
-                Forms\Components\Textarea::make('notes')->maxLength(65535),
-            ]);
+        return ApplicationResource::form($form);
     }
 
     public function table(Table $table): Table

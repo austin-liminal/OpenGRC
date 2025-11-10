@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Http\Controllers\PdfHelper;
 use App\Models\Audit;
 use App\Models\FileAttachment;
-use App\Http\Controllers\PdfHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,16 +14,20 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
-use \App\Notifications\DropdownNotification;
-
-
-
 
 class ExportAuditEvidenceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 1800; // 30 minutes
+
     protected $auditId;
+
     protected $userId;
 
     /**
@@ -31,7 +35,9 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [(new WithoutOverlapping($this->auditId))->dontRelease()];
+        // Release lock after 10 min to prevent permanent deadlocks
+        // The cache flag is cleared manually on completion/failure
+        return [(new WithoutOverlapping($this->auditId))->releaseAfter(600)];
     }
 
     /**
@@ -41,6 +47,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
     {
         $this->auditId = $auditId;
         $this->userId = $userId;
+        \Log::info("ExportAuditEvidenceJob constructed for audit {$auditId}, user {$userId}");
     }
 
     /**
@@ -48,6 +55,15 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function handle()
     {
+        \Log::info("ExportAuditEvidenceJob handle() called for audit {$this->auditId}");
+
+        // Check if another export is already running (via WithoutOverlapping middleware)
+        if (\Cache::has("audit_{$this->auditId}_exporting")) {
+            \Log::warning("Export already in progress for audit {$this->auditId}, skipping...");
+
+            return;
+        }
+
         // Set cache flag to indicate export is running
         \Cache::put("audit_{$this->auditId}_exporting", true, now()->addHours(2));
 
@@ -59,12 +75,15 @@ class ExportAuditEvidenceJob implements ShouldQueue
             'auditItems.auditable',
         ])->findOrFail($this->auditId);
 
-        $exportPath = storage_path("app/exports/audit_{$this->auditId}/");
-        if (! Storage::exists("app/exports/audit_{$this->auditId}/") && ! Storage::disk('s3') && ! Storage::disk('digitalocean')) {
-            Storage::makeDirectory("app/exports/audit_{$this->auditId}/");
-        }
-
         $disk = setting('storage.driver', 'private');
+
+        $exportPath = storage_path("app/exports/audit_{$this->auditId}/");
+        // Only check/create directory for non-cloud storage
+        if ($disk !== 's3' && $disk !== 'digitalocean') {
+            if (! Storage::disk($disk)->exists("exports/audit_{$this->auditId}/")) {
+                Storage::disk($disk)->makeDirectory("exports/audit_{$this->auditId}/");
+            }
+        }
         $allFiles = [];
 
         // Get all data requests for this audit (supports both old and new relationships)
@@ -133,6 +152,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
                 \Log::info("Data request {$dataRequest->id} has single audit item (legacy)");
             } else {
                 \Log::info("Skipping data request {$dataRequest->id} - no audit items");
+
                 continue;
             }
 
@@ -167,19 +187,19 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
                     file_put_contents($localPath, $storage->get($attachment->file_path));
                     $allFiles[] = $localPath;
-                    $attachment->hash =  hash('sha256', $storage->get($attachment->file_path));
+                    $attachment->hash = hash('sha256', $storage->get($attachment->file_path));
                 }
             }
         }
 
-        \Log::info("Total files to include in zip: " . count($allFiles));
+        \Log::info('Total files to include in zip: '.count($allFiles));
 
         // Create a hasfile for all files
         foreach ($allFiles as $file) {
-            $hashFileContents = "";
+            $hashFileContents = '';
 
             if (file_exists($file)) {
-                $hashFileContents = hash_file('sha256', $file)."  ".basename($file)."\n";
+                $hashFileContents = hash_file('sha256', $file).'  '.basename($file)."\n";
                 file_put_contents($tmpDir.'/hashes.txt', $hashFileContents, FILE_APPEND);
                 $allFiles[] = $tmpDir.'/hashes.txt';
             }
@@ -275,10 +295,10 @@ class ExportAuditEvidenceJob implements ShouldQueue
         \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId}");
 
         // Notify the user who initiated the export
-        \Log::info("Attempting to notify user. User ID: " . ($this->userId ?? 'null'));
+        \Log::info('Attempting to notify user. User ID: '.($this->userId ?? 'null'));
         if ($this->userId) {
             $user = \App\Models\User::find($this->userId);
-            \Log::info("User found: " . ($user ? $user->name : 'null'));
+            \Log::info('User found: '.($user ? $user->name : 'null'));
             if ($user) {
                 try {
                     // Generate URL to the audit's attachments tab
@@ -300,14 +320,14 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
                     \Log::info("Notification sent successfully to user {$user->id}");
                 } catch (\Exception $e) {
-                    \Log::error("Failed to send notification: " . $e->getMessage());
+                    \Log::error('Failed to send notification: '.$e->getMessage());
                     \Log::error($e->getTraceAsString());
                 }
             } else {
                 \Log::warning("User with ID {$this->userId} not found");
             }
         } else {
-            \Log::warning("No user ID provided to export job");
+            \Log::warning('No user ID provided to export job');
         }
     }
 
@@ -318,7 +338,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
     {
         // Clear cache flag on failure
         \Cache::forget("audit_{$this->auditId}_exporting");
-        \Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: " . $exception->getMessage());
+        \Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: ".$exception->getMessage());
     }
-
 }

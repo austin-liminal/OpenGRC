@@ -14,16 +14,6 @@ class AuditsRelationManager extends RelationManager
 {
     protected static string $relationship = 'audits';
 
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-            ]);
-    }
-
     public function table(Table $table): Table
     {
         return $table
@@ -54,6 +44,7 @@ class AuditsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->label('Create a New Audit')
                     ->url(fn (): string =>
                         \App\Filament\Resources\AuditResource::getUrl('create', ['default_program_id' => $this->ownerRecord->id])
                 ),

@@ -69,7 +69,7 @@ class ControlsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
-                    ->label('Attach Control')
+                    ->label('Relate to Control')
                     ->preloadRecordSelect(),
             ])
             ->actions([

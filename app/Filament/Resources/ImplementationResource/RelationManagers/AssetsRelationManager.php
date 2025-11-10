@@ -9,6 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\AssetResource;
 
 class AssetsRelationManager extends RelationManager
 {
@@ -16,12 +17,7 @@ class AssetsRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-            ]);
+        return AssetResource::form($form);
     }
 
     public function table(Table $table): Table
@@ -67,7 +63,10 @@ class AssetsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
+                    ->label('Relate to Asset')
                     ->preloadRecordSelect(),
+                Tables\Actions\CreateAction::make()
+                    ->label('Create a New Asset'),
             ])
             ->actions([
                 Tables\Actions\DetachAction::make(),
