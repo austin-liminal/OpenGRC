@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:668a95e3-d13f-4093-9880-aa75e66cb148",
+    "serialNumber": "urn:uuid:bc4ddbb6-3c81-494a-9a2b-6d54102d3d46",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-11-10T00:03:25Z",
+        "timestamp": "2025-11-10T01:32:55Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "52025ff08e229e95d3573fb3616dd2ea30fe8f2b"
+                    "value": "4aa0a9f0ab3aff57e543ebc52b8f4b9be15ad156"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "52025ff08e229e95d3573fb3616dd2ea30fe8f2b"
+                    "value": "4aa0a9f0ab3aff57e543ebc52b8f4b9be15ad156"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1945,6 +1945,64 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "7a20509de405b4f34f6f865e40d51d058147be0b"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "erusev/parsedown-1.7.4.0",
+            "type": "library",
+            "name": "parsedown",
+            "version": "1.7.4",
+            "group": "erusev",
+            "description": "Parser for Markdown.",
+            "author": "Emanuil Rusev",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/erusev/parsedown@1.7.4",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/erusev/parsedown/zipball/cb17b6477dfff935958ba01325f2e8a2bfa6dab3",
+                    "comment": "dist reference: cb17b6477dfff935958ba01325f2e8a2bfa6dab3"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/erusev/parsedown.git",
+                    "comment": "source reference: cb17b6477dfff935958ba01325f2e8a2bfa6dab3"
+                },
+                {
+                    "type": "website",
+                    "url": "http://parsedown.org",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/erusev/parsedown/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/erusev/parsedown/tree/1.7.x",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "cb17b6477dfff935958ba01325f2e8a2bfa6dab3"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "cb17b6477dfff935958ba01325f2e8a2bfa6dab3"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12189,6 +12247,9 @@
             ]
         },
         {
+            "ref": "erusev/parsedown-1.7.4.0"
+        },
+        {
             "ref": "fakerphp/faker-1.24.1.0",
             "dependsOn": [
                 "psr/container-2.0.2.0",
@@ -13244,6 +13305,7 @@
                 "dedoc/scramble-0.12.36.0",
                 "dutchcodingcompany/filament-socialite-1.5.0.0",
                 "eightcedars/filament-inactivity-guard-0.4.0.0",
+                "erusev/parsedown-1.7.4.0",
                 "filament/actions-3.3.43.0",
                 "filament/filament-3.3.43.0",
                 "filament/forms-3.3.43.0",

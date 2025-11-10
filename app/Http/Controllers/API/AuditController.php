@@ -2,36 +2,24 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\Audit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Str;
 
-class AuditController extends Controller
+class AuditController extends BaseApiController
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        $products = Audit::all();
+    protected string $modelClass = Audit::class;
 
-        return response()->json($products, JsonResponse::HTTP_OK);
-    }
+    protected string $resourceName = 'Audits';
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $data = $request->validated();
+    protected array $indexRelations = ['manager', 'standard'];
 
-        $data['slug'] = Str::slug($request->name);
-        $product = Audit::create($data);
+    protected array $showRelations = ['manager', 'standard', 'auditItems'];
 
-        return response()->json($product, JsonResponse::HTTP_CREATED);
-    }
+    protected array $searchableFields = ['title', 'description', 'audit_type'];
+
+    protected array $sortableFields = ['id', 'title', 'audit_type', 'status', 'start_date', 'end_date', 'created_at', 'updated_at'];
 
     /**
      * Display the specified audit resource.
@@ -40,48 +28,70 @@ class AuditController extends Controller
      *
      * @group Audit
      *
-     * @urlParam audit int required The ID of the audit. Example: 1
+     * @urlParam id int required The ID of the audit. Example: 1
      *
      * @queryParam with_details boolean Return all related audit items, controls, implementations, data requests, and responses. Example: true
      *
      * @response scenario=basic {"id": 1, "title": "Q2 Audit", ...}
      * @response scenario=with_details {"id": 1, "title": "Q2 Audit", "audit_items": [{"id": 10, "control": {...}, "implementation": {...}, "data_requests": [{"id": 100, "responses": [{...}]}]}], "data_request": [{"id": 200, "responses": [{...}]}]}
      */
-    public function show(Request $request, Audit $audit)
+    public function show(Request $request, int $id): JsonResponse
     {
+        $this->authorize('Read '.$this->resourceName);
+
+        $query = $this->modelClass::query();
+
+        // Support the legacy with_details parameter
         if ($request->query('with_details')) {
-            $audit->load([
-                'auditItems.control',
-                'auditItems.implementation',
+            $query->with([
+                'auditItems.auditable',
                 'auditItems.dataRequests.responses',
                 'dataRequest.responses',
+                'manager',
+                'standard',
             ]);
+        } elseif (! empty($this->showRelations)) {
+            $query->with($this->showRelations);
         }
 
-        return response()->json($audit, JsonResponse::HTTP_OK);
+        // Allow loading additional relationships via query param
+        if ($request->has('with')) {
+            $with = explode(',', $request->input('with'));
+            $query->with($with);
+        }
+
+        $resource = $query->findOrFail($id);
+
+        return response()->json([
+            'data' => $resource,
+        ], JsonResponse::HTTP_OK);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Audit $audit)
+    protected function validateStore(Request $request): array
     {
-        $data = $request->validated();
-
-        $data['slug'] = Str::slug($request->name);
-
-        $audit->update($data);
-
-        return response()->json($audit, JsonResponse::HTTP_OK);
+        return $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'audit_type' => 'required|string|in:controls,implementations',
+            'status' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'manager_id' => 'nullable|exists:users,id',
+            'sid' => 'nullable|exists:standards,id',
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Audit $audit)
+    protected function validateUpdate(Request $request, Model $resource): array
     {
-        $audit->delete();
-
-        return response()->json(null, JsonResponse::HTTP_NO_CONTENT);
+        return $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'audit_type' => 'sometimes|string|in:controls,implementations',
+            'status' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'manager_id' => 'nullable|exists:users,id',
+            'sid' => 'nullable|exists:standards,id',
+        ]);
     }
 }

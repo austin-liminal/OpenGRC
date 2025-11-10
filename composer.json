@@ -17,6 +17,7 @@
         "dedoc/scramble": "^0.12.36",
         "dutchcodingcompany/filament-socialite": "^1.5.0",
         "eightcedars/filament-inactivity-guard": "^0.4.0",
+        "erusev/parsedown": "^1.7.4",
         "filament/actions": "^3.3.43",
         "filament/filament": "^3.3.43",
         "filament/forms": "^3.3.43",
