@@ -89,6 +89,15 @@ class Implementation extends Model
     }
 
     /**
+     * The policies that belong to the implementation.
+     */
+    public function policies(): BelongsToMany
+    {
+        return $this->belongsToMany(Policy::class, 'implementation_policy')
+            ->withTimestamps();
+    }
+
+    /**
      * The risks that belong to the implementation.
      */
     public function risks(): BelongsToMany

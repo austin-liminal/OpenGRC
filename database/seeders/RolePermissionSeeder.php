@@ -33,7 +33,7 @@ class RolePermissionSeeder extends Seeder
 
         // -----------------------------------------------------------------------------------------
         // Create Resource Permissions
-        $entities = ['Standards', 'Controls', 'Implementations', 'Audits', 'AuditItems', 'Programs', 'Vendors', 'Applications', 'Risks', 'DataRequests', 'DataRequestResponses', 'FileAttachments'];
+        $entities = ['Standards', 'Controls', 'Implementations', 'Audits', 'AuditItems', 'Programs', 'Vendors', 'Applications', 'Risks', 'Assets', 'Policies', 'DataRequests', 'DataRequestResponses', 'FileAttachments'];
         $actions = ['List', 'Create', 'Read', 'Update', 'Delete'];
 
         foreach ($entities as $entity) {

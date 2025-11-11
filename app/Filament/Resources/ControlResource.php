@@ -336,6 +336,7 @@ class ControlResource extends Resource
         return [
             RelationManagers\ImplementationRelationManager::class,
             RelationManagers\AuditItemRelationManager::class,
+            RelationManagers\PoliciesRelationManager::class,
         ];
     }
 

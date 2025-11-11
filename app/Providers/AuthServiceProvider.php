@@ -4,7 +4,9 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
+use App\Models\Policy;
 use App\Policies\PermissionPolicy;
+use App\Policies\PolicyPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\TaxonomyPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -24,6 +26,7 @@ class AuthServiceProvider extends ServiceProvider
         Role::class => RolePolicy::class,
         Permission::class => PermissionPolicy::class,
         Taxonomy::class => TaxonomyPolicy::class,
+        Policy::class => PolicyPolicy::class,
     ];
 
     /**

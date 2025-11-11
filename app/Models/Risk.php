@@ -30,6 +30,12 @@ class Risk extends Model
         return $this->BelongsToMany(Implementation::class);
     }
 
+    public function policies(): BelongsToMany
+    {
+        return $this->belongsToMany(Policy::class, 'policy_risk')
+            ->withTimestamps();
+    }
+
     public function programs(): BelongsToMany
     {
         return $this->belongsToMany(Program::class);

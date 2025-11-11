@@ -6,6 +6,7 @@ use App\Enums\RiskStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Resources\RiskResource\Pages;
 use App\Filament\Resources\RiskResource\RelationManagers\ImplementationsRelationManager;
+use App\Filament\Resources\RiskResource\RelationManagers\PoliciesRelationManager;
 use App\Models\Risk;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -275,6 +276,7 @@ class RiskResource extends Resource
     {
         return [
             'implementations' => ImplementationsRelationManager::class,
+            'policies' => PoliciesRelationManager::class,
         ];
     }
 
