@@ -148,8 +148,13 @@ return new class extends Migration
 
         foreach ($actions as $action) {
             Permission::firstOrCreate(
-                ['name' => "{$action} Policies"],
-                ['category' => 'Policies']
+                [
+                    'name' => "{$action} Policies",
+                    'guard_name' => 'web',
+                ],
+                [
+                    'category' => 'Policies',
+                ]
             );
         }
 

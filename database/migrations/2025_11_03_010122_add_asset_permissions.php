@@ -16,6 +16,8 @@ return new class extends Migration
         foreach ($assetActions as $action) {
             Permission::firstOrCreate([
                 'name' => "{$action} Assets",
+                'guard_name' => 'web',
+            ], [
                 'category' => 'Assets',
             ]);
         }
