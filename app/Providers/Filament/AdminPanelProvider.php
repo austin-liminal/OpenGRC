@@ -10,15 +10,16 @@ use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Rmsramos\Activitylog\ActivitylogPlugin;
-use EightCedars\FilamentInactivityGuard\FilamentInactivityGuardPlugin;
 use Illuminate\Support\Carbon;
 
 class AdminPanelProvider extends PanelProvider
@@ -86,12 +87,11 @@ class AdminPanelProvider extends PanelProvider
                     'enable_cleanup_command' => true,
                     'default_sort_column' => 'created_at',
                 ])->authorize(fn () => auth()->user()->can('View Audit Log')),
-                FilamentInactivityGuardPlugin::make()
-                    ->inactiveAfter(($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE) - 60) // Subtract 60 seconds for the warning period
-                    ->showNoticeFor(60) // 60 second warning before logout
-                    ->enabled(true),
-
             ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render("@livewire('multi-window-inactivity-guard')")
+            )
             ->navigationItems([
                 NavigationItem::make('Back to OpenGRC')
                     ->url('/app', shouldOpenInNewTab: false)
