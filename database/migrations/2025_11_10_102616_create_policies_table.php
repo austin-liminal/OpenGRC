@@ -147,15 +147,14 @@ return new class extends Migration
         $actions = ['List', 'Create', 'Read', 'Update', 'Delete'];
 
         foreach ($actions as $action) {
-            Permission::firstOrCreate(
-                [
+            $permission = Permission::where('name', "{$action} Policies")->first();
+            if (!$permission) {
+                Permission::create([
                     'name' => "{$action} Policies",
                     'guard_name' => 'web',
-                ],
-                [
                     'category' => 'Policies',
-                ]
-            );
+                ]);
+            }
         }
 
         // Clear permission cache so newly created permissions are available
@@ -166,17 +165,34 @@ return new class extends Migration
         $regular = Role::where('name', 'Regular User')->first();
         $securityAdmin = Role::where('name', 'Security Admin')->first();
 
-        // Assign permissions to roles if they exist
+        // Assign permissions to Super Admin if they don't already have them
         if ($superAdmin) {
-            $superAdmin->givePermissionTo(['List Policies', 'Create Policies', 'Read Policies', 'Update Policies', 'Delete Policies']);
+            $permissionsToAssign = ['List Policies', 'Create Policies', 'Read Policies', 'Update Policies', 'Delete Policies'];
+            foreach ($permissionsToAssign as $permName) {
+                if (!$superAdmin->hasPermissionTo($permName)) {
+                    $superAdmin->givePermissionTo($permName);
+                }
+            }
         }
 
+        // Assign permissions to Regular User if they don't already have them
         if ($regular) {
-            $regular->givePermissionTo(['List Policies', 'Read Policies']);
+            $permissionsToAssign = ['List Policies', 'Read Policies'];
+            foreach ($permissionsToAssign as $permName) {
+                if (!$regular->hasPermissionTo($permName)) {
+                    $regular->givePermissionTo($permName);
+                }
+            }
         }
 
+        // Assign permissions to Security Admin if they don't already have them
         if ($securityAdmin) {
-            $securityAdmin->givePermissionTo(['List Policies', 'Create Policies', 'Read Policies', 'Update Policies']);
+            $permissionsToAssign = ['List Policies', 'Create Policies', 'Read Policies', 'Update Policies'];
+            foreach ($permissionsToAssign as $permName) {
+                if (!$securityAdmin->hasPermissionTo($permName)) {
+                    $securityAdmin->givePermissionTo($permName);
+                }
+            }
         }
     }
 
