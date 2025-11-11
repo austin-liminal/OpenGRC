@@ -38,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         \Illuminate\Auth\Events\Failed::class => [
             \App\Listeners\LogFailedLogin::class,
         ],
+        \Kirschbaum\Commentions\Events\UserWasMentionedEvent::class => [
+            \App\Listeners\SendCommentMentionNotification::class,
+        ],
     ];
 
     /**

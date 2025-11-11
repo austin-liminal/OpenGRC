@@ -9,8 +9,10 @@ use App\Models\DataRequest;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -210,41 +212,45 @@ class DataRequestResource extends Resource
                                         return new HtmlString(!empty($descriptions) ? implode('<br><br>', $descriptions) : '-');
                                     }),
                             ]),
-                        Forms\Components\Section::make('Responses')
+                        Forms\Components\Section::make('Response')
                             ->columnSpanFull()
+                            ->columns(3)
                             ->schema([
-                                Forms\Components\Repeater::make('Responses')
-                                    ->label('')
-                                    ->relationship('responses')
-                                    ->addable(false)
-                                    ->columns()
-                                    ->deletable(false)
-                                    ->columnSpanFull()
-                                    ->schema([
-                                Select::make('requestee_id')
+                                Placeholder::make('requestee_name')
                                     ->label('Assigned To')
-                                    ->relationship('requestee', 'name', fn ($query) => $query->whereNotNull('name'))
-                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name ?? 'No Name')
-                                    ->required(),
-                                ToggleButtons::make('status')
+                                    ->content(function ($record) {
+                                        $response = $record->responses->first();
+                                        return $response?->requestee?->name ?? '-';
+                                    }),
+                                Placeholder::make('response_status')
                                     ->label('Status')
-                                    ->options(ResponseStatus::class)
-                                    ->default(ResponseStatus::PENDING)
-                                    ->grouped()
-                                    ->required(),
-                                Forms\Components\DatePicker::make('due_at')
+                                    ->content(function ($record) {
+                                        $response = $record->responses->first();
+                                        return $response?->status?->getLabel() ?? '-';
+                                    }),
+                                Placeholder::make('due_date')
                                     ->label('Due Date')
-                                    ->required(),
-                                Placeholder::make('response')
+                                    ->content(function ($record) {
+                                        $response = $record->responses->first();
+                                        return $response?->due_at?->format('M d, Y') ?? '-';
+                                    }),
+                                Placeholder::make('response_text')
                                     ->label('Text Response')
                                     ->columnSpanFull()
                                     ->content(function ($record) {
-                                        return new HtmlString($record ? $record->response : '');
-                                    })
-                                    ->label('Response'),
+                                        $response = $record->responses->first();
+                                        return new HtmlString($response?->response ?? '<em class="text-gray-400">No response yet</em>');
+                                    }),
                                 Placeholder::make('attachments')
                                     ->columnSpanFull()
+                                    ->label('Attachments')
                                     ->content(function ($record) {
+                                        $response = $record->responses->first();
+
+                                        if (!$response || $response->attachments->isEmpty()) {
+                                            return new HtmlString('<em class="text-gray-400">No attachments</em>');
+                                        }
+
                                         $output = "<table class='min-w-full divide-y divide-gray-200'>
                                         <thead class='bg-gray-50'>
                                             <tr>
@@ -253,38 +259,44 @@ class DataRequestResource extends Resource
                                             </tr>
                                         </thead>
                                         <tbody class='bg-white divide-y divide-gray-200'>";
-                                        if ($record) {
-                                            foreach ($record->attachments as $attachment) {
-                                                $storage = Storage::disk(config('filesystems.default'));
-                                                $downloadUrl = null;
 
-                                                if ($storage->exists($attachment->file_path)) {
-                                                    $driver = config('filesystems.default');
-                                                    if (in_array($driver, ['s3', 'minio'])) {
-                                                        $downloadUrl = $storage->temporaryUrl($attachment->file_path, now()->addMinutes(5));
-                                                    } else {
-                                                        $downloadUrl = $storage->url($attachment->file_path);
-                                                    }
-                                                }
+                                        foreach ($response->attachments as $attachment) {
+                                            $storage = Storage::disk(config('filesystems.default'));
+                                            $downloadUrl = null;
 
-                                                $output .= "<tr>
-                                                <td class='px-6 py-4 whitespace-nowrap w-auto'>";
-                                                if ($downloadUrl) {
-                                                    $output .= "<a href='{$downloadUrl}' class='text-indigo-600 hover:text-indigo-900' target='_blank'>{$attachment->file_name}</a>";
+                                            if ($storage->exists($attachment->file_path)) {
+                                                $driver = config('filesystems.default');
+                                                if (in_array($driver, ['s3', 'minio'])) {
+                                                    $downloadUrl = $storage->temporaryUrl($attachment->file_path, now()->addMinutes(5));
                                                 } else {
-                                                    $output .= "<span class='text-gray-400'>{$attachment->file_name} (not available)</span>";
+                                                    $downloadUrl = $storage->url($attachment->file_path);
                                                 }
-                                                $output .= "</td>
-                                                <td class='px-6 py-4 whitespace-normal'>{$attachment->description}</td>
-                                            </tr>";
                                             }
-                                        }
-                                        $output .= '</tbody></table>';
 
+                                            $output .= "<tr>
+                                            <td class='px-6 py-4 whitespace-nowrap w-auto'>";
+                                            if ($downloadUrl) {
+                                                $output .= "<a href='{$downloadUrl}' class='text-indigo-600 hover:text-indigo-900' target='_blank'>{$attachment->file_name}</a>";
+                                            } else {
+                                                $output .= "<span class='text-gray-400'>{$attachment->file_name} (not available)</span>";
+                                            }
+                                            $output .= "</td>
+                                            <td class='px-6 py-4 whitespace-normal'>{$attachment->description}</td>
+                                        </tr>";
+                                        }
+
+                                        $output .= '</tbody></table>';
                                         return new HtmlString($output);
-                                    })
-                                    ->label('Attachments'),
-                                    ]),
+                                    }),
+                            ]),
+                        Forms\Components\Section::make('Comments')
+                            ->columnSpanFull()
+                            ->collapsible()
+                            ->schema([
+                                ViewField::make('response_comments')
+                                    ->label('')
+                                    ->view('filament.forms.components.data-request-comments')
+                                    ->dehydrated(false),
                             ]),
                     ]),
             ]);
