@@ -93,12 +93,12 @@ class ControlResource extends Resource
                     ->label(__('control.form.type.label'))
                     ->options(ControlType::class)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.type.tooltip'))
-                    ->nullable(),
+                    ->required(),
                 Forms\Components\Select::make('category')
                     ->label(__('control.form.category.label'))
                     ->options(ControlCategory::class)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.category.tooltip'))
-                    ->nullable(),
+                    ->required(),
                 Forms\Components\Select::make('control_owner_id')
                     ->label('Control Owner')
                     ->options(User::pluck('name', 'id')->toArray())

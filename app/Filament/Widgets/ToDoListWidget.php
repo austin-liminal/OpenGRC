@@ -16,7 +16,7 @@ class ToDoListWidget extends BaseWidget
     {
         return $table
             ->query(
-                DataRequestResponse::query()->where('requestee_id', auth()->id())->take(5)->whereIn('status', ['pending', 'in_progress'])->orderBy('due_at', 'asc')
+                DataRequestResponse::query()->where('requestee_id', auth()->id())->take(5)->whereIn('status', ['Pending', 'in_progress'])->orderBy('due_at', 'asc')
             )
             ->heading(trans('widgets.todo.heading'))
             ->emptyStateHeading(new HtmlString(trans('widgets.todo.empty_heading')))
