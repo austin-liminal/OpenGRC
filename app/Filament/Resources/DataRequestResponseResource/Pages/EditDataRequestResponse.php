@@ -13,6 +13,8 @@ class EditDataRequestResponse extends EditRecord
 {
     protected static string $resource = DataRequestResponseResource::class;
 
+    protected bool $shouldSubmit = false;
+
     protected function getHeaderActions(): array
     {
         return [
@@ -20,18 +22,53 @@ class EditDataRequestResponse extends EditRecord
         ];
     }
 
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->label('Save Changes')
+                ->action('save'),
+            $this->getSubmitAction(),
+            $this->getCancelFormAction(),
+        ];
+    }
+
+    protected function getSubmitAction(): Actions\Action
+    {
+        return Actions\Action::make('submit')
+            ->label('Submit Response')
+            ->color('success')
+            ->action(function () {
+                $this->shouldSubmit = true;
+                $this->save();
+            })
+            ->requiresConfirmation()
+            ->modalHeading('Submit Response')
+            ->modalDescription('Are you sure you want to submit this response? This will change the status to "Responded".')
+            ->modalSubmitActionLabel('Yes, Submit');
+    }
+
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         /** @var DataRequestResponse $record */
         $record = parent::handleRecordUpdate($record, $data);
-        $record->status = ResponseStatus::RESPONDED;
-        $record->save();
+
+        // Only change status to RESPONDED if submitting
+        if ($this->shouldSubmit) {
+            $record->status = ResponseStatus::RESPONDED;
+            $record->save();
+        }
 
         return $record;
     }
 
     protected function getRedirectUrl(): string
     {
-        return route('filament.app.pages.to-do');
+        // Only redirect to to-do page if submitting, otherwise stay on current page
+        if ($this->shouldSubmit) {
+            return route('filament.app.pages.to-do');
+        }
+
+        return $this->getResource()::getUrl('edit', ['record' => $this->getRecord()]);
     }
 }
