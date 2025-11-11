@@ -6,7 +6,6 @@ use App\Models\Settings;
 use App\Models\User;
 use Carbon\Carbon;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
-use EightCedars\FilamentInactivityGuard\FilamentInactivityGuardPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -22,6 +21,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Blade;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 use Livewire\Livewire;
@@ -129,12 +129,10 @@ class AppPanelProvider extends PanelProvider
                     ->enableSanctumTokens(),
                 FilamentSocialitePlugin::make()
                     ->setProviders($socialProviders),
-                FilamentInactivityGuardPlugin::make()
-                    ->inactiveAfter(($this->getSessionTimeout() * Carbon::SECONDS_PER_MINUTE) - 60) // Subtract 60 seconds for the warning period
-                    ->showNoticeFor(60) // 60 second warning before logout
-                    ->enabled(true),
-            ],
-
+            ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => Blade::render("@livewire('multi-window-inactivity-guard')")
             )
             ->navigationGroups([
                 'Foundations',
