@@ -20,6 +20,9 @@ return new class extends Migration
             ]);
         }
 
+        // Clear permission cache so newly created permissions are available
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         // Get the roles
         $regular = Role::where('name', 'Regular User')->first();
         $superAdmin = Role::where('name', 'Super Admin')->first();
