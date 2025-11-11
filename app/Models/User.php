@@ -18,8 +18,10 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
+use Kirschbaum\Commentions\Contracts\Commenter;
 
-class User extends Authenticatable implements FilamentUser
+
+class User extends Authenticatable implements FilamentUser, Commenter
 {
     use HasApiTokens, HasFactory, HasRoles, HasSuperAdmin, LogsActivity, Notifiable, softDeletes, TwoFactorAuthenticatable;
 

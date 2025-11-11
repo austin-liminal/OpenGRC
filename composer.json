@@ -26,6 +26,7 @@
         "guzzlehttp/guzzle": "^7.10.0",
         "jeffgreco13/filament-breezy": "^2.6.4",
         "jibaymcs/filament-tour": "^3.1.2",
+        "kirschbaum-development/commentions": "^0.7.5",
         "laravel/framework": "^11.46.1",
         "laravel/prompts": "^0.3.7",
         "laravel/sanctum": "^4.2.0",

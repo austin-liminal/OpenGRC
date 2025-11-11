@@ -13,6 +13,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -169,6 +170,14 @@ class DataRequestResponseResource extends Resource
                             ]),
 
                     ]),
+                Section::make('Comments')
+                    ->columnSpanFull()
+                    ->collapsible()
+                    ->schema([
+                        ViewField::make('comments')
+                            ->view('filament.forms.components.inline-comments')
+                            ->dehydrated(false),
+                    ]),                               
             ]);
     }
 
