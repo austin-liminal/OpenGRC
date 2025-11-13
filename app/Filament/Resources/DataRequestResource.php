@@ -4,21 +4,22 @@ namespace App\Filament\Resources;
 
 use App\Enums\ResponseStatus;
 use App\Filament\Resources\DataRequestResource\Pages;
+use App\Mail\EvidenceRequestMail;
 use App\Models\Audit;
 use App\Models\DataRequest;
 use App\Models\User;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 
@@ -112,7 +113,8 @@ class DataRequestResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->modalFooterActions(fn ($record) => static::getModalFooterActions($record)),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -181,15 +183,15 @@ class DataRequestResource extends Resource
                                     ->content(function ($record) {
                                         // Try many-to-many relationship first
                                         $controls = $record->auditItems->map(function ($item) {
-                                            return $item->auditable ? ($item->auditable->code . ' - ' . $item->auditable->title) : null;
+                                            return $item->auditable ? ($item->auditable->code.' - '.$item->auditable->title) : null;
                                         })->filter()->all();
 
                                         // Fallback to single relationship for backwards compatibility
                                         if (empty($controls) && $record->auditItem?->auditable) {
-                                            $controls = [$record->auditItem->auditable->code . ' - ' . $record->auditItem->auditable->title];
+                                            $controls = [$record->auditItem->auditable->code.' - '.$record->auditItem->auditable->title];
                                         }
 
-                                        return new HtmlString(!empty($controls) ? implode('<br>', $controls) : '-');
+                                        return new HtmlString(! empty($controls) ? implode('<br>', $controls) : '-');
                                     })
                                     ->columnSpanFull(),
                                 Placeholder::make('control_description')
@@ -199,17 +201,18 @@ class DataRequestResource extends Resource
                                         // Try many-to-many relationship first
                                         $descriptions = $record->auditItems->map(function ($item) {
                                             if ($item->auditable) {
-                                                return '<strong>' . $item->auditable->code . ':</strong> ' . $item->auditable->description;
+                                                return '<strong>'.$item->auditable->code.':</strong> '.$item->auditable->description;
                                             }
+
                                             return null;
                                         })->filter()->all();
 
                                         // Fallback to single relationship for backwards compatibility
                                         if (empty($descriptions) && $record->auditItem?->auditable) {
-                                            $descriptions = ['<strong>' . $record->auditItem->auditable->code . ':</strong> ' . $record->auditItem->auditable->description];
+                                            $descriptions = ['<strong>'.$record->auditItem->auditable->code.':</strong> '.$record->auditItem->auditable->description];
                                         }
 
-                                        return new HtmlString(!empty($descriptions) ? implode('<br><br>', $descriptions) : '-');
+                                        return new HtmlString(! empty($descriptions) ? implode('<br><br>', $descriptions) : '-');
                                     }),
                             ]),
                         Forms\Components\Section::make('Response')
@@ -220,18 +223,21 @@ class DataRequestResource extends Resource
                                     ->label('Assigned To')
                                     ->content(function ($record) {
                                         $response = $record->responses->first();
+
                                         return $response?->requestee?->name ?? '-';
                                     }),
                                 Placeholder::make('response_status')
                                     ->label('Status')
                                     ->content(function ($record) {
                                         $response = $record->responses->first();
+
                                         return $response?->status?->getLabel() ?? '-';
                                     }),
                                 Placeholder::make('due_date')
                                     ->label('Due Date')
                                     ->content(function ($record) {
                                         $response = $record->responses->first();
+
                                         return $response?->due_at?->format('M d, Y') ?? '-';
                                     }),
                                 Placeholder::make('response_text')
@@ -239,6 +245,7 @@ class DataRequestResource extends Resource
                                     ->columnSpanFull()
                                     ->content(function ($record) {
                                         $response = $record->responses->first();
+
                                         return new HtmlString($response?->response ?? '<em class="text-gray-400">No response yet</em>');
                                     }),
                                 Placeholder::make('attachments')
@@ -247,7 +254,7 @@ class DataRequestResource extends Resource
                                     ->content(function ($record) {
                                         $response = $record->responses->first();
 
-                                        if (!$response || $response->attachments->isEmpty()) {
+                                        if (! $response || $response->attachments->isEmpty()) {
                                             return new HtmlString('<em class="text-gray-400">No attachments</em>');
                                         }
 
@@ -286,6 +293,7 @@ class DataRequestResource extends Resource
                                         }
 
                                         $output .= '</tbody></table>';
+
                                         return new HtmlString($output);
                                     }),
                             ]),
@@ -301,5 +309,174 @@ class DataRequestResource extends Resource
                     ]),
             ]);
 
+    }
+
+    public static function getViewFormActions(): array
+    {
+        return [
+            Actions\Action::make('reassign')
+                ->label('Reassign Request')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->form([
+                    Select::make('new_assignee_id')
+                        ->label('Reassign To')
+                        ->options(
+                            User::query()
+                                ->whereNotNull('name')
+                                ->whereNull('deleted_at')
+                                ->pluck('name', 'id')
+                                ->toArray()
+                        )
+                        ->searchable()
+                        ->required()
+                        ->helperText('Select the user to reassign this request to'),
+                    Forms\Components\Checkbox::make('send_notification')
+                        ->label('Send email notification to the new assignee')
+                        ->default(true)
+                        ->helperText('Uses the evidence request email template'),
+                ])
+                ->action(function (DataRequest $record, array $data): void {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $newAssignee = User::find($data['new_assignee_id']);
+
+                    if (! $newAssignee) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('Selected user not found.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    // Update the response
+                    $response->requestee_id = $data['new_assignee_id'];
+                    $response->save();
+
+                    // Send email notification if checkbox is checked
+                    if ($data['send_notification'] && $newAssignee->email) {
+                        try {
+                            Mail::send(new EvidenceRequestMail($newAssignee->email, $newAssignee->name));
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Warning')
+                                ->body('Request reassigned but email notification failed to send.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+                    }
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body("Request reassigned to {$newAssignee->name}".($data['send_notification'] ? ' and notification sent.' : '.'))
+                        ->success()
+                        ->send();
+                })
+                ->modalWidth('md'),
+        ];
+    }
+
+    public static function getModalFooterActions(DataRequest $record): array
+    {
+        $actions = [];
+
+        if ($record->responses()->exists()) {
+            $actions[] = Tables\Actions\Action::make('reassign')
+                ->label('Reassign Request')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->form([
+                    Select::make('new_assignee_id')
+                        ->label('Reassign To')
+                        ->options(
+                            User::query()
+                                ->whereNotNull('name')
+                                ->whereNull('deleted_at')
+                                ->pluck('name', 'id')
+                                ->toArray()
+                        )
+                        ->searchable()
+                        ->required()
+                        ->helperText('Select the user to reassign this request to'),
+                    Forms\Components\Checkbox::make('send_notification')
+                        ->label('Send email notification to the new assignee')
+                        ->default(true)
+                        ->helperText('Uses the evidence request email template'),
+                ])
+                ->action(function (DataRequest $record, array $data, $livewire): void {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $newAssignee = User::find($data['new_assignee_id']);
+
+                    if (! $newAssignee) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('Selected user not found.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    // Update the response
+                    $response->requestee_id = $data['new_assignee_id'];
+                    $response->save();
+
+                    // Refresh the record to get updated data
+                    $record->refresh();
+
+                    // Send email notification if checkbox is checked
+                    if ($data['send_notification'] && $newAssignee->email) {
+                        try {
+                            Mail::send(new EvidenceRequestMail($newAssignee->email, $newAssignee->name));
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Warning')
+                                ->body('Request reassigned but email notification failed to send.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+                    }
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body("Request reassigned to {$newAssignee->name}".($data['send_notification'] ? ' and notification sent.' : '.'))
+                        ->success()
+                        ->send();
+
+                    // Dispatch event to refresh the parent modal
+                    if (method_exists($livewire, 'dispatch')) {
+                        $livewire->dispatch('refreshForm');
+                    }
+                });
+        }
+
+        return $actions;
     }
 }
