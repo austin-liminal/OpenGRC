@@ -1,0 +1,3 @@
+code,title,details,notes,test plan,owner,map-control
+IMPL-001,Active Directory Password Policy,We have configured Group Policy to enforce password complexity requirements,Policy applies to all domain users,Verify GPO settings in Active Directory,admin@example.com,CTRL-002
+IMPL-002,Quarterly Access Reviews,We conduct quarterly access reviews using our IAM system,Reviews are documented in our ticketing system,Review access review tickets and documentation,security@example.com,CTRL-001

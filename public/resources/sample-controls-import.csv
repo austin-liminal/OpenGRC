@@ -1,0 +1,3 @@
+code,title,standard_code,description,discussion,test,owner
+CTRL-001,Access Control Policy,CMMC 2.0 - Level 2,This control ensures proper access control procedures are implemented,Access controls should be reviewed quarterly,Verify access control lists are maintained and reviewed,user@example.com
+CTRL-002,Password Requirements,CMMC 2.0 - Level 2,Enforce strong password requirements for all users,Passwords must be at least 12 characters with complexity requirements,Review password policy settings and user compliance,admin@example.com

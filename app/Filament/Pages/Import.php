@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Control;
 use App\Models\Implementation;
+use App\Models\Standard;
 use App\Models\User;
 use Exception;
 use Filament\Actions\Concerns\HasWizard;
@@ -71,6 +72,19 @@ class Import extends Page
                                     'controls' => 'Controls',
                                     'implementations' => 'Implementations',
                                 ])
+                                ->helperText(fn (Get $get): ?HtmlString => match ($get('import_type')) {
+                                    'controls' => new HtmlString('
+                                        <strong>Required fields:</strong> code, title, standard_code<br>
+                                        <strong>Optional fields:</strong> description, discussion, test, owner<br>
+                                        <a href="/resources/sample-controls-import.csv" download class="text-primary-600 hover:text-primary-500 underline">Download sample Controls CSV template</a>
+                                    '),
+                                    'implementations' => new HtmlString('
+                                        <strong>Required fields:</strong> code, title<br>
+                                        <strong>Optional fields:</strong> details, notes, test plan, owner, map-control<br>
+                                        <a href="/resources/sample-implementations-import.csv" download class="text-primary-600 hover:text-primary-500 underline">Download sample Implementations CSV template</a>
+                                    '),
+                                    default => null,
+                                })
                                 ->required(),
                             FileUpload::make('data_file')
                                 ->label('Data File')
@@ -98,6 +112,7 @@ class Import extends Page
                                 ->view('filament.pages.import-data-table', [
                                     'data' => $this->finalData ?? [],
                                     'users' => $this->users ?? [],
+                                    'import_type' => $this->import_type,
                                 ]),
                         ]),
                 ])
@@ -111,7 +126,7 @@ class Import extends Page
         if ($this->import_type === 'controls') {
             $this->currentItems = Control::all();
 
-            return $this->validateImplementationFile();
+            return $this->validateControlFile();
         } elseif ($this->import_type === 'implementations') {
             $this->currentItems = Implementation::all();
 
@@ -119,6 +134,39 @@ class Import extends Page
         }
 
         return false;
+    }
+
+    public function validateControlFile(): bool
+    {
+        try {
+            $reader = Reader::createFromPath($this->data_file_path, 'r');
+            $reader->setHeaderOffset(0);
+            $headers = $reader->getHeader();
+            $normalizedHeaders = array_map(function ($header) {
+                return strtolower(trim($header));
+            }, $headers);
+
+            $requiredHeaders = ['code', 'title', 'standard_code'];
+            $missingHeaders = array_diff($requiredHeaders, $normalizedHeaders);
+
+            if (! empty($missingHeaders)) {
+                $err = new HtmlString('Control File missing required fields: '.implode(', ', $missingHeaders).'<br><br>Please correct your file and reupload');
+                $this->addError('data_file', $err);
+
+                return false;
+            } else {
+                $this->resetErrorBag('data_file');
+                $this->data_file_data = iterator_to_array($reader->getRecords());
+                $this->preProcessData();
+
+                return true;
+            }
+
+        } catch (Exception $e) {
+            $this->addError('data_file', 'Invalid file: '.$e->getMessage());
+
+            return false;
+        }
     }
 
     public function validateImplementationFile(): bool
@@ -174,11 +222,34 @@ class Import extends Page
 
                 $finalRecord['code'] = $row['code'];
                 $finalRecord['title'] = $row['title'];
-                $finalRecord['details'] = $row['details'];
-                $finalRecord['notes'] = $row['notes'];
-                $finalRecord['test_plan'] = $row['test plan'];
-                $finalRecord['owner'] = $row['owner'];
-                $finalRecord['map-control'] = $row['map-control'];
+
+                if ($this->import_type === 'controls') {
+                    // Controls use: description, discussion, test, standard_code
+                    // Resolve standard_code to standard_id
+                    $standardCode = $row['standard_code'] ?? null;
+                    $standard = null;
+                    if ($standardCode) {
+                        $standard = Standard::where('code', $standardCode)->first();
+                        if (!$standard) {
+                            $has_errors = true;
+                            $error_array[] = "Row ".($index + 1).": Standard code '{$standardCode}' not found";
+                        }
+                    }
+
+                    $finalRecord['standard_code'] = $standardCode;
+                    $finalRecord['standard_id'] = $standard?->id;
+                    $finalRecord['description'] = $row['description'] ?? '';
+                    $finalRecord['discussion'] = $row['discussion'] ?? '';
+                    $finalRecord['test'] = $row['test'] ?? '';
+                    $finalRecord['owner'] = $row['owner'] ?? '';
+                } elseif ($this->import_type === 'implementations') {
+                    // Implementations use: details, notes, test_plan
+                    $finalRecord['details'] = $row['details'] ?? '';
+                    $finalRecord['notes'] = $row['notes'] ?? '';
+                    $finalRecord['test_plan'] = $row['test plan'] ?? '';
+                    $finalRecord['owner'] = $row['owner'] ?? '';
+                    $finalRecord['map-control'] = $row['map-control'] ?? '';
+                }
 
                 $this->finalData[] = $finalRecord;
 
@@ -217,9 +288,10 @@ class Import extends Page
                     $control = new Control;
                     $control->code = $row['code'];
                     $control->title = $row['title'];
-                    $control->details = $row['details'];
-                    $control->notes = $row['notes'];
-                    $control->test_plan = $row['test_plan'];
+                    $control->standard_id = $row['standard_id'];
+                    $control->description = $row['description'];
+                    $control->discussion = $row['discussion'];
+                    $control->test = $row['test'];
                     $control->control_owner_id = $owner->id ?? null;
                     $control->save();
                 } elseif ($this->import_type === 'implementations') {
@@ -244,10 +316,11 @@ class Import extends Page
                 if ($this->import_type === 'controls') {
                     $control = $this->currentItems->where('code', $row['code'])->first();
                     $control->title = $row['title'];
-                    $control->details = $row['details'];
-                    $control->notes = $row['notes'];
-                    $control->test_plan = $row['test_plan'];
-                    $control->implementation_owner_id = $row['owner'] ?? null;
+                    $control->standard_id = $row['standard_id'];
+                    $control->description = $row['description'];
+                    $control->discussion = $row['discussion'];
+                    $control->test = $row['test'];
+                    $control->control_owner_id = $owner->id ?? null;
                     $control->update();
                 } elseif ($this->import_type === 'implementations') {
                     $mappedControls = $this->getMappedControls($row['map-control']);

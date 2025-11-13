@@ -79,7 +79,7 @@ class ImportIrl extends Page implements HasForms
         $this->currentDataRequests = DataRequest::query()->where('audit_id', $this->record->id)->get();
         $this->auditItems = $this->record->auditItems()->with('control')->get();
         $this->controlCodes = $this->auditItems->pluck('auditable.code')->toArray();
-        $template_url = "/storage/irl-template.csv";
+        $template_url = "/resources/irl-template.csv";
 
         return $form
             ->schema([
