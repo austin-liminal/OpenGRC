@@ -15,10 +15,14 @@
             <th class='fi-ta-th'>{{ __('Action') }}</th>
             <th class='fi-ta-th'>{{ __('Code') }}</th>
             <th class='fi-ta-th'>{{ __('Title') }}</th>
+            @if($import_type === 'controls')
+                <th class='fi-ta-th'>{{ __('Standard') }}</th>
+                <th class='fi-ta-th'>{{ __('Description') }}</th>
+            @elseif($import_type === 'implementations')
+                <th class='fi-ta-th'>{{ __('Details') }}</th>
+                <th class='fi-ta-th'>{{ __('Map Control') }}</th>
+            @endif
             <th class='fi-ta-th'>{{ __('Owner') }}</th>
-            {{-- <th class='fi-ta-th'>{{ __('Details') }}</th>
-            <th class='fi-ta-th'>{{ __('Notes') }}</th>
-            <th class='fi-ta-th'>{{ __('Test Plan') }}</th> --}}
         </tr>
         </thead>
 
@@ -45,11 +49,14 @@
                 <td class='fi-ta-td text-center align-middle'>{!! $action_html !!}</td>
                 <td class='fi-ta-td text-center align-middle'>{{ $record["code"] }}</td>
                 <td class='fi-ta-td text-center align-middle'>{{ $record["title"] ?? 'New'}}</td>
-                <td class='fi-ta-td text-center align-middle'>{{ $record["owner"] ?? 'Unassigned'}}</td>            
-                <td class='fi-ta-td text-center align-middle'>{{ $record["map-control"] ?? 'Unmapped'}}</td>
-                {{-- <td class='fi-ta-td'>{{ Str::words($record["details"], 10) }}</td>
-                <td class='fi-ta-td'>{{ Str::words($record["notes"], 10) }}</td>
-                <td class='fi-ta-td'>{{ Str::words($record["test_plan"], 10) }}</td> --}}
+                @if($import_type === 'controls')
+                    <td class='fi-ta-td text-center align-middle'>{{ $record["standard_code"] ?? 'N/A'}}</td>
+                    <td class='fi-ta-td text-center align-middle'>{{ Str::limit($record["description"] ?? '', 50) }}</td>
+                @elseif($import_type === 'implementations')
+                    <td class='fi-ta-td text-center align-middle'>{{ Str::limit($record["details"] ?? '', 50) }}</td>
+                    <td class='fi-ta-td text-center align-middle'>{{ $record["map-control"] ?? 'Unmapped'}}</td>
+                @endif
+                <td class='fi-ta-td text-center align-middle'>{{ $record["owner"] ?? 'Unassigned'}}</td>
             </tr>
         @endforeach
         </tbody>
