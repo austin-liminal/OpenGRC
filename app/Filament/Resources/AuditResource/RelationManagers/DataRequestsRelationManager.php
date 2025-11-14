@@ -302,6 +302,7 @@ class DataRequestsRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->modalHeading('View Data Request')
+                    ->modalFooterActions(fn ($record) => DataRequestResource::getModalFooterActions($record))
                     ->disabled(function () {
                         return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                     }),
