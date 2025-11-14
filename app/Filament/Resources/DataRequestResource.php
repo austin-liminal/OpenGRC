@@ -114,7 +114,8 @@ class DataRequestResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
-                    ->modalFooterActions(fn ($record) => static::getModalFooterActions($record)),
+                    ->modalFooterActions(fn ($record) => static::getModalFooterActions($record))
+                    ->modalSubmitAction(false),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -395,10 +396,71 @@ class DataRequestResource extends Resource
         $actions = [];
 
         if ($record->responses()->exists()) {
+            // Accept button
+            $actions[] = Tables\Actions\Action::make('set_accepted')
+                ->label('Accept')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->action(function (DataRequest $record) {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $response->status = ResponseStatus::ACCEPTED;
+                    $response->save();
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Request accepted.')
+                        ->success()
+                        ->send();
+                })
+                ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
+
+            // Reject button
+            $actions[] = Tables\Actions\Action::make('set_rejected')
+                ->label('Reject')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->action(function (DataRequest $record) {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $response->status = ResponseStatus::REJECTED;
+                    $response->save();
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Request rejected.')
+                        ->success()
+                        ->send();
+                })
+                ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
+
+            // Reassign button
             $actions[] = Tables\Actions\Action::make('reassign')
-                ->label('Reassign Request')
-                ->icon('heroicon-o-arrow-path')
-                ->color('warning')
+                ->label('Reassign')
+                ->icon('heroicon-o-user-group')
+                ->color('gray')
                 ->form([
                     Select::make('new_assignee_id')
                         ->label('Reassign To')
@@ -417,7 +479,7 @@ class DataRequestResource extends Resource
                         ->default(true)
                         ->helperText('Uses the evidence request email template'),
                 ])
-                ->action(function (DataRequest $record, array $data, $livewire): void {
+                ->action(function (DataRequest $record, array $data) {
                     $response = $record->responses()->first();
 
                     if (! $response) {
@@ -442,12 +504,10 @@ class DataRequestResource extends Resource
                         return;
                     }
 
-                    // Update the response
+                    // Update the response and set status to Pending
                     $response->requestee_id = $data['new_assignee_id'];
+                    $response->status = ResponseStatus::PENDING;
                     $response->save();
-
-                    // Refresh the record to get updated data
-                    $record->refresh();
 
                     // Send email notification if checkbox is checked
                     if ($data['send_notification'] && $newAssignee->email) {
@@ -466,15 +526,156 @@ class DataRequestResource extends Resource
 
                     Notification::make()
                         ->title('Success')
-                        ->body("Request reassigned to {$newAssignee->name}".($data['send_notification'] ? ' and notification sent.' : '.'))
+                        ->body("Request reassigned to {$newAssignee->name}".($data['send_notification'] ? ' and notification sent.' : '.').'.')
                         ->success()
                         ->send();
+                })
+                ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
+        }
 
-                    // Dispatch event to refresh the parent modal
-                    if (method_exists($livewire, 'dispatch')) {
-                        $livewire->dispatch('refreshForm');
+        return $actions;
+    }
+
+    public static function getPageFooterActions(DataRequest $record): array
+    {
+        $actions = [];
+
+        if ($record->responses()->exists()) {
+            // Accept button
+            $actions[] = Actions\Action::make('set_accepted')
+                ->label('Accept')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->action(function (DataRequest $record) {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
                     }
-                });
+
+                    $response->status = ResponseStatus::ACCEPTED;
+                    $response->save();
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Request accepted.')
+                        ->success()
+                        ->send();
+                })
+                ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
+
+            // Reject button
+            $actions[] = Actions\Action::make('set_rejected')
+                ->label('Reject')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->action(function (DataRequest $record) {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $response->status = ResponseStatus::REJECTED;
+                    $response->save();
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Request rejected.')
+                        ->success()
+                        ->send();
+                })
+                ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
+
+            // Reassign button
+            $actions[] = Actions\Action::make('reassign')
+                ->label('Reassign')
+                ->icon('heroicon-o-user-group')
+                ->color('gray')
+                ->form([
+                    Select::make('new_assignee_id')
+                        ->label('Reassign To')
+                        ->options(
+                            User::query()
+                                ->whereNotNull('name')
+                                ->whereNull('deleted_at')
+                                ->pluck('name', 'id')
+                                ->toArray()
+                        )
+                        ->searchable()
+                        ->required()
+                        ->helperText('Select the user to reassign this request to'),
+                    Forms\Components\Checkbox::make('send_notification')
+                        ->label('Send email notification to the new assignee')
+                        ->default(true)
+                        ->helperText('Uses the evidence request email template'),
+                ])
+                ->action(function (DataRequest $record, array $data) {
+                    $response = $record->responses()->first();
+
+                    if (! $response) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No response found for this data request.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    $newAssignee = User::find($data['new_assignee_id']);
+
+                    if (! $newAssignee) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('Selected user not found.')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    // Update the response and set status to Pending
+                    $response->requestee_id = $data['new_assignee_id'];
+                    $response->status = ResponseStatus::PENDING;
+                    $response->save();
+
+                    // Send email notification if checkbox is checked
+                    if ($data['send_notification'] && $newAssignee->email) {
+                        try {
+                            Mail::send(new EvidenceRequestMail($newAssignee->email, $newAssignee->name));
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Warning')
+                                ->body('Request reassigned but email notification failed to send.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+                    }
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body("Request reassigned to {$newAssignee->name}".($data['send_notification'] ? ' and notification sent.' : '.').'.')
+                        ->success()
+                        ->send();
+                })
+                ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
         }
 
         return $actions;

@@ -30,8 +30,8 @@ class ViewDataRequest extends ViewRecord
 
         $actions = [];
 
-        // Add the reassign action from the resource
-        $actions = array_merge($actions, DataRequestResource::getViewFormActions());
+        // Add the accept, reject, reassign actions
+        $actions = array_merge($actions, DataRequestResource::getPageFooterActions($record));
 
         if ($record->audit_item_id) {
             $actions[] = Action::make('back')
