@@ -72,6 +72,7 @@ class DataRequestsRelationManager extends RelationManager
                 TextColumn::make('code')
                     ->searchable()
                     ->toggleable()
+                    ->sortable()
                     ->label('Request Code'),
                 TextColumn::make('details')
                     ->label('Request Details')
@@ -80,18 +81,17 @@ class DataRequestsRelationManager extends RelationManager
                     ->wrap(),
                 TextColumn::make('responses.status')
                     ->label('Responses')
+                    ->sortable()
                     ->badge(),
-                TextColumn::make('assignedTo')
+                TextColumn::make('responses.requestee.name')
                     ->label('Assigned To')
-                    ->state(function (DataRequest $record) {
-                        return $record->responses->first()?->requestee->name;
-                    }),
-                TextColumn::make('responses')
+                    ->sortable()
+                    ->default('-'),
+                TextColumn::make('responses.due_at')
                     ->label('Due Date')
                     ->date()
-                    ->state(function (DataRequest $record) {
-                        return $record->responses->sortByDesc('due_at')->first()?->due_at;
-                    }),
+                    ->sortable()
+                    ->default('-'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -385,6 +385,66 @@ class DataRequestsRelationManager extends RelationManager
                         ->requiresConfirmation()
                         ->modalHeading('Bulk Update Status')
                         ->modalDescription('This will update the status for the first response of each selected data request.')
+                        ->disabled(function () {
+                            return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
+                        }),
+                    Tables\Actions\BulkAction::make('bulk_change_due_date')
+                        ->label('Bulk Change Due Date')
+                        ->icon('heroicon-o-calendar')
+                        ->color('warning')
+                        ->form([
+                            DatePicker::make('new_due_date')
+                                ->label('New Due Date')
+                                ->required()
+                                ->native(false)
+                                ->displayFormat('M d, Y')
+                                ->helperText('This will update the due date for all selected data requests where you are the Audit Manager'),
+                        ])
+                        ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
+                            $userId = auth()->id();
+                            $audit = $this->getOwnerRecord();
+                            $updated = 0;
+                            $skipped = 0;
+
+                            foreach ($records as $dataRequest) {
+                                // Check if user is the Audit Manager for this audit
+                                if ($audit->manager_id !== $userId) {
+                                    $skipped++;
+
+                                    continue;
+                                }
+
+                                $response = $dataRequest->responses->first();
+                                if (! $response) {
+                                    $skipped++;
+
+                                    continue;
+                                }
+
+                                // Update the due date
+                                $response->update(['due_at' => $data['new_due_date']]);
+                                $updated++;
+                            }
+
+                            // Show notification with results
+                            $message = "Updated {$updated} request(s).";
+                            if ($skipped > 0) {
+                                $message .= " Skipped {$skipped} request(s) (not authorized or no response).";
+                            }
+
+                            Notification::make()
+                                ->title($updated > 0 ? 'Bulk Due Date Update Complete' : 'Warning')
+                                ->body($message)
+                                ->color($updated > 0 ? 'success' : 'warning')
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Bulk Change Due Date')
+                        ->modalDescription('This will update the due date for the first response of each selected data request. Only available to the Audit Manager.')
+                        ->visible(function () {
+                            return $this->getOwnerRecord()->manager_id === auth()->id();
+                        })
                         ->disabled(function () {
                             return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                         }),

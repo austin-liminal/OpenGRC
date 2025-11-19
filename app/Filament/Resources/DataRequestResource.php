@@ -531,6 +531,47 @@ class DataRequestResource extends Resource
                         ->send();
                 })
                 ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
+
+            // Change Due Date button (only for Audit Manager)
+            $audit = $record->audit;
+            if ($audit && $audit->manager_id === auth()->id()) {
+                $actions[] = Tables\Actions\Action::make('change_due_date')
+                    ->label('Change Due Date')
+                    ->icon('heroicon-o-calendar')
+                    ->color('gray')
+                    ->form([
+                        Forms\Components\DatePicker::make('new_due_date')
+                            ->label('New Due Date')
+                            ->required()
+                            ->native(false)
+                            ->displayFormat('M d, Y')
+                            ->helperText('Select the new due date for this data request'),
+                    ])
+                    ->action(function (DataRequest $record, array $data) {
+                        $response = $record->responses()->first();
+
+                        if (! $response) {
+                            Notification::make()
+                                ->title('Error')
+                                ->body('No response found for this data request.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Update the due date
+                        $response->due_at = $data['new_due_date'];
+                        $response->save();
+
+                        Notification::make()
+                            ->title('Success')
+                            ->body('Due date updated successfully.')
+                            ->success()
+                            ->send();
+                    })
+                    ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
+            }
         }
 
         return $actions;
@@ -676,6 +717,47 @@ class DataRequestResource extends Resource
                         ->send();
                 })
                 ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
+
+            // Change Due Date button (only for Audit Manager)
+            $audit = $record->audit;
+            if ($audit && $audit->manager_id === auth()->id()) {
+                $actions[] = Actions\Action::make('change_due_date')
+                    ->label('Change Due Date')
+                    ->icon('heroicon-o-calendar')
+                    ->color('gray')
+                    ->form([
+                        Forms\Components\DatePicker::make('new_due_date')
+                            ->label('New Due Date')
+                            ->required()
+                            ->native(false)
+                            ->displayFormat('M d, Y')
+                            ->helperText('Select the new due date for this data request'),
+                    ])
+                    ->action(function (DataRequest $record, array $data) {
+                        $response = $record->responses()->first();
+
+                        if (! $response) {
+                            Notification::make()
+                                ->title('Error')
+                                ->body('No response found for this data request.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Update the due date
+                        $response->due_at = $data['new_due_date'];
+                        $response->save();
+
+                        Notification::make()
+                            ->title('Success')
+                            ->body('Due date updated successfully.')
+                            ->success()
+                            ->send();
+                    })
+                    ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
+            }
         }
 
         return $actions;
