@@ -27,7 +27,8 @@ class EditDataRequestResponse extends EditRecord
         return [
             $this->getSaveFormAction()
                 ->label('Save Changes')
-                ->action('save'),
+                ->submit(null)
+                ->action(fn () => $this->save(false)),
             $this->getSubmitAction(),
             $this->getCancelFormAction(),
         ];
@@ -40,12 +41,17 @@ class EditDataRequestResponse extends EditRecord
             ->color('success')
             ->action(function () {
                 $this->shouldSubmit = true;
-                $this->save();
+                $this->save(false);
             })
             ->requiresConfirmation()
             ->modalHeading('Submit Response')
             ->modalDescription('Are you sure you want to submit this response? This will change the status to "Responded".')
             ->modalSubmitActionLabel('Yes, Submit');
+    }
+
+    public function save(bool $shouldRedirect = true, bool $shouldSendSavedNotification = true): void
+    {
+        parent::save($shouldRedirect, $shouldSendSavedNotification);
     }
 
     protected function handleRecordUpdate(Model $record, array $data): Model
