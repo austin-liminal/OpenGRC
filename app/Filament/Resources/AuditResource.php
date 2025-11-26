@@ -292,13 +292,13 @@ class AuditResource extends Resource
             if ($auditItem->effectiveness !== Effectiveness::UNKNOWN) {
 
                 $updateData = ['effectiveness' => $auditItem->effectiveness->value];
-
-                if ($auditItem->auditable_type == \App\Models\Control::class) {
-                    $updateData['applicability'] = $auditItem->applicability->value;
-                }
-
-                $auditItem->auditable->update($updateData);
             }
+            if ($auditItem->auditable_type == \App\Models\Control::class) {
+                $updateData['applicability'] = $auditItem->applicability->value;
+            }
+
+            $auditItem->auditable->update($updateData);
+            
         }
 
         // Save the final audit report
