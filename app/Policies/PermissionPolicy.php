@@ -3,11 +3,11 @@
 namespace App\Policies;
 
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class PermissionPolicy
 {
-    protected string $model = Role::class;
+    protected string $model = Permission::class;
 
     public function viewAny(User $user): bool
     {

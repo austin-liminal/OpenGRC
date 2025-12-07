@@ -36,9 +36,12 @@ class MultiWindowInactivityGuard extends Component
         ]);
     }
 
-    public function logout(): void
+    public function logout(): string
     {
         Filament::auth()->logout();
+
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
 
         Notification::make()
             ->warning()
@@ -46,6 +49,8 @@ class MultiWindowInactivityGuard extends Component
             ->persistent()
             ->send();
 
-        $this->redirect(Filament::getLoginUrl());
+        // Return the login URL so JavaScript can do a full page redirect
+        // This prevents the login page from appearing in a Livewire modal
+        return Filament::getLoginUrl();
     }
 }

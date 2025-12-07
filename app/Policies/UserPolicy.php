@@ -32,4 +32,14 @@ class UserPolicy
     {
         return $user->can('Manage Users');
     }
+
+    public function restore(User $user): bool
+    {
+        return $user->can('Manage Users');
+    }
+
+    public function forceDelete(User $user): bool
+    {
+        return $user->can('Manage Users');
+    }
 }
