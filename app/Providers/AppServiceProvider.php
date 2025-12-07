@@ -31,12 +31,6 @@ class AppServiceProvider extends ServiceProvider
         // Disable mass assignment protection
         Model::unguard();
 
-        // Force HTTPS in production environments
-        if (! $this->app->environment('local')) {
-            URL::forceScheme('https');
-            $this->app['request']->server->set('HTTPS', 'on');
-        }
-
         // Only skip the install check if running the installer command or tests
         $isInstaller = false;
         if ($this->app->runningInConsole()) {
@@ -187,6 +181,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Force HTTPS in production environments (must be in register, not boot)
+        if (! $this->app->environment('local')) {
+            URL::forceScheme('https');
+
+            // Ensure HTTPS is detected from proxy headers
+            $this->app['request']->server->set('HTTPS', 'on');
+            $_SERVER['HTTPS'] = 'on';
+        }
     }
 }
