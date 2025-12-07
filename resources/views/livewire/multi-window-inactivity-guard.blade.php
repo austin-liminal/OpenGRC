@@ -114,10 +114,12 @@
                 this.$dispatch('close-modal', { id: 'inactivityModal' });
             },
 
-            performLogout() {
+            async performLogout() {
                 console.log('Performing logout due to inactivity');
                 localStorage.removeItem(this.storageKey);
-                @this.call('logout');
+                const loginUrl = await @this.call('logout');
+                // Force full page redirect to prevent login appearing in modal
+                window.location.href = loginUrl;
             },
 
             resumeActivities() {

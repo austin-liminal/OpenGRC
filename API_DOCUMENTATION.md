@@ -34,13 +34,16 @@ Rate limit headers are included in all responses:
 
 ## Permissions
 
-All endpoints check permissions using the Spatie Permission system. Required permissions follow this pattern:
+All endpoints use Laravel policies for authorization, which check permissions via the Spatie Permission system. The API uses the same policies as the Filament web interface, ensuring consistent authorization across both.
 
-- `GET /api/resources` → `List {Resources}` permission
-- `POST /api/resources` → `Create {Resources}` permission
-- `GET /api/resources/{id}` → `Read {Resources}` permission
-- `PUT/PATCH /api/resources/{id}` → `Update {Resources}` permission
-- `DELETE /api/resources/{id}` → `Delete {Resources}` permission
+Required permissions follow this pattern:
+
+- `GET /api/resources` → `List {Resources}` permission (via `viewAny` policy)
+- `POST /api/resources` → `Create {Resources}` permission (via `create` policy)
+- `GET /api/resources/{id}` → `Read {Resources}` permission (via `view` policy)
+- `PUT/PATCH /api/resources/{id}` → `Update {Resources}` permission (via `update` policy)
+- `DELETE /api/resources/{id}` → `Delete {Resources}` permission (via `delete` policy)
+- `POST /api/resources/{id}/restore` → `Update {Resources}` permission (via `restore` policy)
 
 If a user lacks the required permission, the API returns a `403 Forbidden` response.
 

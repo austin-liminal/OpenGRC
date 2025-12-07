@@ -15,7 +15,7 @@ abstract class BaseApiController extends Controller
     protected string $modelClass;
 
     /**
-     * The resource name for permission checks (e.g., 'Audits', 'Controls')
+     * The resource name for messages (e.g., 'Audits', 'Controls')
      */
     protected string $resourceName;
 
@@ -54,7 +54,7 @@ abstract class BaseApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $this->authorize('List '.$this->resourceName);
+        $this->authorize('viewAny', $this->modelClass);
 
         $query = $this->modelClass::query();
 
@@ -115,7 +115,7 @@ abstract class BaseApiController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $this->authorize('Create '.$this->resourceName);
+        $this->authorize('create', $this->modelClass);
 
         $validatedData = $this->validateStore($request);
 
@@ -137,7 +137,7 @@ abstract class BaseApiController extends Controller
      */
     public function show(Request $request, int $id): JsonResponse
     {
-        $this->authorize('Read '.$this->resourceName);
+        $this->authorize('view', $this->modelClass);
 
         $query = $this->modelClass::query();
 
@@ -164,9 +164,9 @@ abstract class BaseApiController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        $this->authorize('Update '.$this->resourceName);
-
         $resource = $this->modelClass::findOrFail($id);
+
+        $this->authorize('update', $resource);
 
         $validatedData = $this->validateUpdate($request, $resource);
 
@@ -189,9 +189,10 @@ abstract class BaseApiController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $this->authorize('Delete '.$this->resourceName);
-
         $resource = $this->modelClass::findOrFail($id);
+
+        $this->authorize('delete', $resource);
+
         $resource->delete();
 
         return response()->json([
@@ -204,9 +205,9 @@ abstract class BaseApiController extends Controller
      */
     public function restore(int $id): JsonResponse
     {
-        $this->authorize('Update '.$this->resourceName);
-
         $resource = $this->modelClass::withTrashed()->findOrFail($id);
+
+        $this->authorize('restore', $resource);
 
         if (! $resource->trashed()) {
             return response()->json([
