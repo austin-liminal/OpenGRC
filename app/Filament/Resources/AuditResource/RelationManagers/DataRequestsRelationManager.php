@@ -19,6 +19,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 
 class DataRequestsRelationManager extends RelationManager
 {
@@ -30,6 +31,22 @@ class DataRequestsRelationManager extends RelationManager
     {
         // Poll every 5 seconds to update button state
         return '5s';
+    }
+
+    /**
+     * Check if an export job is pending or running in the queue for the given audit.
+     */
+    protected function isExportInProgress(int $auditId): bool
+    {
+        // Check the jobs table for pending/reserved ExportAuditEvidenceJob for this audit
+        // PHP serialization uses null bytes for protected properties: \0*\0propertyName
+        // We need to search for the pattern with the actual null bytes
+        $pattern = '%' . chr(0) . '*' . chr(0) . 'auditId";i:' . $auditId . ';%';
+
+        return DB::table('jobs')
+            ->where('payload', 'like', '%ExportAuditEvidenceJob%')
+            ->where('payload', 'like', $pattern)
+            ->exists();
     }
 
     public function form(Form $form): Form
@@ -230,30 +247,31 @@ class DataRequestsRelationManager extends RelationManager
                 Tables\Actions\Action::make('ExportAuditEvidence')
                     ->label(function () {
                         $audit = $this->getOwnerRecord();
-                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        $isExporting = $this->isExportInProgress($audit->id);
 
                         return $isExporting ? 'Export In Progress...' : 'Export All Evidence';
                     })
                     ->icon(function () {
                         $audit = $this->getOwnerRecord();
-                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        $isExporting = $this->isExportInProgress($audit->id);
 
-                        return $isExporting ? 'heroicon-m-arrow-path' : 'heroicon-m-arrow-down-tray';
+                        // Use custom spinner icon when exporting (registered in AppServiceProvider)
+                        return $isExporting ? 'grc-spinner' : 'heroicon-m-arrow-down-tray';
                     })
                     ->disabled(function () {
                         $audit = $this->getOwnerRecord();
 
-                        return \Cache::has("audit_{$audit->id}_exporting");
+                        return $this->isExportInProgress($audit->id);
                     })
                     ->color(function () {
                         $audit = $this->getOwnerRecord();
-                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        $isExporting = $this->isExportInProgress($audit->id);
 
                         return $isExporting ? 'warning' : 'primary';
                     })
                     ->extraAttributes(function () {
                         $audit = $this->getOwnerRecord();
-                        $isExporting = \Cache::has("audit_{$audit->id}_exporting");
+                        $isExporting = $this->isExportInProgress($audit->id);
 
                         return $isExporting ? ['class' => 'animate-pulse'] : [];
                     })
@@ -263,8 +281,8 @@ class DataRequestsRelationManager extends RelationManager
                     ->action(function ($livewire) {
                         $audit = $this->getOwnerRecord();
 
-                        // Check cache before dispatching
-                        if (\Cache::has("audit_{$audit->id}_exporting")) {
+                        // Check queue before dispatching
+                        if ($this->isExportInProgress($audit->id)) {
                             return Notification::make()
                                 ->title('Export Already In Progress')
                                 ->body('An export is already running for this audit. Please wait for it to complete.')
@@ -275,13 +293,13 @@ class DataRequestsRelationManager extends RelationManager
                         \App\Jobs\ExportAuditEvidenceJob::dispatch($audit->id, auth()->id());
 
                         // Ensure queue worker is running
-                        $queueController = new QueueController;
-                        $wasAlreadyRunning = $queueController->ensureQueueWorkerRunning();
+                        if (env('QUEUE_AUTO_START') == true) {
+                            $queueController = new QueueController;
+                            $wasAlreadyRunning = $queueController->ensureQueueWorkerRunning();
+                        }
 
-                        $body = $wasAlreadyRunning
-                            ? 'The export job has been added to the queue. You will be able to download the ZIP in the Attachments section.'
-                            : 'The export job has been queued and a queue worker has been started. You will be able to download the ZIP in the Attachments section.';
-
+                        $body = 'Your evidence export has started and is being processed in the background.';
+                        
                         Notification::make()
                             ->title('Export Started')
                             ->body($body)

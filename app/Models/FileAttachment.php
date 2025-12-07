@@ -51,6 +51,7 @@ class FileAttachment extends Model
         'file_name',
         'file_path',
         'file_size',
+        'description',
         'uploaded_at',
         'uploaded_by',
         'data_request_id',

@@ -55,18 +55,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function handle()
     {
-        \Log::info("ExportAuditEvidenceJob handle() called for audit {$this->auditId}");
-
-        // Check if another export is already running (via WithoutOverlapping middleware)
-        if (\Cache::has("audit_{$this->auditId}_exporting")) {
-            \Log::warning("Export already in progress for audit {$this->auditId}, skipping...");
-
-            return;
-        }
-
-        // Set cache flag to indicate export is running
-        \Cache::put("audit_{$this->auditId}_exporting", true, now()->addHours(2));
-
         \Log::info("ExportAuditEvidenceJob started for audit {$this->auditId}");
 
         $audit = Audit::with([
@@ -290,8 +278,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
             rmdir($tmpDir);
         }
 
-        // Clear cache flag when export completes
-        \Cache::forget("audit_{$this->auditId}_exporting");
         \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId}");
 
         // Notify the user who initiated the export
@@ -336,8 +322,6 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        // Clear cache flag on failure
-        \Cache::forget("audit_{$this->auditId}_exporting");
         \Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: ".$exception->getMessage());
     }
 }

@@ -139,15 +139,10 @@
         </div>
 
         <!-- Footer (optional - view all link) -->
-        @if($notifications->isNotEmpty())
+       
             <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-                <a
-                    href="#"
-                    class="block text-center text-xs text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-                >
-                    View all notifications
-                </a>
+       
             </div>
-        @endif
+
     </div>
 </div>

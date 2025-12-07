@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use BladeUI\Icons\Factory as IconFactory;
 use Livewire\Livewire;
 use Schema;
 
@@ -189,5 +190,13 @@ class AppServiceProvider extends ServiceProvider
             $this->app['request']->server->set('HTTPS', 'on');
             $_SERVER['HTTPS'] = 'on';
         }
+
+        // Register custom icons
+        $this->callAfterResolving(IconFactory::class, function (IconFactory $factory) {
+            $factory->add('grc', [
+                'path' => resource_path('svg'),
+                'prefix' => 'grc',
+            ]);
+        });
     }
 }

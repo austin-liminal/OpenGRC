@@ -28,6 +28,8 @@ export default {
             pattern: /(bg|text|border)-(grcblue)-(100|200|300|400|500|600|700|800|900)/,
             variants: ['hover', 'focus', 'active'],
         },
+        // Spinning icon for export button (arbitrary variant targeting .fi-btn-icon)
+        '[&_.fi-btn-icon]:animate-spin',
     ],
     theme: {
         extend: {
