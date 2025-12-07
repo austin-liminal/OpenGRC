@@ -7,6 +7,20 @@ define('LARAVEL_START', microtime(true));
 
 /*
 |--------------------------------------------------------------------------
+| Force HTTPS in Production
+|--------------------------------------------------------------------------
+|
+| Force HTTPS scheme detection for all URL generation when behind proxies.
+| This must run before the application boots to ensure asset URLs use HTTPS.
+|
+*/
+
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+}
+
+/*
+|--------------------------------------------------------------------------
 | Check If The Application Is Under Maintenance
 |--------------------------------------------------------------------------
 |
