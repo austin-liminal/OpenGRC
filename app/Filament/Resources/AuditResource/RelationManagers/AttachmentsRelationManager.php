@@ -29,16 +29,17 @@ class AttachmentsRelationManager extends RelationManager
                     ->required(),
                 FileUpload::make('file_path')
                     ->downloadable()
+                    ->openable()
                     ->columnSpanFull()
                     ->label('File')
                     ->required()
-                    ->disk(config('filesystems.default'))
-                    ->directory('attachments')
+                    ->disk(setting('storage.driver', config('filesystems.default')))
                     ->visibility('private')
                     ->storeFileNamesIn('file_name')
+                    ->getUploadedFileNameForStorageUsing(fn ($file) => $file->getClientOriginalName())
                     ->deleteUploadedFileUsing(function ($state) {
                         if ($state) {
-                            Storage::disk(config('filesystems.default'))->delete($state);
+                            Storage::disk(setting('storage.driver', config('filesystems.default')))->delete($state);
                         }
                     }),
                 DateTimePicker::make('updated_at')
@@ -84,6 +85,7 @@ class AttachmentsRelationManager extends RelationManager
                             return 'System';
                         }
                         $user = User::find($record->uploaded_by);
+
                         return $user ? $user->name : 'System';
                     }),
             ])

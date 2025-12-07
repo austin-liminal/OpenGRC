@@ -75,6 +75,9 @@ class SecurityHeaders
             // Connect (XHR/WebSocket): same origin for Livewire
             "connect-src 'self'",
 
+            // Workers: blob URLs required for Filament file uploads
+            "worker-src 'self' blob:",
+
             // Object/embed restrictions
             "object-src 'none'",
 
