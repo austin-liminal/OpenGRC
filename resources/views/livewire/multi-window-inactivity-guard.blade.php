@@ -13,11 +13,6 @@
             interactionEvents: {{ $interaction_events }},
 
             init() {
-                console.log('MultiWindowInactivityGuard initialized', {
-                    inactivityTimeout: this.inactivityTimeout,
-                    logoutTimeout: this.logoutTimeout
-                });
-
                 this.updateActivity();
 
                 this.interactionEvents.forEach(event => {
@@ -67,12 +62,6 @@
                     const now = Date.now();
                     const timeSinceActivity = now - lastActivity;
 
-                    console.log('Monitoring check:', {
-                        timeSinceActivity: Math.floor(timeSinceActivity / 1000) + 's',
-                        inactivityTimeout: Math.floor(this.inactivityTimeout / 1000) + 's',
-                        shouldShowModal: timeSinceActivity >= this.inactivityTimeout
-                    });
-
                     if (timeSinceActivity >= this.inactivityTimeout) {
                         this.showInactivityModal();
                     }
@@ -82,7 +71,6 @@
             showInactivityModal() {
                 // Prevent showing modal multiple times
                 if (this.modalOpen) {
-                    console.log('Modal already open, skipping');
                     return;
                 }
 
@@ -91,7 +79,6 @@
                     return;
                 }
 
-                console.log('Showing inactivity modal');
                 this.modalOpen = true;
                 this.countdown = this.logoutTimeout / 1000;
                 this.$dispatch('open-modal', { id: 'inactivityModal' });
@@ -115,7 +102,6 @@
             },
 
             async performLogout() {
-                console.log('Performing logout due to inactivity');
                 localStorage.removeItem(this.storageKey);
                 const loginUrl = await @this.call('logout');
                 // Force full page redirect to prevent login appearing in modal
@@ -123,7 +109,6 @@
             },
 
             resumeActivities() {
-                console.log('Resuming activities');
                 this.closeModal();
                 this.updateActivity();
             },

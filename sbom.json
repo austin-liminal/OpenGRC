@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:d025ca7f-6eb0-44b2-a484-57d289e35cbc",
+    "serialNumber": "urn:uuid:076bca1e-9658-47bf-a4e5-57a860c3340f",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-12-06T22:53:40Z",
+        "timestamp": "2025-12-07T02:54:30Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "7fe14ed2da53d3be6084eb60b1447d6811f56980"
+                    "value": "fc854b2722265cdd2fe66700c3dc45d835d74071"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "7fe14ed2da53d3be6084eb60b1447d6811f56980"
+                    "value": "fc854b2722265cdd2fe66700c3dc45d835d74071"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3246,64 +3246,6 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "daa11c43729510b3700bc34d414664966b03bffe"
-                },
-                {
-                    "name": "cdx:composer:package:type",
-                    "value": "library"
-                }
-            ]
-        },
-        {
-            "bom-ref": "jibaymcs/filament-tour-3.1.2.0",
-            "type": "library",
-            "name": "filament-tour",
-            "version": "v3.1.2",
-            "group": "jibaymcs",
-            "description": "Bring the power of DriverJs to your Filament panels and start a tour !",
-            "author": "JibayMcs",
-            "licenses": [
-                {
-                    "license": {
-                        "id": "MIT"
-                    }
-                }
-            ],
-            "purl": "pkg:composer/jibaymcs/filament-tour@v3.1.2",
-            "externalReferences": [
-                {
-                    "type": "distribution",
-                    "url": "https://api.github.com/repos/JibayMcs/filament-tour/zipball/22abc1c5c61257e930a7697177f2ae34a514b652",
-                    "comment": "dist reference: 22abc1c5c61257e930a7697177f2ae34a514b652"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/JibayMcs/filament-tour.git",
-                    "comment": "source reference: 22abc1c5c61257e930a7697177f2ae34a514b652"
-                },
-                {
-                    "type": "website",
-                    "url": "https://github.com/jibaymcs/filament-tour",
-                    "comment": "as detected from Composer manifest 'homepage'"
-                },
-                {
-                    "type": "issue-tracker",
-                    "url": "https://github.com/jibaymcs/filament-tour/issues",
-                    "comment": "as detected from Composer manifest 'support.issues'"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/jibaymcs/filament-tour",
-                    "comment": "as detected from Composer manifest 'support.source'"
-                }
-            ],
-            "properties": [
-                {
-                    "name": "cdx:composer:package:distReference",
-                    "value": "22abc1c5c61257e930a7697177f2ae34a514b652"
-                },
-                {
-                    "name": "cdx:composer:package:sourceReference",
-                    "value": "22abc1c5c61257e930a7697177f2ae34a514b652"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12631,13 +12573,6 @@
             ]
         },
         {
-            "ref": "jibaymcs/filament-tour-3.1.2.0",
-            "dependsOn": [
-                "filament/filament-3.3.45.0",
-                "spatie/laravel-package-tools-1.92.7.0"
-            ]
-        },
-        {
             "ref": "kirschbaum-development/commentions-0.7.5.0",
             "dependsOn": [
                 "filament/filament-3.3.45.0",
@@ -13558,7 +13493,6 @@
                 "filament/tables-3.3.45.0",
                 "guzzlehttp/guzzle-7.10.0.0",
                 "jeffgreco13/filament-breezy-2.6.4.0",
-                "jibaymcs/filament-tour-3.1.2.0",
                 "kirschbaum-development/commentions-0.7.5.0",
                 "laravel/framework-11.47.0.0",
                 "laravel/prompts-0.3.8.0",
