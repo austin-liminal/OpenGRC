@@ -27,8 +27,21 @@ Route::middleware(['auth'])->group(function () {
         ->where('path', '.*')
         ->name('media.show');
 
+    // Survey attachment download route
+    Route::get('/survey-attachment/{attachment}/download', [\App\Http\Controllers\SurveyAttachmentController::class, 'download'])
+        ->name('survey-attachment.download');
+
 });
 
 // Add Socialite routes
 Route::get('auth/{provider}/redirect', '\App\Http\Controllers\Auth\AuthController@redirectToProvider')->name('socialite.redirect');
 Route::get('auth/{provider}/callback', '\App\Http\Controllers\Auth\AuthController@handleProviderCallback')->name('socialite.callback');
+
+// Public Survey Response Routes (no authentication required)
+Route::prefix('survey')->name('survey.')->group(function () {
+    Route::get('{token}', [\App\Http\Controllers\SurveyResponseController::class, 'show'])->name('show');
+    Route::post('{token}/save', [\App\Http\Controllers\SurveyResponseController::class, 'save'])->name('save');
+    Route::post('{token}/submit', [\App\Http\Controllers\SurveyResponseController::class, 'submit'])->name('submit');
+    Route::post('{token}/upload', [\App\Http\Controllers\SurveyResponseController::class, 'uploadFile'])->name('upload');
+    Route::match(['post', 'delete'], '{token}/file/{attachmentId}', [\App\Http\Controllers\SurveyResponseController::class, 'deleteFile'])->name('delete-file');
+});

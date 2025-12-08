@@ -2,17 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\SurveyStatus;
+use App\Enums\SurveyTemplateStatus;
 use App\Enums\VendorRiskRating;
 use App\Enums\VendorStatus;
 use App\Filament\Resources\VendorResource\Pages;
 use App\Filament\Resources\VendorResource\RelationManagers\ApplicationsRelationManager;
+use App\Filament\Resources\VendorResource\RelationManagers\SurveysRelationManager;
+use App\Mail\SurveyInvitationMail;
+use App\Models\Survey;
+use App\Models\SurveyTemplate;
 use App\Models\User;
 use App\Models\Vendor;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Mail;
 
 class VendorResource extends Resource
 {
@@ -113,6 +121,56 @@ class VendorResource extends Resource
                     ->options(User::all()->pluck('name', 'id')),
             ])
             ->actions([
+                Tables\Actions\Action::make('send_survey')
+                    ->label(__('Send Survey'))
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\Select::make('survey_template_id')
+                            ->label(__('Survey Template'))
+                            ->options(SurveyTemplate::where('status', SurveyTemplateStatus::ACTIVE)->pluck('title', 'id'))
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\TextInput::make('respondent_email')
+                            ->label(__('Respondent Email'))
+                            ->email()
+                            ->required()
+                            ->helperText(__('The email address to send the survey to')),
+                        Forms\Components\TextInput::make('respondent_name')
+                            ->label(__('Respondent Name'))
+                            ->helperText(__('Name of the person completing the survey')),
+                        Forms\Components\DatePicker::make('due_date')
+                            ->label(__('Due Date'))
+                            ->native(false),
+                    ])
+                    ->action(function (Vendor $record, array $data) {
+                        $survey = Survey::create([
+                            'survey_template_id' => $data['survey_template_id'],
+                            'vendor_id' => $record->id,
+                            'respondent_email' => $data['respondent_email'],
+                            'respondent_name' => $data['respondent_name'] ?? null,
+                            'due_date' => $data['due_date'] ?? null,
+                            'status' => SurveyStatus::DRAFT,
+                            'created_by_id' => auth()->id(),
+                        ]);
+
+                        try {
+                            Mail::send(new SurveyInvitationMail($survey));
+                            $survey->update(['status' => SurveyStatus::SENT]);
+
+                            Notification::make()
+                                ->title(__('Survey Sent'))
+                                ->body(__('Survey invitation sent to :email', ['email' => $data['respondent_email']]))
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title(__('Failed to Send Survey'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -127,6 +185,7 @@ class VendorResource extends Resource
     {
         return [
             ApplicationsRelationManager::class,
+            SurveysRelationManager::class,
         ];
     }
 

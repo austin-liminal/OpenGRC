@@ -32,6 +32,11 @@ class Vendor extends Model
         return $this->hasMany(Application::class);
     }
 
+    public function surveys(): HasMany
+    {
+        return $this->hasMany(Survey::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

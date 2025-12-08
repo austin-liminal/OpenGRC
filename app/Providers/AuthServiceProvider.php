@@ -5,9 +5,13 @@ namespace App\Providers;
 // use Illuminate\Support\Facades\Gate;
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Models\Policy;
+use App\Models\Survey;
+use App\Models\SurveyTemplate;
 use App\Policies\PermissionPolicy;
 use App\Policies\PolicyPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\SurveyPolicy;
+use App\Policies\SurveyTemplatePolicy;
 use App\Policies\TaxonomyPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Spatie\Permission\Models\Permission;
@@ -27,6 +31,8 @@ class AuthServiceProvider extends ServiceProvider
         Permission::class => PermissionPolicy::class,
         Taxonomy::class => TaxonomyPolicy::class,
         Policy::class => PolicyPolicy::class,
+        Survey::class => SurveyPolicy::class,
+        SurveyTemplate::class => SurveyTemplatePolicy::class,
     ];
 
     /**

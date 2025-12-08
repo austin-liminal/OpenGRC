@@ -73,6 +73,14 @@ class SettingsSeeder extends Seeder
                 'value' => '<h1>OpenGRC Evidence Requested</h1><p>Hello, {{ $name }}!</p><p>An auditor has requested evidence from you. Please login to OpenGRC to view the request and provide the necessary evidence.</p><p><strong>URL:</strong> {{ $url }}</p><p>Thank you for your cooperation.</p><p><br></p><p><br></p>',
             ],
             [
+                'key' => 'mail.templates.survey_invitation_subject',
+                'value' => 'Survey Invitation: {{ $surveyTitle }}',
+            ],
+            [
+                'key' => 'mail.templates.survey_invitation_body',
+                'value' => '<h1>Survey Invitation</h1><p>Hello, {{ $name }}!</p><p>You have been invited to complete a survey: <strong>{{ $surveyTitle }}</strong></p>@if($description){!! $description !!}@endif<p>Please click the link below to access the survey:</p><p><a href="{{ $surveyUrl }}">{{ $surveyUrl }}</a></p>@if($dueDate)<p><strong>Due Date:</strong> {{ $dueDate }}</p>@endif<p>Thank you for your participation.</p>',
+            ],
+            [
                 'key' => 'security.session_timeout',
                 'value' => '15',
             ],

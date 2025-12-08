@@ -40,6 +40,18 @@ class MailTemplatesSchema
                     'attachFiles',
                 ])
                 ->columnSpanFull(),
+            TextInput::make('mail.templates.survey_invitation_subject')
+                ->label('Survey Invitation Subject')
+                ->helperText('Available variables: {{ $surveyTitle }}')
+                ->columnSpanFull(),
+            RichEditor::make('mail.templates.survey_invitation_body')
+                ->label('Survey Invitation Body')
+                ->helperText('Available variables: {{ $name }}, {{ $email }}, {{ $surveyUrl }}, {{ $surveyTitle }}, {{ $dueDate }}, {{ $description }}')
+                ->disableToolbarButtons([
+                    'image',
+                    'attachFiles',
+                ])
+                ->columnSpanFull(),
         ];
     }
 }

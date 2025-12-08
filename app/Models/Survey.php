@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\SurveyStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class Survey extends Model
+{
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    protected $fillable = [
+        'survey_template_id',
+        'title',
+        'description',
+        'status',
+        'respondent_email',
+        'respondent_name',
+        'assigned_to_id',
+        'vendor_id',
+        'due_date',
+        'expiration_date',
+        'access_token',
+        'completed_at',
+        'created_by_id',
+    ];
+
+    protected $casts = [
+        'status' => SurveyStatus::class,
+        'due_date' => 'date',
+        'expiration_date' => 'date',
+        'completed_at' => 'datetime',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Survey $survey) {
+            if (empty($survey->access_token)) {
+                $survey->access_token = Str::random(64);
+            }
+        });
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(SurveyTemplate::class, 'survey_template_id');
+    }
+
+    public function answers(): HasMany
+    {
+        return $this->hasMany(SurveyAnswer::class);
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    public function getDisplayTitleAttribute(): string
+    {
+        return $this->title ?? $this->template?->title ?? 'Untitled Survey';
+    }
+
+    public function getRespondentDisplayAttribute(): string
+    {
+        if ($this->respondent_name && $this->respondent_email) {
+            return "{$this->respondent_name} ({$this->respondent_email})";
+        }
+
+        return $this->respondent_name ?? $this->respondent_email ?? $this->assignedTo?->name ?? '-';
+    }
+
+    public function getProgressAttribute(): int
+    {
+        $totalQuestions = $this->template?->questions()->count() ?? 0;
+
+        if ($totalQuestions === 0) {
+            return 0;
+        }
+
+        $answeredQuestions = $this->answers()
+            ->whereNotNull('answer_value')
+            ->count();
+
+        return (int) round(($answeredQuestions / $totalQuestions) * 100);
+    }
+
+    public function getRequiredProgressAttribute(): int
+    {
+        $requiredQuestions = $this->template?->questions()->where('is_required', true)->count() ?? 0;
+
+        if ($requiredQuestions === 0) {
+            return 100;
+        }
+
+        $requiredQuestionIds = $this->template->questions()
+            ->where('is_required', true)
+            ->pluck('id');
+
+        $answeredRequiredQuestions = $this->answers()
+            ->whereIn('survey_question_id', $requiredQuestionIds)
+            ->whereNotNull('answer_value')
+            ->count();
+
+        return (int) round(($answeredRequiredQuestions / $requiredQuestions) * 100);
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->due_date && $this->due_date->isPast() && $this->status !== SurveyStatus::COMPLETED;
+    }
+
+    public function isLinkExpired(): bool
+    {
+        return $this->expiration_date && $this->expiration_date->endOfDay()->isPast();
+    }
+
+    public function isInternal(): bool
+    {
+        return $this->assigned_to_id !== null && empty($this->respondent_email);
+    }
+
+    public function getPublicUrl(): string
+    {
+        return url('/survey/'.$this->access_token);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'status', 'respondent_email', 'respondent_name', 'assigned_to_id', 'due_date', 'expiration_date', 'completed_at'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+}
