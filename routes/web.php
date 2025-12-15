@@ -37,11 +37,36 @@ Route::middleware(['auth'])->group(function () {
 Route::get('auth/{provider}/redirect', '\App\Http\Controllers\Auth\AuthController@redirectToProvider')->name('socialite.redirect');
 Route::get('auth/{provider}/callback', '\App\Http\Controllers\Auth\AuthController@handleProviderCallback')->name('socialite.callback');
 
-// Public Survey Response Routes (no authentication required)
-Route::prefix('survey')->name('survey.')->group(function () {
-    Route::get('{token}', [\App\Http\Controllers\SurveyResponseController::class, 'show'])->name('show');
-    Route::post('{token}/save', [\App\Http\Controllers\SurveyResponseController::class, 'save'])->name('save');
-    Route::post('{token}/submit', [\App\Http\Controllers\SurveyResponseController::class, 'submit'])->name('submit');
-    Route::post('{token}/upload', [\App\Http\Controllers\SurveyResponseController::class, 'uploadFile'])->name('upload');
-    Route::match(['post', 'delete'], '{token}/file/{attachmentId}', [\App\Http\Controllers\SurveyResponseController::class, 'deleteFile'])->name('delete-file');
+// Legacy public survey routes - redirect to new magic link URL
+// (Surveys are now handled through the authenticated Vendor Panel with magic links)
+Route::get('survey/{token}', function ($token) {
+    // Find the survey by access token
+    $survey = \App\Models\Survey::where('access_token', $token)->first();
+
+    if (! $survey) {
+        abort(404, 'Survey not found');
+    }
+
+    // Redirect to the new magic link URL
+    return redirect($survey->getPublicUrl());
+})->name('survey.show');
+
+// Vendor Portal Magic Link Routes
+Route::get('/vendor/auth/magic-login/{vendorUser}', [\App\Http\Controllers\Vendor\VendorAuthController::class, 'magicLogin'])
+    ->name('vendor.magic-login')
+    ->middleware('signed');
+
+// Survey-specific magic link - logs in vendor and redirects to survey
+Route::get('/vendor/survey/{survey}/respond', [\App\Http\Controllers\Vendor\VendorAuthController::class, 'surveyMagicLink'])
+    ->name('vendor.survey.magic-link')
+    ->middleware('signed');
+
+// Vendor Survey Access Page (login/register flow - no auth required)
+Route::get('/vendor/survey-access', \App\Filament\Vendor\Pages\Auth\SurveyAccess::class)
+    ->name('filament.vendor.pages.survey-access');
+
+// Vendor Document Download Route (requires vendor auth)
+Route::middleware(['auth:vendor'])->group(function () {
+    Route::get('/vendor/document/{vendorDocument}/download', [\App\Http\Controllers\Vendor\VendorDocumentController::class, 'download'])
+        ->name('vendor.document.download');
 });

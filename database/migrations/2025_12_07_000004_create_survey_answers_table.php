@@ -16,6 +16,10 @@ return new class extends Migration
             $table->foreignId('survey_id')->constrained()->onDelete('cascade');
             $table->foreignId('survey_question_id')->constrained()->onDelete('cascade');
             $table->json('answer_value')->nullable();
+            $table->text('comment')->nullable();
+            $table->tinyInteger('manual_score')->nullable()->comment('Manual score for text answers: 0=Pass, 50=Partial, 100=Fail, -1=N/A');
+            $table->foreignId('scored_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('scored_at')->nullable();
             $table->timestamps();
         });
     }

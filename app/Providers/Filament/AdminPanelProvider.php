@@ -82,6 +82,7 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Admin\Pages\Settings\ReportSettings::class,
                         \App\Filament\Admin\Pages\Settings\SecuritySettings::class,
                         \App\Filament\Admin\Pages\Settings\AuthenticationSettings::class,
+                        \App\Filament\Admin\Pages\Settings\VendorPortalSettings::class,
                     ]),
                 ActivitylogPlugin::make([
                     'enable_cleanup_command' => true,

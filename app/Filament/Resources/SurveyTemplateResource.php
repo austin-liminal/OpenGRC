@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\QuestionType;
+use App\Enums\RiskImpact;
 use App\Enums\SurveyTemplateStatus;
 use App\Filament\Resources\SurveyTemplateResource\Pages;
 use App\Filament\Resources\SurveyTemplateResource\RelationManagers;
@@ -141,6 +142,41 @@ class SurveyTemplateResource extends Resource
                                             QuestionType::MULTIPLE_CHOICE->value,
                                         ]) ? 2 : 0;
                                     })
+                                    ->columnSpanFull(),
+                                Forms\Components\Fieldset::make('Risk Scoring')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('risk_weight')
+                                            ->label('Risk Weight')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->suffix('%')
+                                            ->helperText('Importance of this question (0-100). 0 = not scored.'),
+                                        Forms\Components\Select::make('risk_impact')
+                                            ->label('Risk Impact')
+                                            ->options(RiskImpact::class)
+                                            ->default(RiskImpact::NEUTRAL)
+                                            ->helperText('How does a "Yes" answer affect risk?'),
+                                        Forms\Components\KeyValue::make('option_scores')
+                                            ->label('Option Scores')
+                                            ->keyLabel('Option Value')
+                                            ->valueLabel('Risk Score (0-100)')
+                                            ->helperText('Map each option to a risk score. 0 = no risk, 100 = maximum risk.')
+                                            ->visible(function (Forms\Get $get): bool {
+                                                $type = $get('question_type');
+                                                if ($type instanceof QuestionType) {
+                                                    $type = $type->value;
+                                                }
+
+                                                return in_array($type, [
+                                                    QuestionType::SINGLE_CHOICE->value,
+                                                    QuestionType::MULTIPLE_CHOICE->value,
+                                                ]);
+                                            })
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columns(2)
                                     ->columnSpanFull(),
                             ])
                             ->columns(2)

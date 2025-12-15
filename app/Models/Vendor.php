@@ -16,10 +16,26 @@ class Vendor extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
 
+    protected $fillable = [
+        'name',
+        'description',
+        'url',
+        'logo',
+        'vendor_manager_id',
+        'primary_contact_id',
+        'status',
+        'risk_rating',
+        'risk_score',
+        'risk_score_calculated_at',
+        'notes',
+    ];
+
     protected $casts = [
         'status' => VendorStatus::class,
         'risk_rating' => VendorRiskRating::class,
         'logo' => 'array',
+        'risk_score' => 'integer',
+        'risk_score_calculated_at' => 'datetime',
     ];
 
     public function vendorManager(): BelongsTo
@@ -35,6 +51,21 @@ class Vendor extends Model
     public function surveys(): HasMany
     {
         return $this->hasMany(Survey::class);
+    }
+
+    public function vendorUsers(): HasMany
+    {
+        return $this->hasMany(VendorUser::class);
+    }
+
+    public function primaryContact(): BelongsTo
+    {
+        return $this->belongsTo(VendorUser::class, 'primary_contact_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(VendorDocument::class);
     }
 
     public function getActivitylogOptions(): LogOptions

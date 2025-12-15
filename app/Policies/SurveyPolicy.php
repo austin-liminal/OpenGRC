@@ -4,44 +4,81 @@ namespace App\Policies;
 
 use App\Models\Survey;
 use App\Models\User;
+use App\Models\VendorUser;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
 
 class SurveyPolicy
 {
     protected string $model = Survey::class;
 
-    public function viewAny(User $user): bool
+    public function viewAny(Authenticatable $user): bool
     {
+        // VendorUsers can view their own surveys (handled by resource query scope)
+        if ($user instanceof VendorUser) {
+            return true;
+        }
+
         return $user->can('List '.Str::plural(class_basename($this->model)));
     }
 
-    public function view(User $user): bool
+    public function view(Authenticatable $user, Survey $survey): bool
     {
+        // VendorUsers can view surveys assigned to their vendor
+        if ($user instanceof VendorUser) {
+            return $survey->vendor_id === $user->vendor_id;
+        }
+
         return $user->can('Read '.Str::plural(class_basename($this->model)));
     }
 
-    public function create(User $user): bool
+    public function create(Authenticatable $user): bool
     {
+        // VendorUsers cannot create surveys
+        if ($user instanceof VendorUser) {
+            return false;
+        }
+
         return $user->can('Create '.Str::plural(class_basename($this->model)));
     }
 
-    public function update(User $user): bool
+    public function update(Authenticatable $user, Survey $survey): bool
     {
+        // VendorUsers can update (respond to) surveys assigned to their vendor
+        if ($user instanceof VendorUser) {
+            return $survey->vendor_id === $user->vendor_id;
+        }
+
         return $user->can('Update '.Str::plural(class_basename($this->model)));
     }
 
-    public function delete(User $user): bool
+    public function delete(Authenticatable $user): bool
     {
+        // VendorUsers cannot delete surveys
+        if ($user instanceof VendorUser) {
+            return false;
+        }
+
         return $user->can('Delete '.Str::plural(class_basename($this->model)));
     }
 
-    public function restore(User $user): bool
+    public function restore(Authenticatable $user): bool
     {
+        // VendorUsers cannot restore surveys
+        if ($user instanceof VendorUser) {
+            return false;
+        }
+
         return $user->can('Delete '.Str::plural(class_basename($this->model)));
     }
 
-    public function forceDelete(User $user): bool
+    public function forceDelete(Authenticatable $user): bool
     {
+        // VendorUsers cannot force delete surveys
+        if ($user instanceof VendorUser) {
+            return false;
+        }
+
         return $user->can('Delete '.Str::plural(class_basename($this->model)));
     }
 }

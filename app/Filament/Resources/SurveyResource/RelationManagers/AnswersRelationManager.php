@@ -3,10 +3,14 @@
 namespace App\Filament\Resources\SurveyResource\RelationManagers;
 
 use App\Enums\QuestionType;
+use App\Models\SurveyAnswer;
+use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 
 class AnswersRelationManager extends RelationManager
@@ -73,6 +77,19 @@ class AnswersRelationManager extends RelationManager
                     ->limit(50)
                     ->placeholder('-')
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('manual_score')
+                    ->label('Risk Score')
+                    ->badge()
+                    ->color(fn (?int $state): string => match (true) {
+                        $state === null => 'gray',
+                        $state <= 20 => 'success',
+                        $state <= 40 => 'info',
+                        $state <= 60 => 'warning',
+                        $state <= 80 => 'orange',
+                        default => 'danger',
+                    })
+                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : 'Not scored')
+                    ->visible(fn ($livewire) => $livewire->getOwnerRecord()->status->value === 'completed'),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('survey.survey.answers.columns.answered_at'))
                     ->dateTime()
@@ -85,6 +102,42 @@ class AnswersRelationManager extends RelationManager
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('score_answer')
+                    ->label('Score')
+                    ->icon('heroicon-o-calculator')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\Placeholder::make('answer_preview')
+                            ->label('Answer')
+                            ->content(fn (SurveyAnswer $record): string => is_array($record->answer_value)
+                                ? implode(', ', array_filter($record->answer_value, fn ($v) => !is_array($v)))
+                                : (string) ($record->answer_value ?? 'No answer')),
+                        Forms\Components\TextInput::make('manual_score')
+                            ->label('Risk Score (0-100)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->required()
+                            ->default(fn (SurveyAnswer $record) => $record->manual_score)
+                            ->helperText('0 = No risk (best), 100 = High risk (worst)'),
+                    ])
+                    ->action(function (SurveyAnswer $record, array $data) {
+                        $record->update([
+                            'manual_score' => $data['manual_score'],
+                            'scored_by' => Auth::id(),
+                            'scored_at' => now(),
+                        ]);
+
+                        Notification::make()
+                            ->title('Answer scored')
+                            ->body("Score set to {$data['manual_score']}/100")
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (SurveyAnswer $record): bool =>
+                        in_array($record->question?->question_type, [QuestionType::TEXT, QuestionType::LONG_TEXT])
+                        && $record->question?->risk_weight > 0
+                    ),
                 Tables\Actions\ViewAction::make()
                     ->modalHeading(fn ($record) => 'Answer Details')
                     ->modalContent(function ($record) {

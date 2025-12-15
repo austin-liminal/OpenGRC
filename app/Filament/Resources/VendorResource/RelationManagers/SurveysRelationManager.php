@@ -70,6 +70,19 @@ class SurveysRelationManager extends RelationManager
                     ->label(__('survey.survey.table.columns.due_date'))
                     ->date()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('risk_score')
+                    ->label('Risk Score')
+                    ->badge()
+                    ->color(fn (?int $state): string => match (true) {
+                        $state === null => 'gray',
+                        $state <= 20 => 'success',
+                        $state <= 40 => 'info',
+                        $state <= 60 => 'warning',
+                        $state <= 80 => 'orange',
+                        default => 'danger',
+                    })
+                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : '-')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('survey.survey.table.columns.created_at'))
                     ->dateTime()
@@ -104,19 +117,19 @@ class SurveysRelationManager extends RelationManager
                             ->native(false),
                     ])
                     ->action(function (array $data) {
+                        // Create survey with SENT status immediately
                         $survey = Survey::create([
                             'survey_template_id' => $data['survey_template_id'],
                             'vendor_id' => $this->ownerRecord->id,
                             'respondent_email' => $data['respondent_email'],
                             'respondent_name' => $data['respondent_name'] ?? null,
                             'due_date' => $data['due_date'] ?? null,
-                            'status' => SurveyStatus::DRAFT,
+                            'status' => SurveyStatus::SENT,
                             'created_by_id' => auth()->id(),
                         ]);
 
                         try {
                             Mail::send(new SurveyInvitationMail($survey));
-                            $survey->update(['status' => SurveyStatus::SENT]);
 
                             Notification::make()
                                 ->title(__('Survey Sent'))
@@ -125,9 +138,9 @@ class SurveysRelationManager extends RelationManager
                                 ->send();
                         } catch (\Exception $e) {
                             Notification::make()
-                                ->title(__('Failed to Send Survey'))
-                                ->body($e->getMessage())
-                                ->danger()
+                                ->title(__('Survey Created'))
+                                ->body(__('Survey created but email notification failed: ').$e->getMessage())
+                                ->warning()
                                 ->send();
                         }
                     }),

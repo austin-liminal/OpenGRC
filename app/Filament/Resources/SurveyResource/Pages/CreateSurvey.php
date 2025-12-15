@@ -24,11 +24,11 @@ class CreateSurvey extends CreateRecord
     {
         // Send invitation email if respondent email is provided
         if (! empty($this->record->respondent_email)) {
+            // Update status to SENT regardless of email success
+            $this->record->update(['status' => SurveyStatus::SENT]);
+
             try {
                 Mail::send(new SurveyInvitationMail($this->record));
-
-                // Update status to SENT
-                $this->record->update(['status' => SurveyStatus::SENT]);
 
                 Notification::make()
                     ->title(__('survey.survey.notifications.invitation_sent.title'))
@@ -37,9 +37,9 @@ class CreateSurvey extends CreateRecord
                     ->send();
             } catch (\Exception $e) {
                 Notification::make()
-                    ->title(__('survey.survey.notifications.invitation_failed.title'))
-                    ->body($e->getMessage())
-                    ->danger()
+                    ->title(__('Survey Created'))
+                    ->body(__('Survey created but email notification failed: ').$e->getMessage())
+                    ->warning()
                     ->send();
             }
         }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -30,6 +31,8 @@ class Survey extends Model
         'access_token',
         'completed_at',
         'created_by_id',
+        'risk_score',
+        'risk_score_calculated_at',
     ];
 
     protected $casts = [
@@ -37,6 +40,8 @@ class Survey extends Model
         'due_date' => 'date',
         'expiration_date' => 'date',
         'completed_at' => 'datetime',
+        'risk_score' => 'integer',
+        'risk_score_calculated_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -137,7 +142,35 @@ class Survey extends Model
         return $this->assigned_to_id !== null && empty($this->respondent_email);
     }
 
-    public function getPublicUrl(): string
+    /**
+     * Get a magic link URL for vendors to respond to this survey.
+     * This is a signed URL that auto-logs in the vendor and redirects to the survey.
+     *
+     * @param  int|null  $expiryHours  Hours until link expires (default from settings)
+     */
+    public function getPublicUrl(?int $expiryHours = null): string
+    {
+        $expiryHours = $expiryHours ?? (int) setting('vendor_portal.magic_link_expiry_hours', 48);
+
+        return URL::temporarySignedRoute(
+            'vendor.survey.magic-link',
+            now()->addHours($expiryHours),
+            ['survey' => $this->id]
+        );
+    }
+
+    /**
+     * Get the direct Vendor panel URL (requires vendor authentication).
+     */
+    public function getVendorPanelUrl(): string
+    {
+        return url('/vendor/surveys/'.$this->id.'/respond');
+    }
+
+    /**
+     * Get the legacy public URL using access token (for backwards compatibility).
+     */
+    public function getLegacyPublicUrl(): string
     {
         return url('/survey/'.$this->access_token);
     }

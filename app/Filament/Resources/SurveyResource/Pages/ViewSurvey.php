@@ -43,6 +43,12 @@ class ViewSurvey extends ViewRecord
                         ->send();
                 })
                 ->visible(fn () => ! in_array($this->record->status, [SurveyStatus::COMPLETED, SurveyStatus::EXPIRED])),
+            Actions\Action::make('score_survey')
+                ->label('Score Survey')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('primary')
+                ->url(fn () => SurveyResource::getUrl('score', ['record' => $this->record]))
+                ->visible(fn () => $this->record->status === SurveyStatus::COMPLETED),
         ];
     }
 }

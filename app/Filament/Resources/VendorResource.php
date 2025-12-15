@@ -9,6 +9,8 @@ use App\Enums\VendorStatus;
 use App\Filament\Resources\VendorResource\Pages;
 use App\Filament\Resources\VendorResource\RelationManagers\ApplicationsRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\SurveysRelationManager;
+use App\Filament\Resources\VendorResource\RelationManagers\VendorDocumentsRelationManager;
+use App\Filament\Resources\VendorResource\RelationManagers\VendorUsersRelationManager;
 use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
 use App\Models\SurveyTemplate;
@@ -27,6 +29,9 @@ class VendorResource extends Resource
     protected static ?string $model = Vendor::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+
+    // Hide from navigation - access via Vendor Manager
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function getNavigationLabel(): string
     {
@@ -102,12 +107,33 @@ class VendorResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label(__('Name'))->searchable(),
-                Tables\Columns\TextColumn::make('vendorManager.name')->label(__('Vendor Manager'))->searchable(),
+                Tables\Columns\TextColumn::make('vendorManager.name')
+                    ->label(__('Vendor Manager'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false)                    
+                    ,
                 Tables\Columns\TextColumn::make('status')->label(__('Status'))->badge()->color(fn ($record) => $record->status->getColor()),
                 Tables\Columns\TextColumn::make('risk_rating')->label(__('Risk Rating'))->badge()->color(fn ($record) => $record->risk_rating->getColor()),
-                Tables\Columns\TextColumn::make('url')->label(__('URL'))->url(fn ($record) => $record->url, true),
-                Tables\Columns\TextColumn::make('created_at')->label(__('Created'))->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')->label(__('Updated'))->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('url')
+                    ->label(__('URL'))
+                    ->url(fn ($record) => $record->url, true)
+                    ->wrap()
+                    ->sortable()
+                    ->searchable()
+                    ->hidden()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ,
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('Created'))
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ,
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label(__('Updated'))
+                    ->date()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -186,6 +212,8 @@ class VendorResource extends Resource
         return [
             ApplicationsRelationManager::class,
             SurveysRelationManager::class,
+            VendorUsersRelationManager::class,
+            VendorDocumentsRelationManager::class,
         ];
     }
 

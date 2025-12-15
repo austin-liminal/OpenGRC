@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QuestionType;
+use App\Enums\RiskImpact;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -23,6 +24,9 @@ class SurveyQuestion extends Model
         'sort_order',
         'help_text',
         'allow_comments',
+        'risk_weight',
+        'risk_impact',
+        'option_scores',
     ];
 
     protected $casts = [
@@ -31,6 +35,9 @@ class SurveyQuestion extends Model
         'is_required' => 'boolean',
         'sort_order' => 'integer',
         'allow_comments' => 'boolean',
+        'risk_weight' => 'integer',
+        'risk_impact' => RiskImpact::class,
+        'option_scores' => 'array',
     ];
 
     public function template(): BelongsTo

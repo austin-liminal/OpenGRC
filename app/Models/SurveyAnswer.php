@@ -18,10 +18,15 @@ class SurveyAnswer extends Model
         'survey_question_id',
         'answer_value',
         'comment',
+        'manual_score',
+        'scored_by',
+        'scored_at',
     ];
 
     protected $casts = [
         'answer_value' => 'array',
+        'manual_score' => 'integer',
+        'scored_at' => 'datetime',
     ];
 
     public function survey(): BelongsTo
@@ -32,6 +37,11 @@ class SurveyAnswer extends Model
     public function question(): BelongsTo
     {
         return $this->belongsTo(SurveyQuestion::class, 'survey_question_id');
+    }
+
+    public function scoredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'scored_by');
     }
 
     public function attachments(): HasMany

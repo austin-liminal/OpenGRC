@@ -9,6 +9,7 @@ use App\Filament\Resources\SurveyResource\RelationManagers;
 use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
 use App\Models\User;
+use App\Services\VendorRiskScoringService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
@@ -82,6 +83,15 @@ class SurveyResource extends Resource
                             ->disableToolbarButtons(['attachFiles'])
                             ->columnSpanFull(),
                     ]),
+                Forms\Components\Section::make('Vendor')
+                    ->schema([
+                        Forms\Components\Select::make('vendor_id')
+                            ->label(__('Vendor'))
+                            ->relationship('vendor', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Associate this survey with a vendor for TPRM tracking'),
+                    ]),
                 Forms\Components\Section::make('Respondent Information')
                     ->description(__('survey.survey.form.respondent.description'))
                     ->columns(2)
@@ -134,6 +144,12 @@ class SurveyResource extends Resource
                     ->label(__('survey.survey.table.columns.template'))
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('vendor.name')
+                    ->label('Vendor')
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->url(fn (Survey $record) => $record->vendor_id ? VendorResource::getUrl('view', ['record' => $record->vendor_id]) : null),
                 Tables\Columns\TextColumn::make('respondent_display')
                     ->label(__('survey.survey.table.columns.respondent'))
                     ->wrap(),
@@ -159,6 +175,20 @@ class SurveyResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('risk_score')
+                    ->label('Risk Score')
+                    ->badge()
+                    ->color(fn (?int $state): string => match (true) {
+                        $state === null => 'gray',
+                        $state <= 20 => 'success',
+                        $state <= 40 => 'info',
+                        $state <= 60 => 'warning',
+                        $state <= 80 => 'orange',
+                        default => 'danger',
+                    })
+                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : '-')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('createdBy.name')
                     ->label(__('survey.survey.table.columns.created_by'))
                     ->sortable()
@@ -173,6 +203,11 @@ class SurveyResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(SurveyStatus::class)
                     ->label(__('survey.survey.table.filters.status')),
+                Tables\Filters\SelectFilter::make('vendor_id')
+                    ->relationship('vendor', 'name')
+                    ->label('Vendor')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('survey_template_id')
                     ->relationship('template', 'title')
                     ->label(__('survey.survey.table.filters.template'))
@@ -220,10 +255,11 @@ class SurveyResource extends Resource
                         ->modalDescription(fn (Survey $record) => __('survey.survey.actions.send_invitation_modal.description', ['email' => $record->respondent_email]))
                         ->modalSubmitActionLabel(__('survey.survey.actions.send_invitation_modal.submit'))
                         ->action(function (Survey $record) {
+                            // Update status to SENT regardless of email success
+                            $record->update(['status' => SurveyStatus::SENT]);
+
                             try {
                                 Mail::send(new SurveyInvitationMail($record));
-
-                                $record->update(['status' => SurveyStatus::SENT]);
 
                                 Notification::make()
                                     ->title(__('survey.survey.notifications.invitation_sent.title'))
@@ -232,9 +268,9 @@ class SurveyResource extends Resource
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
-                                    ->title(__('survey.survey.notifications.invitation_failed.title'))
-                                    ->body($e->getMessage())
-                                    ->danger()
+                                    ->title(__('Survey Sent'))
+                                    ->body(__('Survey marked as sent but email notification failed: ').$e->getMessage())
+                                    ->warning()
                                     ->send();
                             }
                         })
@@ -265,6 +301,33 @@ class SurveyResource extends Resource
                             }
                         })
                         ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && in_array($record->status, [SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])),
+                    Tables\Actions\Action::make('score_survey')
+                        ->label('Score Survey')
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('primary')
+                        ->url(fn (Survey $record): string => static::getUrl('score', ['record' => $record]))
+                        ->visible(fn (Survey $record): bool => $record->status === SurveyStatus::COMPLETED),
+                    Tables\Actions\Action::make('recalculate_score')
+                        ->label('Recalculate Risk Score')
+                        ->icon('heroicon-o-calculator')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalDescription('This will recalculate the risk score based on current answers and question weights.')
+                        ->action(function (Survey $record) {
+                            $service = new VendorRiskScoringService;
+                            $score = $service->calculateSurveyScore($record);
+
+                            if ($record->vendor) {
+                                $service->calculateVendorScore($record->vendor);
+                            }
+
+                            Notification::make()
+                                ->title('Risk score recalculated')
+                                ->body("New score: {$score}/100")
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn (Survey $record): bool => $record->status === SurveyStatus::COMPLETED),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\ForceDeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
@@ -296,6 +359,10 @@ class SurveyResource extends Resource
                         TextEntry::make('status')
                             ->label(__('survey.survey.form.status.label'))
                             ->badge(),
+                        TextEntry::make('vendor.name')
+                            ->label('Vendor')
+                            ->placeholder('-')
+                            ->url(fn (Survey $record) => $record->vendor_id ? VendorResource::getUrl('view', ['record' => $record->vendor_id]) : null),
                         TextEntry::make('respondent_display')
                             ->label(__('survey.survey.table.columns.respondent')),
                         TextEntry::make('assignedTo.name')
@@ -317,6 +384,18 @@ class SurveyResource extends Resource
                             ->label(__('survey.survey.table.columns.completed_at'))
                             ->dateTime()
                             ->placeholder('-'),
+                        TextEntry::make('risk_score')
+                            ->label('Risk Score')
+                            ->badge()
+                            ->color(fn (?int $state): string => match (true) {
+                                $state === null => 'gray',
+                                $state <= 20 => 'success',
+                                $state <= 40 => 'info',
+                                $state <= 60 => 'warning',
+                                $state <= 80 => 'orange',
+                                default => 'danger',
+                            })
+                            ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : '-'),
                         TextEntry::make('createdBy.name')
                             ->label(__('survey.survey.table.columns.created_by')),
                         TextEntry::make('public_url')
@@ -348,6 +427,7 @@ class SurveyResource extends Resource
             'create' => Pages\CreateSurvey::route('/create'),
             'view' => Pages\ViewSurvey::route('/{record}'),
             'edit' => Pages\EditSurvey::route('/{record}/edit'),
+            'score' => Pages\ScoreSurvey::route('/{record}/score'),
         ];
     }
 
