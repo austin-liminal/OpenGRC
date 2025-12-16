@@ -42,11 +42,11 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
         $this->record = $this->resolveRecord($record);
         $this->record->load(['template.questions', 'answers.question', 'vendor']);
 
-        // Only allow scoring completed surveys
-        if ($this->record->status !== SurveyStatus::COMPLETED) {
+        // Only allow scoring completed or pending_scoring surveys
+        if (! in_array($this->record->status, [SurveyStatus::COMPLETED, SurveyStatus::PENDING_SCORING])) {
             Notification::make()
-                ->title('Survey not ready for scoring')
-                ->body('Only completed surveys can be scored.')
+                ->title(__('Survey not ready for scoring'))
+                ->body(__('Only completed or pending scoring surveys can be scored.'))
                 ->warning()
                 ->send();
 
@@ -363,24 +363,36 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
     {
         return [
             Actions\Action::make('save_scores')
-                ->label('Save Scores')
-                ->icon('heroicon-o-check')
-                ->color('success')
-                ->action('saveScores'),
-            Actions\Action::make('save_and_calculate')
-                ->label('Save & Calculate Risk Score')
-                ->icon('heroicon-o-calculator')
+                ->label(__('Save Scores'))
+                ->icon('heroicon-o-bookmark')
+                ->color('gray')
+                ->action('saveScoresOnly')
+                ->visible(fn () => $this->record->status === SurveyStatus::PENDING_SCORING),
+            Actions\Action::make('complete_assessment')
+                ->label(__('Complete Assessment'))
+                ->icon('heroicon-o-check-circle')
                 ->color('primary')
-                ->action('saveAndCalculate'),
+                ->requiresConfirmation()
+                ->modalHeading(__('Complete Assessment'))
+                ->modalDescription(__('This will save all scores, calculate the risk score, and mark the assessment as complete. Are you sure you want to proceed?'))
+                ->modalSubmitActionLabel(__('Yes, complete assessment'))
+                ->action('completeAssessment')
+                ->visible(fn () => $this->record->status === SurveyStatus::PENDING_SCORING),
+            Actions\Action::make('recalculate')
+                ->label(__('Recalculate Risk Score'))
+                ->icon('heroicon-o-calculator')
+                ->color('warning')
+                ->action('saveAndCalculate')
+                ->visible(fn () => $this->record->status === SurveyStatus::COMPLETED),
             Actions\Action::make('back')
-                ->label('Back to Survey')
+                ->label(__('Back to Survey'))
                 ->icon('heroicon-o-arrow-left')
                 ->color('gray')
                 ->url(SurveyResource::getUrl('view', ['record' => $this->record])),
         ];
     }
 
-    public function saveScores(): void
+    protected function saveScores(): int
     {
         $data = $this->form->getState();
 
@@ -402,19 +414,29 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
             }
         }
 
+        return $updated;
+    }
+
+    public function saveScoresOnly(): void
+    {
+        $updated = $this->saveScores();
+
         Notification::make()
-            ->title('Scores saved')
-            ->body("{$updated} answer(s) scored successfully.")
+            ->title(__('Scores saved'))
+            ->body(__(':count answer(s) scored successfully.', ['count' => $updated]))
             ->success()
             ->send();
     }
 
-    public function saveAndCalculate(): void
+    public function completeAssessment(): void
     {
-        // First save the scores
+        // Save the scores
         $this->saveScores();
 
-        // Then calculate the overall risk score
+        // Update status to completed
+        $this->record->update(['status' => SurveyStatus::COMPLETED]);
+
+        // Calculate the overall risk score
         $service = new VendorRiskScoringService;
         $score = $service->calculateSurveyScore($this->record);
 
@@ -426,8 +448,40 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
         $recommendedRating = $service->recommendRiskRating($score);
 
         Notification::make()
-            ->title('Risk score calculated')
-            ->body("Survey risk score: {$score}/100. Recommended rating: {$recommendedRating->getLabel()}")
+            ->title(__('Assessment completed'))
+            ->body(__('Survey risk score: :score/100. Risk rating: :rating', [
+                'score' => $score,
+                'rating' => $recommendedRating->getLabel(),
+            ]))
+            ->success()
+            ->send();
+
+        // Redirect to view page
+        $this->redirect(SurveyResource::getUrl('view', ['record' => $this->record]));
+    }
+
+    public function saveAndCalculate(): void
+    {
+        // Save the scores
+        $this->saveScores();
+
+        // Calculate the overall risk score
+        $service = new VendorRiskScoringService;
+        $score = $service->calculateSurveyScore($this->record);
+
+        // Also update vendor score if linked
+        if ($this->record->vendor) {
+            $service->calculateVendorScore($this->record->vendor);
+        }
+
+        $recommendedRating = $service->recommendRiskRating($score);
+
+        Notification::make()
+            ->title(__('Risk score recalculated'))
+            ->body(__('Survey risk score: :score/100. Recommended rating: :rating', [
+                'score' => $score,
+                'rating' => $recommendedRating->getLabel(),
+            ]))
             ->success()
             ->send();
 

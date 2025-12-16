@@ -16,16 +16,13 @@ class ViewSurvey extends ViewRecord
     {
         return [
             Actions\EditAction::make(),
-            Actions\Action::make('copy_link')
-                ->label(__('survey.survey.actions.copy_link'))
-                ->icon('heroicon-o-link')
-                ->color('gray')
-                ->requiresConfirmation()
-                ->modalHeading('Survey Link')
-                ->modalDescription(fn () => 'Share this link with respondents: '.$this->record->getPublicUrl())
-                ->modalSubmitActionLabel('Close')
-                ->action(fn () => null)
-                ->visible(fn () => $this->record->access_token !== null),
+            Actions\Action::make('respond_internal')
+                ->label(__('Complete Assessment'))
+                ->icon('heroicon-o-clipboard-document-list')
+                ->color('primary')
+                ->url(fn () => SurveyResource::getUrl('respond-internal', ['record' => $this->record]))
+                ->visible(fn () => $this->record->isInternal()
+                    && in_array($this->record->status, [SurveyStatus::DRAFT, SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])),
             Actions\Action::make('mark_complete')
                 ->label(__('survey.survey.actions.mark_complete'))
                 ->icon('heroicon-o-check-circle')
@@ -48,7 +45,7 @@ class ViewSurvey extends ViewRecord
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('primary')
                 ->url(fn () => SurveyResource::getUrl('score', ['record' => $this->record]))
-                ->visible(fn () => $this->record->status === SurveyStatus::COMPLETED),
+                ->visible(fn () => in_array($this->record->status, [SurveyStatus::PENDING_SCORING, SurveyStatus::COMPLETED])),
         ];
     }
 }

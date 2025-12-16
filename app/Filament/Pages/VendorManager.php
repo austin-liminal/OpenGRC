@@ -2,11 +2,13 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\VendorResource;
 use App\Filament\Widgets\SurveyInfoWidget;
 use App\Filament\Widgets\SurveysTableWidget;
 use App\Filament\Widgets\SurveyTemplatesTableWidget;
 use App\Filament\Widgets\VendorStatsWidget;
 use App\Filament\Widgets\VendorsTableWidget;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Livewire\Attributes\Url;
 
@@ -28,12 +30,23 @@ class VendorManager extends Page
 
     public static function getNavigationLabel(): string
     {
-        return __('Vendor Manager');
+        return __('Vendor Management');
     }
 
     public function getTitle(): string
     {
-        return __('Vendor Manager');
+        return __('Vendor Management');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('addVendor')
+                ->label(__('Add Vendor'))
+                ->icon('heroicon-o-plus')
+                ->url(VendorResource::getUrl('create'))
+                ->visible(fn () => auth()->user()->can('Create Vendors')),
+        ];
     }
 
     protected function getHeaderWidgets(): array

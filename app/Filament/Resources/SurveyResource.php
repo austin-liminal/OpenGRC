@@ -118,11 +118,19 @@ class SurveyResource extends Resource
                             ->native(false),
                     ]),
                 Forms\Components\Section::make('Survey Link')
-                    ->description(__('survey.survey.form.link.description'))
+                    ->description(fn (?Survey $record): string => $record?->isInternal()
+                        ? __('Internal survey - accessible via admin panel')
+                        : __('survey.survey.form.link.description'))
                     ->schema([
                         Forms\Components\Placeholder::make('public_url')
-                            ->label(__('survey.survey.form.link.label'))
-                            ->content(fn (?Survey $record): string => $record?->getPublicUrl() ?? 'Link will be generated after saving')
+                            ->label(fn (?Survey $record): string => $record?->isInternal()
+                                ? __('Internal Assessment Link')
+                                : __('survey.survey.form.link.label'))
+                            ->content(fn (?Survey $record): string => $record === null
+                                ? 'Link will be generated after saving'
+                                : ($record->isInternal()
+                                    ? static::getUrl('respond-internal', ['record' => $record])
+                                    : $record->getPublicUrl()))
                             ->visible(fn (?Survey $record): bool => $record !== null),
                     ])
                     ->visible(fn (?Survey $record): bool => $record !== null),
@@ -225,15 +233,20 @@ class SurveyResource extends Resource
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\Action::make('copy_link')
-                        ->label(__('survey.survey.actions.copy_link'))
+                        ->label(fn (Survey $record): string => $record->isInternal()
+                            ? __('Open Assessment')
+                            : __('survey.survey.actions.copy_link'))
                         ->icon('heroicon-o-link')
                         ->color('gray')
-                        ->requiresConfirmation()
+                        ->url(fn (Survey $record): ?string => $record->isInternal()
+                            ? static::getUrl('respond-internal', ['record' => $record])
+                            : null)
+                        ->requiresConfirmation(fn (Survey $record): bool => ! $record->isInternal())
                         ->modalHeading('Survey Link')
                         ->modalDescription(fn (Survey $record) => 'Copy this link to share the survey: '.$record->getPublicUrl())
                         ->modalSubmitActionLabel('Copy to Clipboard')
                         ->action(fn () => null)
-                        ->visible(fn (Survey $record): bool => $record->access_token !== null),
+                        ->visible(fn (Survey $record): bool => $record->isInternal() || $record->access_token !== null),
                     Tables\Actions\Action::make('mark_complete')
                         ->label(__('survey.survey.actions.mark_complete'))
                         ->icon('heroicon-o-check-circle')
@@ -302,17 +315,17 @@ class SurveyResource extends Resource
                         })
                         ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && in_array($record->status, [SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])),
                     Tables\Actions\Action::make('score_survey')
-                        ->label('Score Survey')
+                        ->label(__('Score Survey'))
                         ->icon('heroicon-o-clipboard-document-check')
                         ->color('primary')
                         ->url(fn (Survey $record): string => static::getUrl('score', ['record' => $record]))
-                        ->visible(fn (Survey $record): bool => $record->status === SurveyStatus::COMPLETED),
+                        ->visible(fn (Survey $record): bool => in_array($record->status, [SurveyStatus::PENDING_SCORING, SurveyStatus::COMPLETED])),
                     Tables\Actions\Action::make('recalculate_score')
-                        ->label('Recalculate Risk Score')
+                        ->label(__('Recalculate Risk Score'))
                         ->icon('heroicon-o-calculator')
                         ->color('warning')
                         ->requiresConfirmation()
-                        ->modalDescription('This will recalculate the risk score based on current answers and question weights.')
+                        ->modalDescription(__('This will recalculate the risk score based on current answers and question weights.'))
                         ->action(function (Survey $record) {
                             $service = new VendorRiskScoringService;
                             $score = $service->calculateSurveyScore($record);
@@ -322,8 +335,8 @@ class SurveyResource extends Resource
                             }
 
                             Notification::make()
-                                ->title('Risk score recalculated')
-                                ->body("New score: {$score}/100")
+                                ->title(__('Risk score recalculated'))
+                                ->body(__('New score: :score/100', ['score' => $score]))
                                 ->success()
                                 ->send();
                         })
@@ -399,10 +412,17 @@ class SurveyResource extends Resource
                         TextEntry::make('createdBy.name')
                             ->label(__('survey.survey.table.columns.created_by')),
                         TextEntry::make('public_url')
-                            ->label(__('survey.survey.form.link.label'))
-                            ->state(fn (Survey $record): string => $record->getPublicUrl())
+                            ->label(fn (Survey $record): string => $record->isInternal()
+                                ? __('Internal Assessment Link')
+                                : __('survey.survey.form.link.label'))
+                            ->state(fn (Survey $record): string => $record->isInternal()
+                                ? static::getUrl('respond-internal', ['record' => $record])
+                                : $record->getPublicUrl())
                             ->copyable()
                             ->copyMessage('Link copied!')
+                            ->url(fn (Survey $record): ?string => $record->isInternal()
+                                ? static::getUrl('respond-internal', ['record' => $record])
+                                : null)
                             ->columnSpanFull(),
                         TextEntry::make('description')
                             ->label(__('survey.survey.form.description.label'))
@@ -428,6 +448,7 @@ class SurveyResource extends Resource
             'view' => Pages\ViewSurvey::route('/{record}'),
             'edit' => Pages\EditSurvey::route('/{record}/edit'),
             'score' => Pages\ScoreSurvey::route('/{record}/score'),
+            'respond-internal' => Pages\RespondToSurveyInternal::route('/{record}/respond'),
         ];
     }
 

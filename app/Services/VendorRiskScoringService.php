@@ -71,7 +71,7 @@ class VendorRiskScoringService
      * Get the risk score for a specific answer based on question type and settings.
      * Returns null if the question should be excluded from scoring (N/A).
      */
-    protected function getAnswerScore(SurveyQuestion $question, ?SurveyAnswer $answer): ?int
+    public function getAnswerScore(SurveyQuestion $question, ?SurveyAnswer $answer): ?int
     {
         // No answer = assume worst case for risk calculation
         if (! $answer || $answer->answer_value === null) {

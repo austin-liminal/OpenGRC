@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SurveyResource\RelationManagers;
 
 use App\Enums\QuestionType;
 use App\Models\SurveyAnswer;
+use App\Services\VendorRiskScoringService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -77,19 +78,27 @@ class AnswersRelationManager extends RelationManager
                     ->limit(50)
                     ->placeholder('-')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('manual_score')
-                    ->label('Risk Score')
+                Tables\Columns\TextColumn::make('calculated_score')
+                    ->label(__('Assessment'))
                     ->badge()
+                    ->state(function (SurveyAnswer $record): ?int {
+                        return $this->calculateAnswerScore($record);
+                    })
                     ->color(fn (?int $state): string => match (true) {
                         $state === null => 'gray',
-                        $state <= 20 => 'success',
-                        $state <= 40 => 'info',
-                        $state <= 60 => 'warning',
-                        $state <= 80 => 'orange',
+                        $state === -1 => 'gray',
+                        $state === 0 => 'success',
+                        $state <= 50 => 'warning',
                         default => 'danger',
                     })
-                    ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : 'Not scored')
-                    ->visible(fn ($livewire) => $livewire->getOwnerRecord()->status->value === 'completed'),
+                    ->formatStateUsing(fn (?int $state): string => match (true) {
+                        $state === null => __('Not Scored'),
+                        $state === -1 => __('N/A'),
+                        $state === 0 => __('Pass'),
+                        $state <= 50 => __('Partial'),
+                        default => __('Fail'),
+                    })
+                    ->visible(fn ($livewire) => in_array($livewire->getOwnerRecord()->status->value, ['completed', 'pending_scoring'])),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('survey.survey.answers.columns.answered_at'))
                     ->dateTime()
@@ -214,5 +223,18 @@ class AnswersRelationManager extends RelationManager
             ])
             ->emptyStateHeading('No answers yet')
             ->emptyStateDescription('Answers will appear here once the respondent starts filling out the survey.');
+    }
+
+    protected function calculateAnswerScore(SurveyAnswer $record): ?int
+    {
+        $question = $record->question;
+
+        if (! $question || $question->risk_weight <= 0) {
+            return null;
+        }
+
+        $service = new VendorRiskScoringService;
+
+        return $service->getAnswerScore($question, $record);
     }
 }

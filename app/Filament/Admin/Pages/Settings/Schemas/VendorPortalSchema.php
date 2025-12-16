@@ -60,7 +60,14 @@ class VendorPortalSchema
                         ->default(80)
                         ->minValue(0)
                         ->maxValue(100)
-                        ->helperText('Scores above Medium to this value = High risk. Above this = Critical'),
+                        ->helperText('Scores above Medium to this value = High risk'),
+                    TextInput::make('vendor_portal.risk_threshold_critical')
+                        ->label('Critical Threshold')
+                        ->numeric()
+                        ->default(100)
+                        ->minValue(0)
+                        ->maxValue(100)
+                        ->helperText('Scores above High to this value = Critical risk'),
                 ]),
 
             Section::make('Magic Link Settings')

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Vendor\Resources\SurveyResource\Pages;
+namespace App\Filament\Resources\SurveyResource\Pages;
 
 use App\Enums\QuestionType;
 use App\Enums\SurveyStatus;
-use App\Filament\Vendor\Resources\SurveyResource;
+use App\Filament\Resources\SurveyResource;
 use App\Models\Survey;
 use App\Models\SurveyAnswer;
 use App\Models\SurveyQuestion;
@@ -17,15 +17,14 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 
-class RespondToSurvey extends Page implements HasForms
+class RespondToSurveyInternal extends Page implements HasForms
 {
     use InteractsWithForms;
 
     protected static string $resource = SurveyResource::class;
 
-    protected static string $view = 'filament.vendor.pages.respond-to-survey';
+    protected static string $view = 'filament.pages.respond-to-survey-internal';
 
     public Survey|Model|int|string|null $record = null;
 
@@ -33,20 +32,18 @@ class RespondToSurvey extends Page implements HasForms
 
     public function mount(int|string $record): void
     {
-        // Use Filament's record resolution method instead of direct find
-        $this->record = $this->resolveRecord($record);
+        $this->record = Survey::findOrFail($record);
 
-        // Verify vendor access
-        $vendorUser = Auth::guard('vendor')->user();
-        if ($this->record->vendor_id !== $vendorUser?->vendor_id) {
+        // Check if user has permission
+        if (! auth()->user()->can('Update Surveys')) {
             abort(403);
         }
 
         // Check if survey can be responded to
-        if (! in_array($this->record->status, [SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])) {
+        if (! in_array($this->record->status, [SurveyStatus::DRAFT, SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])) {
             Notification::make()
-                ->title('Survey cannot be modified')
-                ->body('This survey has already been completed or is not available for response.')
+                ->title(__('Survey cannot be modified'))
+                ->body(__('This survey has already been completed or is not available for response.'))
                 ->warning()
                 ->send();
 
@@ -57,13 +54,6 @@ class RespondToSurvey extends Page implements HasForms
 
         // Load existing answers
         $this->loadExistingAnswers();
-    }
-
-    protected function resolveRecord(int|string $key): Model
-    {
-        // Bypass the resource's getEloquentQuery and find directly
-        // We'll verify access manually in mount()
-        return Survey::findOrFail($key);
     }
 
     protected function loadExistingAnswers(): void
@@ -131,8 +121,8 @@ class RespondToSurvey extends Page implements HasForms
                 ->helperText($question->help_text)
                 ->required($question->is_required)
                 ->options([
-                    'yes' => 'Yes',
-                    'no' => 'No',
+                    'yes' => __('Yes'),
+                    'no' => __('No'),
                 ])
                 ->inline(),
 
@@ -168,14 +158,14 @@ class RespondToSurvey extends Page implements HasForms
         // Add comment field if allowed
         if ($question->allow_comments) {
             $fields[] = Forms\Components\Textarea::make($commentName)
-                ->label('Additional Comments')
-                ->placeholder('Add any additional context or notes...')
+                ->label(__('Additional Comments'))
+                ->placeholder(__('Add any additional context or notes...'))
                 ->rows(2)
                 ->maxLength(2000)
                 ->columnSpanFull();
         }
 
-        return Forms\Components\Fieldset::make("Question {$number}")
+        return Forms\Components\Fieldset::make(__('Question :number', ['number' => $number]))
             ->schema($fields)
             ->columnSpanFull();
     }
@@ -197,8 +187,8 @@ class RespondToSurvey extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        // Update status to in progress if it was sent
-        if ($this->record->status === SurveyStatus::SENT) {
+        // Update status to in progress if it was draft or sent
+        if (in_array($this->record->status, [SurveyStatus::DRAFT, SurveyStatus::SENT])) {
             $this->record->update(['status' => SurveyStatus::IN_PROGRESS]);
         }
 
@@ -223,8 +213,8 @@ class RespondToSurvey extends Page implements HasForms
         }
 
         Notification::make()
-            ->title('Progress saved')
-            ->body('Your responses have been saved. You can continue later.')
+            ->title(__('Progress saved'))
+            ->body(__('Your responses have been saved. You can continue later.'))
             ->success()
             ->send();
     }
@@ -248,8 +238,8 @@ class RespondToSurvey extends Page implements HasForms
 
         if (! empty($missingRequired)) {
             Notification::make()
-                ->title('Required questions not answered')
-                ->body('Please answer all required questions before submitting.')
+                ->title(__('Required questions not answered'))
+                ->body(__('Please answer all required questions before submitting.'))
                 ->danger()
                 ->send();
 
@@ -283,31 +273,41 @@ class RespondToSurvey extends Page implements HasForms
             ->exists();
 
         if ($requiresManualScoring) {
-            // Set status to pending scoring - admin will need to score manually
+            // Set status to pending scoring
             $this->record->update([
                 'status' => SurveyStatus::PENDING_SCORING,
                 'completed_at' => now(),
             ]);
-        } else {
-            // No manual scoring needed - mark as completed and calculate score
-            $this->record->update([
-                'status' => SurveyStatus::COMPLETED,
-                'completed_at' => now(),
-            ]);
 
-            // Calculate risk score
-            $scoringService = new VendorRiskScoringService;
-            $scoringService->calculateSurveyScore($this->record);
+            Notification::make()
+                ->title(__('Assessment submitted'))
+                ->body(__('The assessment has been submitted but requires manual scoring for open-ended questions.'))
+                ->warning()
+                ->send();
 
-            // Also update vendor's overall risk score
-            if ($this->record->vendor) {
-                $scoringService->calculateVendorScore($this->record->vendor);
-            }
+            $this->redirect(SurveyResource::getUrl('score', ['record' => $this->record]));
+
+            return;
+        }
+
+        // No manual scoring needed - mark as completed
+        $this->record->update([
+            'status' => SurveyStatus::COMPLETED,
+            'completed_at' => now(),
+        ]);
+
+        // Calculate risk score
+        $scoringService = new VendorRiskScoringService;
+        $riskScore = $scoringService->calculateSurveyScore($this->record);
+
+        // Also update vendor's overall risk score
+        if ($this->record->vendor) {
+            $scoringService->calculateVendorScore($this->record->vendor);
         }
 
         Notification::make()
-            ->title(__('Survey submitted'))
-            ->body(__('Thank you! Your survey response has been submitted successfully.'))
+            ->title(__('Assessment submitted'))
+            ->body(__('The internal assessment has been completed. Risk score: :score/100', ['score' => $riskScore]))
             ->success()
             ->send();
 
@@ -316,22 +316,24 @@ class RespondToSurvey extends Page implements HasForms
 
     public function getTitle(): string
     {
-        return 'Respond to Survey';
+        return __('Internal Assessment');
     }
 
     public function getSubheading(): ?string
     {
-        return $this->record->template->title ?? '';
+        $vendor = $this->record->vendor?->name ?? __('No vendor');
+
+        return $this->record->template->title.' - '.$vendor;
     }
 
     protected function getHeaderActions(): array
     {
         return [
             Actions\Action::make('back')
-                ->label('Back to Surveys')
+                ->label(__('Back'))
                 ->icon('heroicon-o-arrow-left')
                 ->color('gray')
-                ->url(SurveyResource::getUrl('index')),
+                ->url(SurveyResource::getUrl('view', ['record' => $this->record])),
         ];
     }
 
@@ -339,19 +341,19 @@ class RespondToSurvey extends Page implements HasForms
     {
         return [
             Actions\Action::make('save')
-                ->label('Save Progress')
+                ->label(__('Save Progress'))
                 ->icon('heroicon-o-bookmark')
                 ->color('gray')
                 ->action('save'),
             Actions\Action::make('submit')
-                ->label('Submit Survey')
-                ->icon('heroicon-o-paper-airplane')
+                ->label(__('Submit Assessment'))
+                ->icon('heroicon-o-check-circle')
                 ->color('primary')
                 ->action('submit')
                 ->requiresConfirmation()
-                ->modalHeading('Submit Survey')
-                ->modalDescription('Are you sure you want to submit this survey? You will not be able to make changes after submission.')
-                ->modalSubmitActionLabel('Yes, submit survey'),
+                ->modalHeading(__('Submit Assessment'))
+                ->modalDescription(__('Are you sure you want to submit this assessment? You will not be able to make changes after submission.'))
+                ->modalSubmitActionLabel(__('Yes, submit assessment')),
         ];
     }
 }
