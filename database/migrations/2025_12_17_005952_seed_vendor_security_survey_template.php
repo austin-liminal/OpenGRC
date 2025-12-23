@@ -4,28 +4,38 @@ use App\Enums\QuestionType;
 use App\Enums\RiskImpact;
 use App\Enums\SurveyTemplateStatus;
 use App\Enums\SurveyType;
+use App\Models\SurveyQuestion;
+use App\Models\SurveyTemplate;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Only seeds if users exist (upgrade scenario).
+     * Fresh installs are handled by VendorSurveyTemplatesSeeder.
      */
     public function up(): void
     {
-        // Create the survey template
-        $templateId = DB::table('survey_templates')->insertGetId([
-            'title' => 'Vendor Security Survey',
-            'description' => '<p>This survey assesses the security posture of third-party vendors to help identify and manage risks associated with external partnerships. Please answer all questions honestly and completely.</p>',
-            'status' => SurveyTemplateStatus::ACTIVE->value,
-            'type' => SurveyType::VENDOR_ASSESSMENT->value,
-            'created_by_id' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $user = User::first();
 
-        // Define all questions with their categories
+        if (! $user) {
+            // Fresh install - seeder will handle this after UserSeeder runs
+            return;
+        }
+
+        $template = SurveyTemplate::updateOrCreate(
+            ['title' => 'Vendor Security Survey'],
+            [
+                'description' => '<p>This survey assesses the security posture of third-party vendors to help identify and manage risks associated with external partnerships. Please answer all questions honestly and completely.</p>',
+                'status' => SurveyTemplateStatus::ACTIVE,
+                'type' => SurveyType::VENDOR_ASSESSMENT,
+                'created_by_id' => $user->id,
+            ]
+        );
+
         $questions = [
             // Governance & Security Program (Questions 1-3)
             [
@@ -144,23 +154,24 @@ return new class extends Migration
             ],
         ];
 
-        // Insert all questions
         foreach ($questions as $index => $question) {
-            DB::table('survey_questions')->insert([
-                'survey_template_id' => $templateId,
-                'question_text' => $question['question_text'],
-                'question_type' => QuestionType::BOOLEAN->value,
-                'help_text' => $question['category'],
-                'is_required' => true,
-                'allow_comments' => true,
-                'sort_order' => $index + 1,
-                'risk_weight' => $question['risk_weight'],
-                'risk_impact' => RiskImpact::POSITIVE->value, // Yes = reduces risk for all these questions
-                'options' => null,
-                'option_scores' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            SurveyQuestion::updateOrCreate(
+                [
+                    'survey_template_id' => $template->id,
+                    'question_text' => $question['question_text'],
+                ],
+                [
+                    'question_type' => QuestionType::BOOLEAN,
+                    'help_text' => $question['category'],
+                    'is_required' => true,
+                    'allow_comments' => true,
+                    'sort_order' => $index + 1,
+                    'risk_weight' => $question['risk_weight'],
+                    'risk_impact' => RiskImpact::POSITIVE,
+                    'options' => null,
+                    'option_scores' => null,
+                ]
+            );
         }
     }
 
@@ -169,21 +180,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Find the template
-        $template = DB::table('survey_templates')
-            ->where('title', 'Vendor Security Survey')
-            ->first();
+        $template = SurveyTemplate::where('title', 'Vendor Security Survey')->first();
 
         if ($template) {
-            // Delete the questions
-            DB::table('survey_questions')
-                ->where('survey_template_id', $template->id)
-                ->delete();
-
-            // Delete the template
-            DB::table('survey_templates')
-                ->where('id', $template->id)
-                ->delete();
+            SurveyQuestion::where('survey_template_id', $template->id)->delete();
+            $template->delete();
         }
     }
 };
