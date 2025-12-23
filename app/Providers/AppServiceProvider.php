@@ -124,8 +124,13 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        Gate::before(function (User $user, string $ability) {
-            return $user->isSuperAdmin() ? true : null;
+        Gate::before(function ($user, string $ability) {
+            // Only apply super admin bypass for regular User model, not VendorUser
+            if ($user instanceof User && $user->isSuperAdmin()) {
+                return true;
+            }
+
+            return null;
         });
 
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {

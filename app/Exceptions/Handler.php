@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -25,6 +26,17 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        // Return JSON responses for survey routes when Accept header is JSON
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->is('survey/*') && $request->expectsJson()) {
+                $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+
+                return response()->json([
+                    'error' => $e->getMessage() ?: 'An error occurred',
+                ], $status);
+            }
         });
     }
 }

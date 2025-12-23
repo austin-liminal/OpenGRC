@@ -26,7 +26,14 @@ class ToDo extends Page implements Tables\Contracts\HasTable
 
     public static function getNavigationBadge(): ?string
     {
-        $count = auth()->user()->openTodos()->count();
+        $user = auth()->user();
+
+        // Only show badge for regular users with openTodos method
+        if (! $user || ! method_exists($user, 'openTodos')) {
+            return null;
+        }
+
+        $count = $user->openTodos()->count();
 
         if ($count > 99) {
             return '99+';
@@ -35,7 +42,6 @@ class ToDo extends Page implements Tables\Contracts\HasTable
         }
 
         return null;
-
     }
 
     protected function getTableQuery(): Builder
