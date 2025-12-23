@@ -32,13 +32,17 @@ class SurveyResource extends Resource
     {
         $vendorUser = Auth::guard('vendor')->user();
 
+        // Show surveys where the user is the respondent OR surveys for their vendor
         return parent::getEloquentQuery()
-            ->where('vendor_id', $vendorUser?->vendor_id)
-            ->where('respondent_email', $vendorUser?->email)
+            ->where(function (Builder $query) use ($vendorUser) {
+                $query->where('respondent_email', $vendorUser?->email)
+                    ->orWhere('vendor_id', $vendorUser?->vendor_id);
+            })
             ->whereIn('status', [
                 SurveyStatus::SENT,
                 SurveyStatus::IN_PROGRESS,
                 SurveyStatus::COMPLETED,
+                SurveyStatus::PENDING_SCORING,
             ]);
     }
 
@@ -78,6 +82,7 @@ class SurveyResource extends Resource
                         SurveyStatus::SENT->value => 'Pending',
                         SurveyStatus::IN_PROGRESS->value => 'In Progress',
                         SurveyStatus::COMPLETED->value => 'Completed',
+                        SurveyStatus::PENDING_SCORING->value => 'Pending Review',
                     ]),
             ])
             ->actions([

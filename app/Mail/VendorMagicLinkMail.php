@@ -25,6 +25,8 @@ class VendorMagicLinkMail extends Mailable
 
     public int $linkExpiryHours;
 
+    public string $expiresAt;
+
     public function __construct(VendorUser $vendorUser)
     {
         $this->email = $vendorUser->email;
@@ -33,10 +35,14 @@ class VendorMagicLinkMail extends Mailable
         $this->portalName = setting('vendor_portal.portal_name', 'Vendor Portal');
         $this->linkExpiryHours = (int) setting('vendor_portal.magic_link_expiry_hours', 48);
 
+        // Calculate expiration time
+        $expiresAtTime = now()->addHours($this->linkExpiryHours);
+        $this->expiresAt = $expiresAtTime->format('F j, Y \a\t g:i A');
+
         // Generate signed magic link URL
         $this->magicLinkUrl = URL::temporarySignedRoute(
             'vendor.magic-login',
-            now()->addHours($this->linkExpiryHours),
+            $expiresAtTime,
             ['vendorUser' => $vendorUser->id]
         );
     }
@@ -52,6 +58,7 @@ class VendorMagicLinkMail extends Mailable
             'portalName' => $this->portalName,
             'magicLinkUrl' => $this->magicLinkUrl,
             'linkExpiryHours' => $this->linkExpiryHours,
+            'expiresAt' => $this->expiresAt,
         ]);
 
         return $this->from(setting('mail.from'))

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SurveyResource\Pages;
 
 use App\Enums\SurveyStatus;
 use App\Filament\Resources\SurveyResource;
+use App\Filament\Resources\VendorResource;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
@@ -11,6 +12,20 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewSurvey extends ViewRecord
 {
     protected static string $resource = SurveyResource::class;
+
+    public function getBreadcrumbs(): array
+    {
+        // If this survey is associated with a vendor, navigate back to vendor
+        if ($this->record->vendor_id) {
+            return [
+                VendorResource::getUrl() => __('Vendors'),
+                VendorResource::getUrl('view', ['record' => $this->record->vendor_id]) => $this->record->vendor?->name ?? __('Vendor'),
+                $this->record->display_title,
+            ];
+        }
+
+        return parent::getBreadcrumbs();
+    }
 
     protected function getHeaderActions(): array
     {

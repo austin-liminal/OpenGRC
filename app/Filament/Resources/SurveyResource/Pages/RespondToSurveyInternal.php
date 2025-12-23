@@ -5,8 +5,10 @@ namespace App\Filament\Resources\SurveyResource\Pages;
 use App\Enums\QuestionType;
 use App\Enums\SurveyStatus;
 use App\Filament\Resources\SurveyResource;
+use App\Filament\Resources\VendorResource;
 use App\Models\Survey;
 use App\Models\SurveyAnswer;
+use App\Models\SurveyAttachment;
 use App\Models\SurveyQuestion;
 use App\Services\VendorRiskScoringService;
 use Filament\Actions;
@@ -17,6 +19,8 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class RespondToSurveyInternal extends Page implements HasForms
 {
@@ -63,10 +67,18 @@ class RespondToSurveyInternal extends Page implements HasForms
         foreach ($this->record->template->questions as $question) {
             $answer = $this->record->answers()
                 ->where('survey_question_id', $question->id)
+                ->with('attachments')
                 ->first();
 
             if ($answer) {
-                $data["question_{$question->id}"] = $answer->answer_value;
+                // For file questions, load attachment paths
+                if ($question->question_type === QuestionType::FILE) {
+                    $data["question_{$question->id}"] = $answer->attachments
+                        ->pluck('file_path')
+                        ->toArray();
+                } else {
+                    $data["question_{$question->id}"] = $answer->answer_value;
+                }
                 $data["comment_{$question->id}"] = $answer->comment;
             }
         }
@@ -88,7 +100,7 @@ class RespondToSurveyInternal extends Page implements HasForms
         return $form
             ->schema([
                 Forms\Components\Section::make($this->record->template->title)
-                    ->description($this->record->template->description)
+                    ->description(new HtmlString($this->record->template->description))
                     ->schema($schema),
             ])
             ->statePath('data');
@@ -200,16 +212,32 @@ class RespondToSurveyInternal extends Page implements HasForms
             $answerValue = $data[$fieldName] ?? null;
             $comment = $data[$commentName] ?? null;
 
-            SurveyAnswer::updateOrCreate(
-                [
-                    'survey_id' => $this->record->id,
-                    'survey_question_id' => $question->id,
-                ],
-                [
-                    'answer_value' => $answerValue,
-                    'comment' => $comment,
-                ]
-            );
+            // Handle file uploads separately
+            if ($question->question_type === QuestionType::FILE) {
+                $answer = SurveyAnswer::updateOrCreate(
+                    [
+                        'survey_id' => $this->record->id,
+                        'survey_question_id' => $question->id,
+                    ],
+                    [
+                        'answer_value' => null, // File references stored in attachments table
+                        'comment' => $comment,
+                    ]
+                );
+
+                $this->syncFileAttachments($answer, $answerValue);
+            } else {
+                SurveyAnswer::updateOrCreate(
+                    [
+                        'survey_id' => $this->record->id,
+                        'survey_question_id' => $question->id,
+                    ],
+                    [
+                        'answer_value' => $answerValue,
+                        'comment' => $comment,
+                    ]
+                );
+            }
         }
 
         Notification::make()
@@ -217,6 +245,40 @@ class RespondToSurveyInternal extends Page implements HasForms
             ->body(__('Your responses have been saved. You can continue later.'))
             ->success()
             ->send();
+    }
+
+    /**
+     * Sync file attachments for a survey answer.
+     */
+    protected function syncFileAttachments(SurveyAnswer $answer, mixed $filePaths): void
+    {
+        $filePaths = is_array($filePaths) ? $filePaths : ($filePaths ? [$filePaths] : []);
+        $disk = config('filesystems.default');
+
+        // Get current attachment paths
+        $existingPaths = $answer->attachments->pluck('file_path')->toArray();
+
+        // Delete attachments that are no longer in the form
+        foreach ($answer->attachments as $attachment) {
+            if (! in_array($attachment->file_path, $filePaths)) {
+                // Delete the file from storage
+                Storage::disk($disk)->delete($attachment->file_path);
+                $attachment->delete();
+            }
+        }
+
+        // Add new attachments
+        foreach ($filePaths as $filePath) {
+            if (! in_array($filePath, $existingPaths) && Storage::disk($disk)->exists($filePath)) {
+                SurveyAttachment::create([
+                    'survey_answer_id' => $answer->id,
+                    'file_name' => basename($filePath),
+                    'file_path' => $filePath,
+                    'file_size' => Storage::disk($disk)->size($filePath),
+                    'uploaded_by' => auth()->id(),
+                ]);
+            }
+        }
     }
 
     public function submit(): void
@@ -254,16 +316,32 @@ class RespondToSurveyInternal extends Page implements HasForms
             $answerValue = $data[$fieldName] ?? null;
             $comment = $data[$commentName] ?? null;
 
-            SurveyAnswer::updateOrCreate(
-                [
-                    'survey_id' => $this->record->id,
-                    'survey_question_id' => $question->id,
-                ],
-                [
-                    'answer_value' => $answerValue,
-                    'comment' => $comment,
-                ]
-            );
+            // Handle file uploads separately
+            if ($question->question_type === QuestionType::FILE) {
+                $answer = SurveyAnswer::updateOrCreate(
+                    [
+                        'survey_id' => $this->record->id,
+                        'survey_question_id' => $question->id,
+                    ],
+                    [
+                        'answer_value' => null, // File references stored in attachments table
+                        'comment' => $comment,
+                    ]
+                );
+
+                $this->syncFileAttachments($answer, $answerValue);
+            } else {
+                SurveyAnswer::updateOrCreate(
+                    [
+                        'survey_id' => $this->record->id,
+                        'survey_question_id' => $question->id,
+                    ],
+                    [
+                        'answer_value' => $answerValue,
+                        'comment' => $comment,
+                    ]
+                );
+            }
         }
 
         // Check if there are TEXT/LONG_TEXT questions with risk_weight > 0 that need manual scoring
@@ -324,6 +402,25 @@ class RespondToSurveyInternal extends Page implements HasForms
         $vendor = $this->record->vendor?->name ?? __('No vendor');
 
         return $this->record->template->title.' - '.$vendor;
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        // If this survey is associated with a vendor, navigate back to vendor
+        if ($this->record->vendor_id) {
+            return [
+                VendorResource::getUrl() => __('Vendors'),
+                VendorResource::getUrl('view', ['record' => $this->record->vendor_id]) => $this->record->vendor?->name ?? __('Vendor'),
+                SurveyResource::getUrl('view', ['record' => $this->record]) => $this->record?->display_title ?? 'Survey',
+                __('Respond'),
+            ];
+        }
+
+        return [
+            SurveyResource::getUrl() => __('Surveys'),
+            SurveyResource::getUrl('view', ['record' => $this->record]) => $this->record?->display_title ?? 'Survey',
+            __('Respond'),
+        ];
     }
 
     protected function getHeaderActions(): array

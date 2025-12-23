@@ -5,6 +5,7 @@ namespace App\Filament\Resources\SurveyResource\Pages;
 use App\Enums\QuestionType;
 use App\Enums\SurveyStatus;
 use App\Filament\Resources\SurveyResource;
+use App\Filament\Resources\VendorResource;
 use App\Models\Survey;
 use App\Models\SurveyAnswer;
 use App\Services\VendorRiskScoringService;
@@ -352,6 +353,16 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
 
     public function getBreadcrumbs(): array
     {
+        // If this survey is associated with a vendor, navigate back to vendor
+        if ($this->record->vendor_id) {
+            return [
+                VendorResource::getUrl() => __('Vendors'),
+                VendorResource::getUrl('view', ['record' => $this->record->vendor_id]) => $this->record->vendor?->name ?? __('Vendor'),
+                SurveyResource::getUrl('view', ['record' => $this->record]) => $this->record?->display_title ?? 'Survey',
+                'Score',
+            ];
+        }
+
         return [
             SurveyResource::getUrl() => 'Surveys',
             SurveyResource::getUrl('view', ['record' => $this->record]) => $this->record?->display_title ?? 'Survey',

@@ -4,16 +4,19 @@ namespace App\Filament\Resources\VendorResource\RelationManagers;
 
 use App\Enums\SurveyStatus;
 use App\Enums\SurveyTemplateStatus;
+use App\Enums\SurveyType;
 use App\Filament\Resources\SurveyResource;
 use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
 use App\Models\SurveyTemplate;
+use App\Services\VendorAssessmentService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
 
 class SurveysRelationManager extends RelationManager
@@ -48,6 +51,10 @@ class SurveysRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('title')
+            ->modifyQueryUsing(fn (Builder $query) => $query->where(function ($q) {
+                $q->where('type', SurveyType::VENDOR_ASSESSMENT)
+                    ->orWhereNull('type');
+            }))
             ->columns([
                 Tables\Columns\TextColumn::make('display_title')
                     ->label(__('survey.survey.table.columns.title'))
@@ -94,56 +101,12 @@ class SurveysRelationManager extends RelationManager
                     ->options(SurveyStatus::class),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('send_survey')
-                    ->label(__('Send Survey'))
-                    ->icon('heroicon-o-paper-airplane')
+                Tables\Actions\Action::make('assess_risk')
+                    ->label(__('Assess Risk'))
+                    ->icon('heroicon-o-clipboard-document-check')
                     ->color('primary')
-                    ->form([
-                        Forms\Components\Select::make('survey_template_id')
-                            ->label(__('Survey Template'))
-                            ->options(SurveyTemplate::where('status', SurveyTemplateStatus::ACTIVE)->pluck('title', 'id'))
-                            ->searchable()
-                            ->required(),
-                        Forms\Components\TextInput::make('respondent_email')
-                            ->label(__('Respondent Email'))
-                            ->email()
-                            ->required()
-                            ->helperText(__('The email address to send the survey to')),
-                        Forms\Components\TextInput::make('respondent_name')
-                            ->label(__('Respondent Name'))
-                            ->helperText(__('Name of the person completing the survey')),
-                        Forms\Components\DatePicker::make('due_date')
-                            ->label(__('Due Date'))
-                            ->native(false),
-                    ])
-                    ->action(function (array $data) {
-                        // Create survey with SENT status immediately
-                        $survey = Survey::create([
-                            'survey_template_id' => $data['survey_template_id'],
-                            'vendor_id' => $this->ownerRecord->id,
-                            'respondent_email' => $data['respondent_email'],
-                            'respondent_name' => $data['respondent_name'] ?? null,
-                            'due_date' => $data['due_date'] ?? null,
-                            'status' => SurveyStatus::SENT,
-                            'created_by_id' => auth()->id(),
-                        ]);
-
-                        try {
-                            Mail::send(new SurveyInvitationMail($survey));
-
-                            Notification::make()
-                                ->title(__('Survey Sent'))
-                                ->body(__('Survey invitation sent to :email', ['email' => $data['respondent_email']]))
-                                ->success()
-                                ->send();
-                        } catch (\Exception $e) {
-                            Notification::make()
-                                ->title(__('Survey Created'))
-                                ->body(__('Survey created but email notification failed: ').$e->getMessage())
-                                ->warning()
-                                ->send();
-                        }
-                    }),
+                    ->form(VendorAssessmentService::getAssessRiskFormSchema())
+                    ->action(fn (array $data) => VendorAssessmentService::handleAssessRisk($this->ownerRecord, $data)),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

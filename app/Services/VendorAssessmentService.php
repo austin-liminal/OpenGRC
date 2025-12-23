@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SurveyStatus;
 use App\Enums\SurveyTemplateStatus;
+use App\Enums\SurveyType;
 use App\Filament\Resources\SurveyResource;
 use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
@@ -63,6 +64,7 @@ class VendorAssessmentService
         $survey = Survey::create([
             'survey_template_id' => $data['survey_template_id'],
             'vendor_id' => $vendor->id,
+            'type' => SurveyType::VENDOR_ASSESSMENT,
             'respondent_email' => $isInternal ? null : $data['respondent_email'],
             'respondent_name' => $isInternal ? null : ($data['respondent_name'] ?? null),
             'assigned_to_id' => $isInternal ? auth()->id() : null,

@@ -45,21 +45,23 @@ class AnswersRelationManager extends RelationManager
                     ->wrap()
                     ->formatStateUsing(function ($state, $record) {
                         $value = $record->answer_value;
+                        $questionType = $record->question?->question_type;
+
+                        // Handle FILE questions first - they store data in attachments, not answer_value
+                        if ($questionType === QuestionType::FILE) {
+                            $attachmentCount = $record->attachments()->count();
+
+                            return $attachmentCount > 0
+                                ? $attachmentCount.' file(s) attached'
+                                : new HtmlString('<span class="text-gray-400">No files</span>');
+                        }
 
                         if ($value === null) {
                             return new HtmlString('<span class="text-gray-400">No answer</span>');
                         }
 
-                        $questionType = $record->question?->question_type;
-
                         if ($questionType === QuestionType::BOOLEAN) {
                             return $value ? 'Yes' : 'No';
-                        }
-
-                        if ($questionType === QuestionType::FILE) {
-                            return $record->attachments->count() > 0
-                                ? $record->attachments->count().' file(s) attached'
-                                : 'No files';
                         }
 
                         if (is_array($value)) {
@@ -119,7 +121,7 @@ class AnswersRelationManager extends RelationManager
                         Forms\Components\Placeholder::make('answer_preview')
                             ->label('Answer')
                             ->content(fn (SurveyAnswer $record): string => is_array($record->answer_value)
-                                ? implode(', ', array_filter($record->answer_value, fn ($v) => !is_array($v)))
+                                ? implode(', ', array_filter($record->answer_value, fn ($v) => ! is_array($v)))
                                 : (string) ($record->answer_value ?? 'No answer')),
                         Forms\Components\TextInput::make('manual_score')
                             ->label('Risk Score (0-100)')
@@ -143,8 +145,7 @@ class AnswersRelationManager extends RelationManager
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (SurveyAnswer $record): bool =>
-                        in_array($record->question?->question_type, [QuestionType::TEXT, QuestionType::LONG_TEXT])
+                    ->visible(fn (SurveyAnswer $record): bool => in_array($record->question?->question_type, [QuestionType::TEXT, QuestionType::LONG_TEXT])
                         && $record->question?->risk_weight > 0
                     ),
                 Tables\Actions\ViewAction::make()
@@ -165,11 +166,8 @@ class AnswersRelationManager extends RelationManager
                         $html .= '<hr class="my-4">';
                         $html .= '<div><strong>Answer:</strong><br>';
 
-                        if ($value === null) {
-                            $html .= '<span class="text-gray-400">No answer provided</span>';
-                        } elseif ($question->question_type === QuestionType::BOOLEAN) {
-                            $html .= $value ? 'Yes' : 'No';
-                        } elseif ($question->question_type === QuestionType::FILE) {
+                        // Handle FILE questions first - they store data in attachments, not answer_value
+                        if ($question->question_type === QuestionType::FILE) {
                             // Show file attachments with download links
                             if ($record->attachments->count() > 0) {
                                 $html .= '<div class="space-y-2 mt-2">';
@@ -191,6 +189,10 @@ class AnswersRelationManager extends RelationManager
                             } else {
                                 $html .= '<span class="text-gray-400">No files uploaded</span>';
                             }
+                        } elseif ($value === null) {
+                            $html .= '<span class="text-gray-400">No answer provided</span>';
+                        } elseif ($question->question_type === QuestionType::BOOLEAN) {
+                            $html .= $value ? 'Yes' : 'No';
                         } elseif (is_array($value)) {
                             $html .= '<ul class="list-disc list-inside">';
                             foreach ($value as $v) {

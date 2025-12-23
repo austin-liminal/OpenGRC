@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SurveyTemplateStatus;
+use App\Enums\SurveyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,13 +20,13 @@ class SurveyTemplate extends Model
         'title',
         'description',
         'status',
-        'is_public',
+        'type',
         'created_by_id',
     ];
 
     protected $casts = [
         'status' => SurveyTemplateStatus::class,
-        'is_public' => 'boolean',
+        'type' => SurveyType::class,
     ];
 
     public function questions(): HasMany
@@ -46,7 +47,7 @@ class SurveyTemplate extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['title', 'description', 'status', 'is_public'])
+            ->logOnly(['title', 'description', 'status', 'type'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

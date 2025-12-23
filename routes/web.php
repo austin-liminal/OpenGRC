@@ -52,21 +52,21 @@ Route::get('survey/{token}', function ($token) {
 })->name('survey.show');
 
 // Vendor Portal Magic Link Routes
-Route::get('/vendor/auth/magic-login/{vendorUser}', [\App\Http\Controllers\Vendor\VendorAuthController::class, 'magicLogin'])
+Route::get('/portal/auth/magic-login/{vendorUser}', [\App\Http\Controllers\Vendor\VendorAuthController::class, 'magicLogin'])
     ->name('vendor.magic-login')
     ->middleware('signed');
 
 // Survey-specific magic link - logs in vendor and redirects to survey
-Route::get('/vendor/survey/{survey}/respond', [\App\Http\Controllers\Vendor\VendorAuthController::class, 'surveyMagicLink'])
+Route::get('/portal/survey/{survey}/respond', [\App\Http\Controllers\Vendor\VendorAuthController::class, 'surveyMagicLink'])
     ->name('vendor.survey.magic-link')
     ->middleware('signed');
 
 // Vendor Survey Access Page (login/register flow - no auth required)
-Route::get('/vendor/survey-access', \App\Filament\Vendor\Pages\Auth\SurveyAccess::class)
+Route::get('/portal/survey-access', \App\Filament\Vendor\Pages\Auth\SurveyAccess::class)
     ->name('filament.vendor.pages.survey-access');
 
 // Vendor Document Download Route (requires vendor auth)
 Route::middleware(['auth:vendor'])->group(function () {
-    Route::get('/vendor/document/{vendorDocument}/download', [\App\Http\Controllers\Vendor\VendorDocumentController::class, 'download'])
+    Route::get('/portal/document/{vendorDocument}/download', [\App\Http\Controllers\Vendor\VendorDocumentController::class, 'download'])
         ->name('vendor.document.download');
 });

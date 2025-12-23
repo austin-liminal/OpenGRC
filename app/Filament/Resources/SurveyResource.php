@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\SurveyStatus;
 use App\Enums\SurveyTemplateStatus;
+use App\Enums\SurveyType;
 use App\Filament\Resources\SurveyResource\Pages;
 use App\Filament\Resources\SurveyResource\RelationManagers;
 use App\Mail\SurveyInvitationMail;
@@ -76,6 +77,11 @@ class SurveyResource extends Resource
                             ->label(__('survey.survey.form.status.label'))
                             ->options(SurveyStatus::class)
                             ->default(SurveyStatus::DRAFT)
+                            ->required(),
+                        Forms\Components\Select::make('type')
+                            ->label(__('Type'))
+                            ->options(SurveyType::class)
+                            ->default(SurveyType::VENDOR_ASSESSMENT)
                             ->required(),
                         Forms\Components\RichEditor::make('description')
                             ->label(__('survey.survey.form.description.label'))
@@ -165,6 +171,11 @@ class SurveyResource extends Resource
                     ->label(__('survey.survey.table.columns.status'))
                     ->badge()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label(__('Type'))
+                    ->badge()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('progress')
                     ->label(__('survey.survey.table.columns.progress'))
                     ->suffix('%')
@@ -211,6 +222,9 @@ class SurveyResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(SurveyStatus::class)
                     ->label(__('survey.survey.table.filters.status')),
+                Tables\Filters\SelectFilter::make('type')
+                    ->options(SurveyType::class)
+                    ->label(__('Type')),
                 Tables\Filters\SelectFilter::make('vendor_id')
                     ->relationship('vendor', 'name')
                     ->label('Vendor')
@@ -371,6 +385,9 @@ class SurveyResource extends Resource
                             ->url(fn (Survey $record) => SurveyTemplateResource::getUrl('view', ['record' => $record->template])),
                         TextEntry::make('status')
                             ->label(__('survey.survey.form.status.label'))
+                            ->badge(),
+                        TextEntry::make('type')
+                            ->label(__('Type'))
                             ->badge(),
                         TextEntry::make('vendor.name')
                             ->label('Vendor')

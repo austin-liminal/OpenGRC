@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
+use App\Filament\Admin\Pages\Settings\Schemas\RiskScoringSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\VendorPortalSchema;
 use Closure;
 use Filament\Forms\Components\Tabs;
@@ -44,8 +45,12 @@ class VendorPortalSettings extends BaseSettings
         return [
             Tabs::make('VendorPortalSettings')
                 ->tabs([
-                    Tabs\Tab::make('Configuration')
+                    Tabs\Tab::make(__('Configuration'))
+                        ->icon('heroicon-o-cog-6-tooth')
                         ->schema(VendorPortalSchema::schema()),
+                    Tabs\Tab::make(__('Risk Scoring'))
+                        ->icon('heroicon-o-chart-bar')
+                        ->schema(RiskScoringSchema::schema()),
                 ]),
         ];
     }

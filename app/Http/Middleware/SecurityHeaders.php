@@ -47,6 +47,8 @@ class SecurityHeaders
      */
     protected function buildPolicy(): string
     {
+        $storageEndpoints = $this->getStorageEndpoints();
+
         $directives = [
             // Default fallback - restrict to same origin
             "default-src 'self'",
@@ -60,8 +62,8 @@ class SecurityHeaders
             // Fonts: Google Fonts, Bunny Fonts + self
             "font-src 'self' https://fonts.gstatic.com https://fonts.bunny.net data:",
 
-            // Images: self + data URIs + ui-avatars for default avatars
-            "img-src 'self' data: blob: https://ui-avatars.com",
+            // Images: self + data URIs + ui-avatars for default avatars + external storage
+            "img-src 'self' data: blob: https://ui-avatars.com".$storageEndpoints,
 
             // Forms can only submit to same origin
             "form-action 'self'",
@@ -72,8 +74,8 @@ class SecurityHeaders
             // Base URI restriction
             "base-uri 'self'",
 
-            // Connect (XHR/WebSocket): same origin for Livewire
-            "connect-src 'self'",
+            // Connect (XHR/WebSocket): same origin for Livewire + external storage for file uploads
+            "connect-src 'self'".$storageEndpoints,
 
             // Workers: blob URLs required for Filament file uploads
             "worker-src 'self' blob:",
@@ -86,6 +88,41 @@ class SecurityHeaders
         ];
 
         return implode('; ', array_filter($directives));
+    }
+
+    /**
+     * Get external storage endpoints for CSP allowlist.
+     */
+    protected function getStorageEndpoints(): string
+    {
+        $endpoints = [];
+
+        // Check S3/DigitalOcean Spaces endpoint
+        $defaultDisk = config('filesystems.default');
+
+        if (in_array($defaultDisk, ['s3', 'digitalocean'])) {
+            $endpoint = config("filesystems.disks.{$defaultDisk}.endpoint");
+            $url = config("filesystems.disks.{$defaultDisk}.url");
+
+            if ($endpoint) {
+                // Extract hostname from endpoint URL
+                $parsed = parse_url($endpoint);
+                if (! empty($parsed['host'])) {
+                    $endpoints[] = $parsed['scheme'].'://'.$parsed['host'];
+                    // Also allow wildcard for regional subdomains
+                    $endpoints[] = $parsed['scheme'].'://*.'.$parsed['host'];
+                }
+            }
+
+            if ($url && $url !== config('app.url').'/media') {
+                $parsed = parse_url($url);
+                if (! empty($parsed['host'])) {
+                    $endpoints[] = $parsed['scheme'].'://'.$parsed['host'];
+                }
+            }
+        }
+
+        return $endpoints ? ' '.implode(' ', array_unique($endpoints)) : '';
     }
 
     /**

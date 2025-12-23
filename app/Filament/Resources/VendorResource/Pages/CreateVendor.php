@@ -51,12 +51,20 @@ class CreateVendor extends CreateRecord
                                 ->placeholder(__('https://example.com'))
                                 ->helperText(__('The vendor\'s primary website.')),
                             Select::make('vendor_manager_id')
-                                ->label(__('Vendor Manager'))
+                                ->label(__('Vendor Relationship Manager'))
                                 ->relationship('vendorManager', 'name')
                                 ->searchable()
                                 ->preload()
                                 ->required()
                                 ->helperText(__('The internal user responsible for managing this vendor relationship.')),
+                        ])
+                        ->columns(1),
+
+                    Section::make(__('Additional Information'))
+                        ->description(__('Optional notes and logo.'))
+                        ->collapsible()
+                        ->collapsed()
+                        ->schema([
                             Textarea::make('notes')
                                 ->label(__('Internal Notes'))
                                 ->maxLength(65535)
@@ -79,18 +87,51 @@ class CreateVendor extends CreateRecord
                         ->columns(1),
                 ]),
 
+            Step::make(__('Vendor Contact'))
+                ->icon('heroicon-o-user-circle')
+                ->description(__('Primary contact information'))
+                ->schema([
+                    Section::make(__('Vendor Contact'))
+                        ->description(__('Enter the primary contact information for this vendor.'))
+                        ->schema([
+                            TextInput::make('contact_name')
+                                ->label(__('Contact Name'))
+                                ->maxLength(255)
+                                ->placeholder(__('e.g., John Smith'))
+                                ->helperText(__('Main point of contact at the vendor.')),
+                            TextInput::make('contact_email')
+                                ->label(__('Contact Email'))
+                                ->email()
+                                ->maxLength(255)
+                                ->placeholder(__('john@example.com'))
+                                ->helperText(__('Email address for vendor communications.')),
+                            TextInput::make('contact_phone')
+                                ->label(__('Contact Phone'))
+                                ->tel()
+                                ->maxLength(255)
+                                ->placeholder(__('(555) 123-4567'))
+                                ->helperText(__('Phone number for vendor contact.')),
+                            Textarea::make('address')
+                                ->label(__('Physical Address'))
+                                ->rows(3)
+                                ->placeholder(__('123 Main St, City, State, ZIP'))
+                                ->helperText(__('Vendor\'s physical address.')),
+                        ])
+                        ->columns(1),
+                ]),
+
             Step::make(__('Risk Assessment'))
                 ->icon('heroicon-o-shield-exclamation')
                 ->description(__('Evaluate vendor risk'))
                 ->schema([
-                    Section::make(__('Inherent Risk Rating'))
+                    Section::make(__('Organizational Risk Rating'))
                         ->description(__('Assess the potential impact this vendor could have on your organization.'))
                         ->schema([
                             Placeholder::make('risk_explanation')
                                 ->label('')
                                 ->content(new HtmlString('
                                     <div class="prose prose-sm dark:prose-invert max-w-none">
-                                        <p>The <strong>Inherent Risk Rating</strong> represents the potential impact this vendor could have on your organization <em>before</em> any controls or mitigations are applied.</p>
+                                        <p>The <strong>Organizational Risk Rating</strong> represents the potential impact this vendor could have on your organization <em>before</em> any controls or mitigations are applied.</p>
                                         <p class="mt-2">Consider factors such as:</p>
                                         <ul class="mt-1">
                                             <li><strong>Data Access</strong> - Does this vendor have access to sensitive data (PII, financial, health)?</li>
@@ -101,7 +142,7 @@ class CreateVendor extends CreateRecord
                                     </div>
                                 ')),
                             Select::make('risk_rating')
-                                ->label(__('Inherent Risk Rating'))
+                                ->label(__('Organizational Risk Rating'))
                                 ->enum(VendorRiskRating::class)
                                 ->options(collect(VendorRiskRating::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
                                 ->required()
@@ -160,6 +201,9 @@ class CreateVendor extends CreateRecord
                             Placeholder::make('summary_url')
                                 ->label(__('Website'))
                                 ->content(fn (Get $get) => $get('url') ?: '-'),
+                            Placeholder::make('summary_contact')
+                                ->label(__('Contact'))
+                                ->content(fn (Get $get) => $get('contact_name') ?: '-'),
                             Placeholder::make('summary_risk')
                                 ->label(__('Risk Rating'))
                                 ->content(fn (Get $get) => $get('risk_rating') ?: '-'),

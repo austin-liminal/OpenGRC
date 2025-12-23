@@ -13,13 +13,14 @@ return new class extends Migration
             ['key' => 'vendor_portal.name', 'value' => json_encode('Vendor Portal')],
 
             // Risk Scoring Thresholds
-            ['key' => 'vendor_portal.risk_threshold_very_low', 'value' => json_encode(20)],
-            ['key' => 'vendor_portal.risk_threshold_low', 'value' => json_encode(40)],
+            ['key' => 'vendor_portal.risk_threshold_very_low', 'value' => json_encode(15)],
+            ['key' => 'vendor_portal.risk_threshold_low', 'value' => json_encode(30)],
             ['key' => 'vendor_portal.risk_threshold_medium', 'value' => json_encode(60)],
             ['key' => 'vendor_portal.risk_threshold_high', 'value' => json_encode(80)],
+            ['key' => 'vendor_portal.risk_threshold_critical', 'value' => json_encode(100)],
 
             // Magic Link Settings
-            ['key' => 'vendor_portal.magic_link_expiry_hours', 'value' => json_encode(24)],
+            ['key' => 'vendor_portal.magic_link_expiry_hours', 'value' => json_encode(72)],
 
             // Session Settings
             ['key' => 'vendor_portal.session_timeout_minutes', 'value' => json_encode(120)],

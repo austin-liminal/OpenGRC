@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\SurveyStatus;
+use App\Enums\SurveyType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +19,7 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->longText('description')->nullable();
             $table->string('status')->default(SurveyStatus::DRAFT->value);
+            $table->string('type')->default(SurveyType::VENDOR_ASSESSMENT->value);
             $table->unsignedInteger('risk_score')->nullable()->comment('Calculated risk score 0-100 after survey completion');
             $table->timestamp('risk_score_calculated_at')->nullable();
             $table->string('respondent_email')->nullable();

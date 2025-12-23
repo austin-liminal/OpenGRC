@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\QuestionType;
 use App\Enums\RiskImpact;
 use App\Enums\SurveyTemplateStatus;
+use App\Enums\SurveyType;
 use App\Filament\Resources\SurveyTemplateResource\Pages;
 use App\Filament\Resources\SurveyTemplateResource\RelationManagers;
 use App\Models\SurveyTemplate;
@@ -69,10 +70,12 @@ class SurveyTemplateResource extends Resource
                             ->options(SurveyTemplateStatus::class)
                             ->default(SurveyTemplateStatus::DRAFT)
                             ->required(),
-                        Forms\Components\Toggle::make('is_public')
-                            ->label(__('survey.template.form.is_public.label'))
-                            ->helperText(__('survey.template.form.is_public.helper'))
-                            ->default(false),
+                        Forms\Components\Select::make('type')
+                            ->label(__('Survey Type'))
+                            ->options(SurveyType::class)
+                            ->default(SurveyType::VENDOR_ASSESSMENT)
+                            ->required()
+                            ->helperText(__('The type of survey this template is used for')),
                         Forms\Components\Hidden::make('created_by_id')
                             ->default(fn () => auth()->id()),
                     ]),
@@ -199,6 +202,10 @@ class SurveyTemplateResource extends Resource
                     ->label(__('survey.template.table.columns.status'))
                     ->badge()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label(__('Type'))
+                    ->badge()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('questions_count')
                     ->label(__('survey.template.table.columns.questions_count'))
                     ->counts('questions')
@@ -206,10 +213,6 @@ class SurveyTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('surveys_count')
                     ->label(__('survey.template.table.columns.surveys_count'))
                     ->counts('surveys')
-                    ->sortable(),
-                Tables\Columns\IconColumn::make('is_public')
-                    ->label(__('survey.template.table.columns.is_public'))
-                    ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('createdBy.name')
                     ->label(__('survey.template.table.columns.created_by'))
@@ -230,8 +233,9 @@ class SurveyTemplateResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(SurveyTemplateStatus::class)
                     ->label(__('survey.template.table.filters.status')),
-                Tables\Filters\TernaryFilter::make('is_public')
-                    ->label(__('survey.template.table.filters.is_public')),
+                Tables\Filters\SelectFilter::make('type')
+                    ->options(SurveyType::class)
+                    ->label(__('Type')),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
@@ -292,11 +296,9 @@ class SurveyTemplateResource extends Resource
                         TextEntry::make('status')
                             ->label(__('survey.template.form.status.label'))
                             ->badge(),
-                        TextEntry::make('is_public')
-                            ->label(__('survey.template.form.is_public.label'))
-                            ->badge()
-                            ->formatStateUsing(fn (bool $state): string => $state ? 'Yes' : 'No')
-                            ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+                        TextEntry::make('type')
+                            ->label(__('Type'))
+                            ->badge(),
                         TextEntry::make('createdBy.name')
                             ->label(__('survey.template.table.columns.created_by')),
                         TextEntry::make('description')

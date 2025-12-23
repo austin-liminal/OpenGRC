@@ -23,19 +23,10 @@ return new class extends Migration
 
             $table->index(['vendor_id', 'is_primary']);
         });
-
-        // Add primary_contact_id to vendors table
-        Schema::table('vendors', function (Blueprint $table) {
-            $table->foreignId('primary_contact_id')->nullable()->after('vendor_manager_id')->constrained('vendor_users')->nullOnDelete();
-        });
     }
 
     public function down(): void
     {
-        Schema::table('vendors', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('primary_contact_id');
-        });
-
         Schema::dropIfExists('vendor_users');
     }
 };

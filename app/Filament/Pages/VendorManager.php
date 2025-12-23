@@ -6,8 +6,8 @@ use App\Filament\Resources\VendorResource;
 use App\Filament\Widgets\SurveyInfoWidget;
 use App\Filament\Widgets\SurveysTableWidget;
 use App\Filament\Widgets\SurveyTemplatesTableWidget;
-use App\Filament\Widgets\VendorStatsWidget;
 use App\Filament\Widgets\VendorsTableWidget;
+use App\Filament\Widgets\VendorStatsWidget;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Livewire\Attributes\Url;
@@ -25,7 +25,13 @@ class VendorManager extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()->can('List Vendors') || auth()->user()->can('List Surveys');
+        $user = auth()->user();
+
+        if (! $user || ! method_exists($user, 'can')) {
+            return false;
+        }
+
+        return $user->can('List Vendors') || $user->can('List Surveys');
     }
 
     public static function getNavigationLabel(): string
@@ -45,7 +51,7 @@ class VendorManager extends Page
                 ->label(__('Add Vendor'))
                 ->icon('heroicon-o-plus')
                 ->url(VendorResource::getUrl('create'))
-                ->visible(fn () => auth()->user()->can('Create Vendors')),
+                ->visible(fn () => auth()->check() && auth()->user()->can('Create Vendors')),
         ];
     }
 

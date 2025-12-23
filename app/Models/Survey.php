@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SurveyStatus;
+use App\Enums\SurveyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,7 @@ class Survey extends Model
         'title',
         'description',
         'status',
+        'type',
         'respondent_email',
         'respondent_name',
         'assigned_to_id',
@@ -37,6 +39,7 @@ class Survey extends Model
 
     protected $casts = [
         'status' => SurveyStatus::class,
+        'type' => SurveyType::class,
         'due_date' => 'date',
         'expiration_date' => 'date',
         'completed_at' => 'datetime',
@@ -178,8 +181,13 @@ class Survey extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['title', 'status', 'respondent_email', 'respondent_name', 'assigned_to_id', 'due_date', 'expiration_date', 'completed_at'])
+            ->logOnly(['title', 'status', 'type', 'respondent_email', 'respondent_name', 'assigned_to_id', 'due_date', 'expiration_date', 'completed_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    public function isVendorAssessment(): bool
+    {
+        return $this->type === SurveyType::VENDOR_ASSESSMENT || $this->type === null;
     }
 }

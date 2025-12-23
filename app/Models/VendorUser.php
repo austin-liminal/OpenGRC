@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\URL;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -70,5 +72,25 @@ class VendorUser extends Authenticatable implements FilamentUser
             ->logOnly(['name', 'email', 'is_primary', 'vendor_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * Send the password reset notification using the vendor panel's route.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        // Set up the reset URL to use the vendor panel's password reset route with signature
+        ResetPassword::createUrlUsing(function ($notifiable, $token) {
+            return URL::temporarySignedRoute(
+                'filament.vendor.auth.password-reset.reset',
+                now()->addMinutes(60),
+                [
+                    'token' => $token,
+                    'email' => $notifiable->getEmailForPasswordReset(),
+                ]
+            );
+        });
+
+        $this->notify(new ResetPassword($token));
     }
 }

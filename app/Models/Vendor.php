@@ -22,7 +22,10 @@ class Vendor extends Model
         'url',
         'logo',
         'vendor_manager_id',
-        'primary_contact_id',
+        'contact_name',
+        'contact_email',
+        'contact_phone',
+        'address',
         'status',
         'risk_rating',
         'risk_score',
@@ -58,11 +61,6 @@ class Vendor extends Model
         return $this->hasMany(VendorUser::class);
     }
 
-    public function primaryContact(): BelongsTo
-    {
-        return $this->belongsTo(VendorUser::class, 'primary_contact_id');
-    }
-
     public function documents(): HasMany
     {
         return $this->hasMany(VendorDocument::class);
@@ -71,7 +69,7 @@ class Vendor extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'status', 'risk_rating', 'vendor_manager_id'])
+            ->logOnly(['name', 'status', 'risk_rating', 'vendor_manager_id', 'contact_name', 'contact_email'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

@@ -15,18 +15,18 @@ return new class extends Migration
         $actions = ['List', 'Create', 'Read', 'Update', 'Delete'];
 
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} Surveys",
-                'category' => 'Surveys',
-            ]);
+            Permission::firstOrCreate(
+                ['name' => "{$action} Surveys", 'guard_name' => 'web'],
+                ['category' => 'Surveys']
+            );
         }
 
         // Create SurveyTemplate permissions
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} SurveyTemplates",
-                'category' => 'Surveys',
-            ]);
+            Permission::firstOrCreate(
+                ['name' => "{$action} SurveyTemplates", 'guard_name' => 'web'],
+                ['category' => 'Surveys']
+            );
         }
 
         // Get the roles

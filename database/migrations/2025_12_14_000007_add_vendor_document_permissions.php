@@ -16,34 +16,34 @@ return new class extends Migration
         // Create VendorDocument permissions (uses Survey permissions via policy,
         // but we add these for explicit permission management if needed)
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} VendorDocuments",
-                'category' => 'Vendor Management',
-            ]);
+            Permission::firstOrCreate(
+                ['name' => "{$action} VendorDocuments", 'guard_name' => 'web'],
+                ['category' => 'Vendor Management']
+            );
         }
 
         // Ensure Vendor permissions exist
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} Vendors",
-                'category' => 'Vendor Management',
-            ]);
+            Permission::firstOrCreate(
+                ['name' => "{$action} Vendors", 'guard_name' => 'web'],
+                ['category' => 'Vendor Management']
+            );
         }
 
         // Ensure Survey permissions exist (may already exist from previous migration)
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} Surveys",
-                'category' => 'Surveys',
-            ]);
+            Permission::firstOrCreate(
+                ['name' => "{$action} Surveys", 'guard_name' => 'web'],
+                ['category' => 'Surveys']
+            );
         }
 
         // Ensure SurveyTemplate permissions exist (may already exist from previous migration)
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} SurveyTemplates",
-                'category' => 'Surveys',
-            ]);
+            Permission::firstOrCreate(
+                ['name' => "{$action} SurveyTemplates", 'guard_name' => 'web'],
+                ['category' => 'Surveys']
+            );
         }
 
         // Get the roles

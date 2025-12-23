@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\Survey;
-use App\Models\User;
 use App\Models\VendorUser;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Str;
@@ -24,9 +23,10 @@ class SurveyPolicy
 
     public function view(Authenticatable $user, Survey $survey): bool
     {
-        // VendorUsers can view surveys assigned to their vendor
+        // VendorUsers can view surveys assigned to their vendor OR where they are the respondent
         if ($user instanceof VendorUser) {
-            return $survey->vendor_id === $user->vendor_id;
+            return $survey->vendor_id === $user->vendor_id
+                || $survey->respondent_email === $user->email;
         }
 
         return $user->can('Read '.Str::plural(class_basename($this->model)));
@@ -44,9 +44,10 @@ class SurveyPolicy
 
     public function update(Authenticatable $user, Survey $survey): bool
     {
-        // VendorUsers can update (respond to) surveys assigned to their vendor
+        // VendorUsers can update (respond to) surveys assigned to their vendor OR where they are the respondent
         if ($user instanceof VendorUser) {
-            return $survey->vendor_id === $user->vendor_id;
+            return $survey->vendor_id === $user->vendor_id
+                || $survey->respondent_email === $user->email;
         }
 
         return $user->can('Update '.Str::plural(class_basename($this->model)));

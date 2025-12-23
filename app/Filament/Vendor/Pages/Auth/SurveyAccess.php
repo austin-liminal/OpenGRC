@@ -65,25 +65,25 @@ class SurveyAccess extends SimplePage implements HasForms
         if (Auth::guard('vendor')->check()) {
             $vendorUser = Auth::guard('vendor')->user();
 
-            // Verify user belongs to this vendor
-            if ($vendorUser->vendor_id === $this->surveyRecord->vendor_id) {
+            // Verify user can access this survey (belongs to vendor OR is the respondent)
+            if ($vendorUser->vendor_id === $this->surveyRecord->vendor_id
+                || $vendorUser->email === $this->surveyRecord->respondent_email) {
                 $this->redirectToSurvey();
 
                 return;
             }
 
-            // Wrong vendor - log them out
+            // User doesn't have access to this survey - log them out
             Auth::guard('vendor')->logout();
         }
 
         // Pre-fill email from URL or survey respondent
         $prefillEmail = $this->email ?? $this->surveyRecord->respondent_email;
 
-        // Check if a vendor user exists for this email and vendor
+        // Check if a vendor user exists for this email (not scoped to survey's vendor,
+        // since users can be assigned surveys for vendors they don't belong to)
         if ($prefillEmail) {
-            $this->existingUser = VendorUser::where('vendor_id', $this->surveyRecord->vendor_id)
-                ->where('email', $prefillEmail)
-                ->first();
+            $this->existingUser = VendorUser::where('email', $prefillEmail)->first();
 
             if ($this->existingUser) {
                 $this->loginData['email'] = $prefillEmail;
@@ -132,7 +132,7 @@ class SurveyAccess extends SimplePage implements HasForms
             ->schema([
                 Placeholder::make('vendor_info')
                     ->label('')
-                    ->content(fn () => "Signing in as a user of {$this->surveyRecord->vendor->name}"),
+                    ->content(fn () => 'Sign in with your vendor portal credentials to access this survey.'),
                 TextInput::make('email')
                     ->label('Email')
                     ->email()
@@ -164,7 +164,11 @@ class SurveyAccess extends SimplePage implements HasForms
                     ->email()
                     ->required()
                     ->maxLength(255)
-                    ->autocomplete('email'),
+                    ->autocomplete('email')
+                    ->unique(table: 'vendor_users', column: 'email', ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'This email is already registered. Please sign in instead.',
+                    ]),
                 TextInput::make('password')
                     ->label('Password')
                     ->password()
@@ -225,15 +229,25 @@ class SurveyAccess extends SimplePage implements HasForms
 
         $data = $this->loginForm->getState();
 
-        // Find user for this vendor
-        $user = VendorUser::where('vendor_id', $this->surveyRecord->vendor_id)
-            ->where('email', $data['email'])
-            ->first();
+        // Find user by email (not scoped to vendor)
+        $user = VendorUser::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             Notification::make()
                 ->title('Invalid credentials')
                 ->body('The email or password you entered is incorrect.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        // Verify user can access this survey (belongs to vendor OR is the respondent)
+        if ($user->vendor_id !== $this->surveyRecord->vendor_id
+            && $user->email !== $this->surveyRecord->respondent_email) {
+            Notification::make()
+                ->title('Access denied')
+                ->body('You do not have permission to access this survey.')
                 ->danger()
                 ->send();
 
@@ -260,14 +274,30 @@ class SurveyAccess extends SimplePage implements HasForms
         $data = $this->registerForm->getState();
 
         // Check if user already exists for this vendor
-        $existingUser = VendorUser::where('vendor_id', $this->surveyRecord->vendor_id)
+        $existingUserForVendor = VendorUser::where('vendor_id', $this->surveyRecord->vendor_id)
             ->where('email', $data['email'])
             ->first();
 
-        if ($existingUser) {
+        if ($existingUserForVendor) {
             Notification::make()
                 ->title('Account already exists')
                 ->body('An account with this email already exists. Please sign in instead.')
+                ->warning()
+                ->send();
+
+            $this->mode = 'login';
+            $this->loginData['email'] = $data['email'];
+
+            return;
+        }
+
+        // Check if email exists for any vendor (database has unique constraint on email)
+        $existingUserGlobal = VendorUser::where('email', $data['email'])->first();
+
+        if ($existingUserGlobal) {
+            Notification::make()
+                ->title('Email already registered')
+                ->body('This email is already registered. Please sign in with your existing account or use a different email address.')
                 ->warning()
                 ->send();
 
