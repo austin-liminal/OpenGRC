@@ -54,7 +54,12 @@ class ImplementationRelationManager extends RelationManager
                 SelectFilter::make('effectiveness')->options(Effectiveness::class),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('New implementation')
+                    ->after(function ($record) {
+                        // Attach the newly created implementation to this control
+                        $this->getOwnerRecord()->implementations()->syncWithoutDetaching([$record->id]);
+                    }),
                 Tables\Actions\AttachAction::make()
                     ->label('Add Existing Implementation')
                     ->preloadRecordSelect()
