@@ -29,10 +29,10 @@ echo "Setting ownership to $CURRENT_USER:$WEB_USER ..."
 sudo chown -R $CURRENT_USER:$WEB_USER .
 
 echo "Fixing directory permissions..."
-sudo find . -type d -exec chmod 2770 {} \;
+sudo find . -type d -exec chmod 2770 {} +;
 
 echo "Fixing file permissions..."
-sudo find . -type f -exec chmod 660 {} \;
+sudo find . -type f -exec chmod 660 {} +;
 for link in node_modules/.bin/*; do
     if [ -L "$link" ]; then
         target=$(readlink -f "$link")
@@ -46,7 +46,7 @@ echo "Setting correct permissions for storage and bootstrap/cache..."
 sudo chmod -R 2770 storage bootstrap/cache
 
 echo "Setting group sticky bit..."
-sudo find storage bootstrap/cache -type d -exec chmod g+s {} \;
+sudo find storage bootstrap/cache -type d -exec chmod g+s {} +;
 
 echo "Setting correct permissions for utilities..."
 sudo chmod 770 install.sh update.sh set_permissions generate-sbom.php artisan
