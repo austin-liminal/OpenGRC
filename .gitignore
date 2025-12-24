@@ -34,3 +34,4 @@ yarn-error.log
 
 .DS_Store
 app-spec.docker.yaml
+.env.dusk.local
