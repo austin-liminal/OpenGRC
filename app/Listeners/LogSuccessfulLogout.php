@@ -11,10 +11,10 @@ class LogSuccessfulLogout
 {
     public function handle(Logout $event)
     {
-        $badUser = new User();
-        $badUser->id = -1;
-        $badUser->email = $event->credentials['email'] ?? 'unknown';
-        $event->name = "Invalid User";
+        // Skip logging if no user was logged in (e.g., during Dusk tests)
+        if (! $event->user) {
+            return;
+        }
 
         activity('auth')
             ->causedBy($event->user)
@@ -26,9 +26,9 @@ class LogSuccessfulLogout
             ])
             ->log('User logged out');
 
-    \Log::info("APPLOG - User logged out", [
-            'user_id' => $event->user->id ?? $badUser->id,
-            'email' => $event->user->email ?? $badUser->email,
+        Log::info('APPLOG - User logged out', [
+            'user_id' => $event->user->id,
+            'email' => $event->user->email,
             'ip' => request()->ip(),
             'host' => request()->header('host'),
             'forwarded_for' => request()->header('X-Forwarded-For'),
