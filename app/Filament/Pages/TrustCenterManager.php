@@ -57,6 +57,12 @@ class TrustCenterManager extends Page
                 ->url(route('trust-center.index'))
                 ->openUrlInNewTab()
                 ->color('gray'),
+            Action::make('settings')
+                ->label(__('Settings'))
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->url('/admin/trust-center-settings')
+                ->color('gray')
+                ->visible(fn () => auth()->user()?->can('Manage Trust Center')),
         ];
     }
 
