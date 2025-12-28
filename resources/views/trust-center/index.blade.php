@@ -337,17 +337,18 @@
 
         <!-- Additional Content Blocks -->
         @php
-            $contentBlockSlugs = ['security_practices', 'data_handling', 'subprocessors', 'faq', 'compliance_roadmap', 'contact'];
-            $enabledBlocks = collect($contentBlockSlugs)->filter(fn($slug) => isset($contentBlocks[$slug]) && $contentBlocks[$slug]->is_enabled);
+            // Get all enabled content blocks except 'overview' (which is displayed separately above)
+            // Sort by sort_order to ensure proper display order
+            $additionalBlocks = $contentBlocks->filter(fn($block) => $block->slug !== 'overview' && $block->is_enabled)->sortBy('sort_order');
         @endphp
-        @if($enabledBlocks->count() > 0)
+        @if($additionalBlocks->count() > 0)
             <section class="mb-12">
                 <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    @foreach($enabledBlocks as $slug)
+                    @foreach($additionalBlocks as $block)
                         <div class="bg-white rounded-xl shadow-sm border p-6 flex flex-col">
-                            <h2 class="text-lg font-semibold text-gray-900 mb-3">{{ $contentBlocks[$slug]->title }}</h2>
+                            <h2 class="text-lg font-semibold text-gray-900 mb-3">{{ $block->title }}</h2>
                             <div class="prose prose-sm prose-blue max-w-none flex-1">
-                                {!! $contentBlocks[$slug]->content !!}
+                                {!! $block->content !!}
                             </div>
                         </div>
                     @endforeach

@@ -16,8 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RolePermissionSeeder::class);
         $this->call(AssetTaxonomySeeder::class);
         $this->call(VendorSurveyTemplatesSeeder::class);
-
-        // Added for testing
-        // $this->call(FullDemoSeeder::class);
+        $this->call(TrustCenterContentBlockSeeder::class);
+        
     }
 }
