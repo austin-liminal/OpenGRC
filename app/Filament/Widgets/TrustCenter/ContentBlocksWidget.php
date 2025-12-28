@@ -51,11 +51,20 @@ class ContentBlocksWidget extends BaseWidget
                     ->trueLabel(__('Enabled'))
                     ->falseLabel(__('Disabled')),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('create')
+                    ->label(__('Create Content Block'))
+                    ->icon('heroicon-o-plus')
+                    ->url(TrustCenterContentBlockResource::getUrl('create')),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->url(fn (TrustCenterContentBlock $record) => TrustCenterContentBlockResource::getUrl('view', ['record' => $record])),
                 Tables\Actions\EditAction::make()
                     ->url(fn (TrustCenterContentBlock $record) => TrustCenterContentBlockResource::getUrl('edit', ['record' => $record])),
+                Tables\Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->hidden(fn (TrustCenterContentBlock $record) => $record->slug === 'overview'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -83,10 +92,31 @@ class ContentBlocksWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function (Collection $records) {
+                            // Exclude the overview block from deletion
+                            $deletableRecords = $records->filter(fn ($record) => $record->slug !== 'overview');
+                            $deletableRecords->each->delete();
+
+                            $deletedCount = $deletableRecords->count();
+                            if ($deletedCount > 0) {
+                                Notification::make()
+                                    ->title(__(':count content blocks deleted', ['count' => $deletedCount]))
+                                    ->success()
+                                    ->send();
+                            }
+
+                            if ($records->count() > $deletedCount) {
+                                Notification::make()
+                                    ->title(__('The Overview block cannot be deleted'))
+                                    ->warning()
+                                    ->send();
+                            }
+                        }),
                 ]),
             ])
             ->emptyStateHeading(__('No Content Blocks'))
-            ->emptyStateDescription(__('Content blocks let you customize the Trust Center page.'))
+            ->emptyStateDescription(__('Content blocks let you customize the Trust Center page. Click the button above to create your first content block.'))
             ->emptyStateIcon('heroicon-o-squares-2x2')
             ->reorderable('sort_order');
     }

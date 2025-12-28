@@ -123,6 +123,7 @@ class TrustCenterContentBlockResource extends Resource
                         TextEntry::make('content')
                             ->hiddenLabel()
                             ->html()
+                            ->prose()
                             ->columnSpanFull(),
                     ]),
             ]);
@@ -162,6 +163,8 @@ class TrustCenterContentBlockResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->hidden(fn (TrustCenterContentBlock $record) => $record->slug === 'overview'),
             ])
             ->bulkActions([])
             ->defaultSort('sort_order', 'asc')
@@ -179,6 +182,7 @@ class TrustCenterContentBlockResource extends Resource
     {
         return [
             'index' => Pages\ListTrustCenterContentBlocks::route('/'),
+            'create' => Pages\CreateTrustCenterContentBlock::route('/create'),
             'view' => Pages\ViewTrustCenterContentBlock::route('/{record}'),
             'edit' => Pages\EditTrustCenterContentBlock::route('/{record}/edit'),
         ];
