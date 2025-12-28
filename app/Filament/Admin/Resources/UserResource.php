@@ -8,7 +8,6 @@ use App\Mail\UserCreatedMail;
 use App\Mail\UserForceResetMail;
 use App\Models\User;
 use Exception;
-use Faker\Factory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -164,7 +163,8 @@ class UserResource extends Resource
 
     public static function createDefaultPassword(): string
     {
-        return Str::replace(' ', '-', implode(' ', Factory::create('en_US')->words(4)));
+        $words = collect(range(1, 4))->map(fn () => Str::random(6))->implode('-');
+        return $words;
     }
 
     public static function resetPasswordAction(User $record): void
