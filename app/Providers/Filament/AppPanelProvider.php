@@ -134,6 +134,10 @@ class AppPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn () => Blade::render("@livewire('multi-window-inactivity-guard')")
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => view('components.session-expiration-handler')
+            )
             ->navigationGroups([
                 'Foundations',
                 'Entities',
