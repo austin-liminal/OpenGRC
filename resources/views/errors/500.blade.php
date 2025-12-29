@@ -30,8 +30,11 @@
         <h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-3xl lg:text-3xl dark:text-white text-center"
             style="font-family: 'Bruno Ace SC', sans-serif;">OpenGRC</h1>
 
+        
         <div class="text-center mt-12">
-            <p class="bg-grcblue-400 text-white p-3 rounded ">{{ $exception->getMessage() }}</p>
+            <p class="bg-grcblue-400 text-white p-3 rounded ">
+                {{ config('app.debug') ? $exception->getMessage() : 'An unexpected error occurred. Please try again later.' }}
+            </p>
         </div>
 
     </div>

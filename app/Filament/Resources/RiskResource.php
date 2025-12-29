@@ -187,7 +187,6 @@ class RiskResource extends Resource
                         ->orderBy('dept_taxonomies.name', $direction)
                         ->select('risks.*');
                     })
-                    ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('taxonomy_scope')
                     ->label('Scope')
@@ -209,7 +208,6 @@ class RiskResource extends Resource
                         ->orderBy('scope_taxonomies.name', $direction)
                         ->select('risks.*');
                     })
-                    ->searchable()
                     ->toggleable(),
             ])
             ->filters([

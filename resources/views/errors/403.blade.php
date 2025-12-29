@@ -30,8 +30,11 @@
         <h1 class="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-3xl lg:text-3xl dark:text-white text-center"
             style="font-family: 'Bruno Ace SC', sans-serif;">OpenGRC</h1>
 
+        {{-- Fixed in response to Pentest Finding --}}
         <div class="text-center mt-12">
-            <p class="bg-grcblue-400 text-white p-3 rounded ">{{ $exception->getMessage() ?: __('Forbidden') }}</p>
+            <p class="bg-grcblue-400 text-white p-3 rounded ">
+                {{ config('app.debug') ? $exception->getMessage() : __('Forbidden') }}
+            </p>
         </div>
 
     </div>
