@@ -18,6 +18,13 @@ OpenGRC is a cyber Governance, Risk, and Compliance (GRC) web application built 
 ### MCP
 Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask or approve. All access to Context7 MCP is automatically approved.
 
+### File Permissions
+**IMPORTANT:** After creating any new files, always run the permissions script to ensure proper ownership and permissions for the web server:
+```bash
+./set_permissions
+```
+This sets correct ownership (lmangold:www-data) and permissions for all project files.
+
 ### Setup & Dependencies
 ```bash
 composer install          # Install PHP dependencies
