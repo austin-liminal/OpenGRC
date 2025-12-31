@@ -24,6 +24,11 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
+        // HSTS - only in production to avoid issues with local development
+        if (app()->environment('production')) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        }
+
         // CSP only for HTML responses
         if ($this->shouldAddCsp($response)) {
             $response->headers->set('Content-Security-Policy', $this->buildPolicy($request));
