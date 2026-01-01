@@ -474,7 +474,7 @@ class Deploy extends Command
         ];
 
         // Only update site name for fresh deployments
-        if (!$isUpdate) {
+        if (! $isUpdate) {
             $envData['APP_NAME'] = $config['site_name'];
         }
 
@@ -542,7 +542,7 @@ class Deploy extends Command
             $this->info('[SUCCESS] Database migrations completed');
 
             // Skip user creation and role seeding for updates, but ensure settings are initialized
-            if (!$isUpdate) {
+            if (! $isUpdate) {
                 // Create admin user
                 $this->info('[INFO] Creating admin user...');
                 $this->call('opengrc:create-user', [
@@ -570,7 +570,7 @@ class Deploy extends Command
         $this->info('[INFO] Configuring site settings...');
 
         // Only update site name for fresh deployments
-        if (!$isUpdate) {
+        if (! $isUpdate) {
             $this->call('settings:set', [
                 'key' => 'general.name',
                 'value' => $config['site_name'],
@@ -650,7 +650,7 @@ class Deploy extends Command
             ]);
             $this->call('settings:set', [
                 'key' => 'mail.password',
-                'value' => $config['smtp_password'],
+                'value' => Crypt::encryptString($config['smtp_password']),
             ]);
             $this->call('settings:set', [
                 'key' => 'mail.encryption',
@@ -699,9 +699,9 @@ class Deploy extends Command
 
         // Set production permissions (skip in containerized environments)
         // Detect container environment: no node_modules means pre-built Docker image
-        $isContainer = !file_exists(base_path('node_modules'));
+        $isContainer = ! file_exists(base_path('node_modules'));
 
-        if (PHP_OS === 'Linux' && !$isContainer) {
+        if (PHP_OS === 'Linux' && ! $isContainer) {
             $this->info('[INFO] Setting file permissions...');
 
             // Check if set_permissions script exists and run it

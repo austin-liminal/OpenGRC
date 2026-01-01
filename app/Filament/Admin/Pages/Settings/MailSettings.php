@@ -5,7 +5,6 @@ namespace App\Filament\Admin\Pages\Settings;
 use App\Filament\Admin\Pages\Settings\Schemas\MailSchema;
 use Closure;
 use Filament\Forms\Components\Section;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 
 class MailSettings extends BaseSettings
 {
@@ -17,7 +16,7 @@ class MailSettings extends BaseSettings
 
     public static function canAccess(): bool
     {
-        if (auth()->check() && auth()->user()->can('Manage Preferences') && setting('storage.locked') != "true") {
+        if (auth()->check() && auth()->user()->can('Manage Preferences') && setting('storage.locked') != 'true') {
             return true;
         }
 

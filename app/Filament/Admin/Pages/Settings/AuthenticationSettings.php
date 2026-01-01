@@ -2,15 +2,13 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use App\Filament\Admin\Pages\Settings\Schemas\AuthenticationSchema;
 use Closure;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Illuminate\Support\Facades\Crypt;
 use Spatie\Permission\Models\Role;
 
@@ -62,11 +60,19 @@ class AuthenticationSettings extends BaseSettings
                                 ->password()
                                 ->visible(fn ($get) => $get('auth.azure.enabled'))
                                 ->required(fn ($get) => $get('auth.azure.enabled'))
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        $component->state(Crypt::decryptString($state));
+                                ->placeholder(fn () => filled(setting('auth.azure.client_secret')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('auth.azure.client_secret'))
+                                    ? 'Secret is stored securely. Leave blank to keep current secret.'
+                                    : null)
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('auth.azure.client_secret');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
                             TextInput::make('auth.azure.tenant')
                                 ->label('Tenant')
@@ -110,11 +116,19 @@ class AuthenticationSettings extends BaseSettings
                                 ->password()
                                 ->visible(fn ($get) => $get('auth.okta.enabled'))
                                 ->required(fn ($get) => $get('auth.okta.enabled'))
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        $component->state(Crypt::decryptString($state));
+                                ->placeholder(fn () => filled(setting('auth.okta.client_secret')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('auth.okta.client_secret'))
+                                    ? 'Secret is stored securely. Leave blank to keep current secret.'
+                                    : null)
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('auth.okta.client_secret');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
                             TextInput::make('auth.okta.base_url')
                                 ->label('Base URL')
@@ -157,11 +171,19 @@ class AuthenticationSettings extends BaseSettings
                                 ->password()
                                 ->visible(fn ($get) => $get('auth.google.enabled'))
                                 ->required(fn ($get) => $get('auth.google.enabled'))
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        $component->state(Crypt::decryptString($state));
+                                ->placeholder(fn () => filled(setting('auth.google.client_secret')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('auth.google.client_secret'))
+                                    ? 'Secret is stored securely. Leave blank to keep current secret.'
+                                    : null)
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('auth.google.client_secret');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
                             Placeholder::make('auth.google.redirect')
                                 ->label('Redirect URL')
@@ -200,11 +222,19 @@ class AuthenticationSettings extends BaseSettings
                                 ->password()
                                 ->visible(fn ($get) => $get('auth.auth0.enabled'))
                                 ->required(fn ($get) => $get('auth.auth0.enabled'))
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        $component->state(Crypt::decryptString($state));
+                                ->placeholder(fn () => filled(setting('auth.auth0.client_secret')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('auth.auth0.client_secret'))
+                                    ? 'Secret is stored securely. Leave blank to keep current secret.'
+                                    : null)
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('auth.auth0.client_secret');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
                             TextInput::make('auth.auth0.domain')
                                 ->label('Domain')

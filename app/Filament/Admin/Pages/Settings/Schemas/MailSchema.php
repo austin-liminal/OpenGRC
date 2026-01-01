@@ -8,8 +8,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Mail\Message;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
 
 class MailSchema
 {
@@ -27,7 +28,25 @@ class MailSchema
                 ]),
             TextInput::make('mail.username'),
             TextInput::make('mail.password')
-                ->password(),
+                ->password()
+                ->placeholder(fn () => filled(setting('mail.password')) ? '••••••••' : null)
+                ->helperText(fn () => filled(setting('mail.password'))
+                    ? 'Password is stored securely. Leave blank to keep current password.'
+                    : null)
+                ->dehydrateStateUsing(function ($state) {
+                    // If blank, keep the existing encrypted password
+                    if (! filled($state)) {
+                        return setting('mail.password');
+                    }
+
+                    // Encrypt the new password
+                    return Crypt::encryptString($state);
+                })
+                ->afterStateHydrated(function (TextInput $component, $state) {
+                    // Never populate the field with the actual password
+                    // This prevents the password from appearing in the Livewire payload
+                    $component->state(null);
+                }),
             TextInput::make('mail.from')
                 ->label('From Address')
                 ->email()
@@ -39,12 +58,11 @@ class MailSchema
                     ->action(function ($livewire) {
                         // Save current form data first
                         $livewire->save();
-                        
+
                         // Then test email with saved settings
                         static::sendTestEmail();
                     })
-                    ->visible(fn (Get $get) => 
-                        filled(setting('mail.host')) &&
+                    ->visible(fn (Get $get) => filled(setting('mail.host')) &&
                         filled(setting('mail.port')) &&
                         filled(setting('mail.encryption')) &&
                         filled(setting('mail.username')) &&
@@ -55,6 +73,25 @@ class MailSchema
         ];
     }
 
+    /**
+     * Get the decrypted mail password from settings.
+     */
+    protected static function getDecryptedMailPassword(): ?string
+    {
+        $password = setting('mail.password');
+
+        if (! filled($password)) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($password);
+        } catch (\Exception $e) {
+            // If decryption fails, assume it's plaintext (legacy data)
+            return $password;
+        }
+    }
+
     protected static function sendTestEmail(): void
     {
         $mailConfig = [
@@ -62,7 +99,7 @@ class MailSchema
             'port' => setting('mail.port'),
             'encryption' => setting('mail.encryption'),
             'username' => setting('mail.username'),
-            'password' => setting('mail.password'),
+            'password' => static::getDecryptedMailPassword(),
             'from' => setting('mail.from'),
         ];
 
@@ -81,7 +118,7 @@ class MailSchema
 
             Notification::make()
                 ->title('Test email sent successfully!')
-                ->body('Email sent to: ' . auth()->user()->email)
+                ->body('Email sent to: '.auth()->user()->email)
                 ->success()
                 ->send();
 
@@ -96,19 +133,19 @@ class MailSchema
 
     protected static function validateMailConfiguration(array $mailConfig): void
     {
-        if (empty($mailConfig['host']) || empty($mailConfig['port']) || 
-            empty($mailConfig['username']) || empty($mailConfig['password']) || 
+        if (empty($mailConfig['host']) || empty($mailConfig['port']) ||
+            empty($mailConfig['username']) || empty($mailConfig['password']) ||
             empty($mailConfig['from'])) {
             throw new \Exception('Mail configuration is incomplete. Please ensure all fields are filled.');
         }
 
         // AWS SES specific validations
         if (str_contains($mailConfig['host'], 'amazonaws.com')) {
-            if (!str_starts_with($mailConfig['username'], 'AKIA')) {
+            if (! str_starts_with($mailConfig['username'], 'AKIA')) {
                 throw new \Exception('AWS SES username should start with "AKIA". Please use your AWS SES SMTP credentials, not your AWS console credentials.');
             }
             if ($mailConfig['port'] != 587 && $mailConfig['port'] != 465 && $mailConfig['port'] != 25) {
-                throw new \Exception('AWS SES typically uses ports 587 (STARTTLS), 465 (TLS), or 25. Current port: ' . $mailConfig['port']);
+                throw new \Exception('AWS SES typically uses ports 587 (STARTTLS), 465 (TLS), or 25. Current port: '.$mailConfig['port']);
             }
         }
     }
@@ -117,7 +154,7 @@ class MailSchema
     {
         // Set the mail configuration dynamically
         $encryption = strtolower($mailConfig['encryption']);
-        
+
         // For AWS SES, ensure proper encryption handling
         if (str_contains($mailConfig['host'], 'amazonaws.com')) {
             if ($encryption === 'starttls') {
@@ -147,21 +184,21 @@ class MailSchema
 
         // Clear any cached mail manager instance
         app()->forgetInstance('mail.manager');
-        
+
         // Force refresh the mail configuration
         $mailManager = app('mail.manager');
         $mailManager->purge('smtp');
 
         // Add debug info for troubleshooting
-        $debugInfo = "Host: {$mailConfig['host']}, Port: {$mailConfig['port']}, Raw Encryption: {$mailConfig['encryption']}, Processed Encryption: {$encryption}, Username: " . substr($mailConfig['username'], 0, 12) . "...";
-        \Log::info("Mail test configuration: " . $debugInfo);
-        \Log::info("Full SMTP config: " . json_encode($smtpConfig));
+        $debugInfo = "Host: {$mailConfig['host']}, Port: {$mailConfig['port']}, Raw Encryption: {$mailConfig['encryption']}, Processed Encryption: {$encryption}, Username: ".substr($mailConfig['username'], 0, 12).'...';
+        \Log::info('Mail test configuration: '.$debugInfo);
+        \Log::info('Full SMTP config: '.json_encode($smtpConfig));
     }
 
     protected static function testSmtpConnection(array $mailConfig): void
     {
         $encryption = strtolower($mailConfig['encryption']);
-        
+
         // For AWS SES, ensure proper encryption handling
         if (str_contains($mailConfig['host'], 'amazonaws.com') && $encryption === 'starttls') {
             $encryption = 'tls';
@@ -173,7 +210,7 @@ class MailSchema
             $useEncryption = true; // SSL/TLS on port 465
         }
         // Port 587 uses STARTTLS (starts plain then upgrades), so useEncryption = false
-        
+
         $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
             $mailConfig['host'],
             (int) $mailConfig['port'],
@@ -181,17 +218,17 @@ class MailSchema
         );
         $transport->setUsername($mailConfig['username']);
         $transport->setPassword($mailConfig['password']);
-        
+
         // This will test the connection
         $transport->start();
-        \Log::info("SMTP connection test successful");
+        \Log::info('SMTP connection test successful');
         $transport->stop();
     }
 
     protected static function sendEmail(): void
     {
         Mail::mailer('smtp')->raw('This is a test email from OpenGRC. If you receive this, your mail configuration is working correctly.', function (Message $message) {
-            $message->to(auth()->user()->email)                                
+            $message->to(auth()->user()->email)
                 ->subject('OpenGRC Mail Configuration Test');
         });
     }
@@ -199,12 +236,12 @@ class MailSchema
     protected static function handleMailError(\Exception $e, array $mailConfig): void
     {
         $errorMessage = $e->getMessage();
-        
+
         // Add helpful hints for common AWS SES errors
         if (str_contains($errorMessage, '535 Authentication Credentials Invalid')) {
             $errorMessage .= "\n\nAWS SES troubleshooting:\n• SMTP credentials must be generated in AWS SES Console > SMTP Settings\n• Use the SMTP username/password, NOT your AWS access keys\n• Verify both sender ({$mailConfig['from']}) and recipient emails in AWS SES\n• Check if you're in AWS SES sandbox mode (limits sending to verified emails only)\n• Ensure the SMTP hostname region matches your SES region\n• AWS says this key has never been used - try generating new SMTP credentials";
         }
-        
+
         Notification::make()
             ->title('Failed to send test email')
             ->body($errorMessage)

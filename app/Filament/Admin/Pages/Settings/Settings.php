@@ -2,10 +2,7 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use App\Filament\Admin\Pages\Settings\Schemas\GeneralSchema;
 use Closure;
-use Filament\Forms\Components\Tabs;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 
@@ -61,5 +58,4 @@ class Settings extends BaseSettings
                 ]),
         ];
     }
-
 }
