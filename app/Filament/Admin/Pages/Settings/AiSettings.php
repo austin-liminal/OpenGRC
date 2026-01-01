@@ -2,15 +2,11 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use App\Filament\Admin\Pages\Settings\Schemas\AiSchema;
 use Closure;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Section;
 use Illuminate\Support\Facades\Crypt;
-
-
 
 class AiSettings extends BaseSettings
 {
@@ -41,7 +37,8 @@ class AiSettings extends BaseSettings
 
     public function schema(): array|Closure
     {
-        $isLocked = setting('storage.locked') === "true";
+        $isLocked = setting('storage.locked') === 'true';
+
         return [
             Section::make('AI Configuration')
                 ->schema([
@@ -52,16 +49,23 @@ class AiSettings extends BaseSettings
                         ->label('OpenAI API Key (Optional)')
                         ->disabled($isLocked)
                         ->password()
-                        ->helperText('The API key for OpenAI')
-                        ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                        ->afterStateHydrated(function (TextInput $component, $state) {
-                            if (filled($state)) {
-                                try {
-                                    $component->state(Crypt::decryptString($state));
-                                } catch (\Exception $e) {
-                                    $component->state('');
-                                }
+                        ->placeholder(fn () => filled(setting('ai.openai_key')) ? '••••••••' : null)
+                        ->helperText(fn () => filled(setting('ai.openai_key'))
+                            ? 'API key is stored securely. Leave blank to keep current key.'
+                            : 'The API key for OpenAI')
+                        ->dehydrateStateUsing(function ($state) {
+                            // If blank, keep the existing encrypted key
+                            if (! filled($state)) {
+                                return setting('ai.openai_key');
                             }
+
+                            // Encrypt the new key
+                            return Crypt::encryptString($state);
+                        })
+                        ->afterStateHydrated(function (TextInput $component, $state) {
+                            // Never populate the field with the actual key
+                            // This prevents the key from appearing in the Livewire payload
+                            $component->state(null);
                         }),
                 ]),
         ];

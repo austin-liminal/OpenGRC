@@ -2,9 +2,7 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use App\Filament\Admin\Pages\Settings\Schemas\ReportSchema;
 use Closure;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use Illuminate\Support\Facades\Storage;

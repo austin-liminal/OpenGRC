@@ -12,7 +12,6 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 use Throwable;
 
 class StorageSettings extends BaseSettings
@@ -76,19 +75,24 @@ class StorageSettings extends BaseSettings
                         ->schema([
                             TextInput::make('storage.s3.key')
                                 ->label('AWS Access Key ID')
+                                ->password()
                                 ->visible(fn ($get) => $get('storage.driver') === 's3')
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
                                 ->dehydrated(fn ($get) => $get('storage.driver') === 's3')
                                 ->disabled($isLocked)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        try {
-                                            $component->state(Crypt::decryptString($state));
-                                        } catch (\Exception $e) {
-                                            $component->state('');
-                                        }
+                                ->placeholder(fn () => filled(setting('storage.s3.key')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('storage.s3.key'))
+                                    ? 'Key is stored securely. Leave blank to keep current key.'
+                                    : null)
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('storage.s3.key');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
 
                             TextInput::make('storage.s3.secret')
@@ -98,15 +102,19 @@ class StorageSettings extends BaseSettings
                                 ->required(fn ($get) => $get('storage.driver') === 's3')
                                 ->dehydrated(fn ($get) => $get('storage.driver') === 's3')
                                 ->disabled($isLocked)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        try {
-                                            $component->state(Crypt::decryptString($state));
-                                        } catch (\Exception $e) {
-                                            $component->state('');
-                                        }
+                                ->placeholder(fn () => filled(setting('storage.s3.secret')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('storage.s3.secret'))
+                                    ? 'Secret is stored securely. Leave blank to keep current secret.'
+                                    : null)
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('storage.s3.secret');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
 
                             TextInput::make('storage.s3.region')
@@ -126,39 +134,46 @@ class StorageSettings extends BaseSettings
 
                             TextInput::make('storage.digitalocean.key')
                                 ->label('DigitalOcean Spaces Access Key ID')
-                                ->helperText('Your DigitalOcean Spaces access key ID')
+                                ->password()
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->dehydrated(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->disabled($isLocked)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        try {
-                                            $component->state(Crypt::decryptString($state));
-                                        } catch (\Exception $e) {
-                                            $component->state('');
-                                        }
+                                ->placeholder(fn () => filled(setting('storage.digitalocean.key')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('storage.digitalocean.key'))
+                                    ? 'Key is stored securely. Leave blank to keep current key.'
+                                    : 'Your DigitalOcean Spaces access key ID')
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('storage.digitalocean.key');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
 
                             TextInput::make('storage.digitalocean.secret')
                                 ->label('DigitalOcean Spaces Secret Access Key')
                                 ->password()
-                                ->helperText('Your DigitalOcean Spaces secret access key')
                                 ->visible(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->required(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->dehydrated(fn ($get) => $get('storage.driver') === 'digitalocean')
                                 ->disabled($isLocked)
-                                ->dehydrateStateUsing(fn ($state) => filled($state) ? Crypt::encryptString($state) : null)
-                                ->afterStateHydrated(function (TextInput $component, $state) {
-                                    if (filled($state)) {
-                                        try {
-                                            $component->state(Crypt::decryptString($state));
-                                        } catch (\Exception $e) {
-                                            $component->state('');
-                                        }
+                                ->placeholder(fn () => filled(setting('storage.digitalocean.secret')) ? '••••••••' : null)
+                                ->helperText(fn () => filled(setting('storage.digitalocean.secret'))
+                                    ? 'Secret is stored securely. Leave blank to keep current secret.'
+                                    : 'Your DigitalOcean Spaces secret access key')
+                                ->dehydrateStateUsing(function ($state) {
+                                    if (! filled($state)) {
+                                        return setting('storage.digitalocean.secret');
                                     }
+
+                                    return Crypt::encryptString($state);
+                                })
+                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                    $component->state(null);
                                 }),
 
                             TextInput::make('storage.digitalocean.region')

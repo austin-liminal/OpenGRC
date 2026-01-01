@@ -59,12 +59,22 @@ class AppServiceProvider extends ServiceProvider
                 Config::set('app.name', setting('general.name', 'OpenGRC'));
                 Config::set('app.url', setting('general.url', 'https://opengrc.test'));
 
+                // Decrypt mail password if it's encrypted
+                $mailPassword = setting('mail.password');
+                if (! empty($mailPassword)) {
+                    try {
+                        $mailPassword = Crypt::decryptString($mailPassword);
+                    } catch (\Exception $e) {
+                        // If decryption fails, assume it's plaintext (legacy data)
+                    }
+                }
+
                 config()->set('mail', array_merge(config('mail'), [
                     'driver' => 'smtp',
                     'transport' => 'smtp',
                     'host' => setting('mail.host'),
                     'username' => setting('mail.username'),
-                    'password' => setting('mail.password'),
+                    'password' => $mailPassword,
                     'encryption' => setting('mail.encryption'),
                     'port' => setting('mail.port'),
                     'from' => [

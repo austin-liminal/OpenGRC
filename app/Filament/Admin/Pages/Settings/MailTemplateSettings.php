@@ -5,7 +5,6 @@ namespace App\Filament\Admin\Pages\Settings;
 use App\Filament\Admin\Pages\Settings\Schemas\MailTemplatesSchema;
 use Closure;
 use Filament\Forms\Components\Tabs;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 
 class MailTemplateSettings extends BaseSettings
 {

@@ -8,7 +8,6 @@ use App\Filament\Admin\Pages\Settings\Schemas\VendorPortalMailSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\VendorPortalSchema;
 use Closure;
 use Filament\Forms\Components\Tabs;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 
 class VendorPortalSettings extends BaseSettings
 {

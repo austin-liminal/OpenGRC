@@ -2,11 +2,9 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use App\Filament\Admin\Pages\Settings\Schemas\SecuritySchema;
 use Closure;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
 
 class SecuritySettings extends BaseSettings
 {

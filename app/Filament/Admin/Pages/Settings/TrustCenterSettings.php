@@ -6,7 +6,6 @@ use App\Filament\Admin\Pages\Settings\Schemas\TrustCenterMailSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\TrustCenterNdaSchema;
 use Closure;
 use Filament\Forms\Components\Tabs;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
 
 class TrustCenterSettings extends BaseSettings
 {
