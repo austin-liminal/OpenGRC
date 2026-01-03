@@ -2,12 +2,12 @@
 
 namespace App\Mcp\Servers;
 
-use App\Mcp\Tools\CreatePolicyTool;
-use App\Mcp\Tools\GetPolicyTool;
+use App\Mcp\Tools\CreateEntityTool;
+use App\Mcp\Tools\DeleteEntityTool;
+use App\Mcp\Tools\GetEntityTool;
 use App\Mcp\Tools\GetTaxonomyValuesTool;
-use App\Mcp\Tools\ListControlsTool;
-use App\Mcp\Tools\ListPoliciesTool;
-use App\Mcp\Tools\ListStandardsTool;
+use App\Mcp\Tools\ListEntitiesTool;
+use App\Mcp\Tools\UpdateEntityTool;
 use Laravel\Mcp\Server;
 
 class OpenGrcServer extends Server
@@ -20,7 +20,7 @@ class OpenGrcServer extends Server
     /**
      * The MCP server's version.
      */
-    protected string $version = '1.0.0';
+    protected string $version = '2.0.0';
 
     /**
      * The MCP server's instructions for the LLM.
@@ -28,46 +28,68 @@ class OpenGrcServer extends Server
     protected string $instructions = <<<'MARKDOWN'
         # OpenGRC MCP Server
 
-        This MCP server provides tools to interact with OpenGRC, a Governance, Risk, and Compliance (GRC) platform.
+        This MCP server provides unified tools to interact with OpenGRC, a Governance, Risk, and Compliance (GRC) platform.
 
         ## Available Tools
 
-        ### Policy Management
-        - **CreatePolicy**: Create new security/compliance policies with structured fields
-        - **ListPolicies**: List all policies with filtering and pagination
-        - **GetPolicy**: Get detailed information about a specific policy
-
-        ### Standards & Controls
-        - **ListStandards**: List available compliance frameworks (NIST, ISO, SOC2, etc.)
-        - **ListControls**: List security controls, optionally filtered by standard
+        ### Entity Management (CRUD)
+        - **ListEntities**: List any entity type with filtering and pagination
+        - **GetEntity**: Get detailed information about a specific entity
+        - **CreateEntity**: Create a new entity of any supported type
+        - **UpdateEntity**: Update an existing entity
+        - **DeleteEntity**: Delete an entity (with confirmation)
 
         ### Reference Data
-        - **GetTaxonomyValues**: Get valid values for policy status, scope, departments
+        - **GetTaxonomyValues**: Get valid values for statuses, scopes, departments
 
-        ## Creating Policies
+        ## Supported Entity Types
 
-        When creating policies:
-        1. Use `ListPolicies` first to see existing policy codes and naming patterns
-        2. Use `GetTaxonomyValues` to understand valid status and scope values
-        3. Use `ListStandards` and `ListControls` to find relevant controls to link
-        4. Use `CreatePolicy` with structured content:
-           - `name`: Clear, descriptive policy name
-           - `purpose`: HTML content explaining the policy's objective
-           - `policy_scope`: HTML content defining who/what the policy applies to
-           - `body`: HTML content with detailed requirements (sections, lists, etc.)
+        All CRUD tools support these entity types via the `type` parameter:
+        - `standard`: Compliance frameworks (NIST, ISO, SOC2, etc.)
+        - `control`: Security controls within standards
+        - `implementation`: How controls are implemented
+        - `policy`: Security and compliance policies
+        - `risk`: Risk register entries
+        - `program`: Organizational security programs
+        - `audit`: Assessment/audit records
+        - `audit_item`: Individual audit questions/items
+        - `vendor`: Third-party vendors
+        - `application`: Applications/systems
+        - `asset`: IT assets
+
+        ## Common Workflows
+
+        ### Creating a Policy
+        1. Use `ListEntities(type: "policy")` to see existing policies and naming patterns
+        2. Use `GetTaxonomyValues` to get valid status/scope values
+        3. Use `ListEntities(type: "control")` to find controls to reference
+        4. Use `CreateEntity(type: "policy", data: {...})` with:
+           - `name`: Clear policy name (required)
+           - `purpose`: HTML content for policy objective
+           - `policy_scope`: HTML content for applicability
+           - `body`: HTML content with requirements
+
+        ### Reviewing Compliance
+        1. Use `ListEntities(type: "standard")` to see frameworks
+        2. Use `ListEntities(type: "control", filter: {standard_id: X})` for controls
+        3. Use `GetEntity(type: "control", id: X)` for control details with implementations
+
+        ### Managing Audits
+        1. Use `ListEntities(type: "audit")` to see audits
+        2. Use `GetEntity(type: "audit", id: X)` for audit details with items
+        3. Use `UpdateEntity(type: "audit_item", id: X, data: {...})` to update findings
 
         ## HTML Formatting
 
-        Policy content fields (purpose, policy_scope, body) support HTML formatting:
-        - Use `<p>` for paragraphs
-        - Use `<ul>` and `<li>` for lists
-        - Use `<h2>`, `<h3>` for section headers
-        - Use `<strong>` or `<b>` for emphasis
+        Text content fields (purpose, body, description, details) support HTML:
+        - `<p>` for paragraphs
+        - `<ul>` and `<li>` for lists
+        - `<h2>`, `<h3>` for section headers
+        - `<strong>` for emphasis
 
-        ## Policy Code Convention
+        ## Auto-Generated Codes
 
-        If no code is provided, policies are auto-assigned codes following the POL-XXX pattern
-        (e.g., POL-001, POL-002). You can also provide custom codes if needed.
+        Policies auto-generate codes (POL-001, POL-002) if not provided.
     MARKDOWN;
 
     /**
@@ -76,11 +98,11 @@ class OpenGrcServer extends Server
      * @var array<int, class-string<\Laravel\Mcp\Server\Tool>>
      */
     protected array $tools = [
-        CreatePolicyTool::class,
-        ListPoliciesTool::class,
-        GetPolicyTool::class,
-        ListStandardsTool::class,
-        ListControlsTool::class,
+        ListEntitiesTool::class,
+        GetEntityTool::class,
+        CreateEntityTool::class,
+        UpdateEntityTool::class,
+        DeleteEntityTool::class,
         GetTaxonomyValuesTool::class,
     ];
 

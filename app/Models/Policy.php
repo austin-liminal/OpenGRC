@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use Aliziodev\LaravelTaxonomy\Traits\HasTaxonomy;
+use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,12 +16,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * Represents an organizational policy in the GRC system.
  * Note: This is a Policy document model, not to be confused with Laravel authorization policies.
- *
- * @package App\Models
  */
 class Policy extends Model
 {
-    use HasFactory, HasTaxonomy, SoftDeletes;
+    use HasFactory, HasMcpSupport, HasTaxonomy, SoftDeletes;
+
+    /**
+     * MCP configuration overrides.
+     * Only specify what differs from auto-derived defaults.
+     *
+     * @return array<string, mixed>
+     */
+    public static function mcpConfig(): array
+    {
+        return [
+            // Override list_relations to include taxonomy relations
+            'list_relations' => ['status', 'scope', 'department', 'owner'],
+            // Override list_counts
+            'list_counts' => ['controls'],
+            // Policies use auto-generated codes
+            'auto_code_prefix' => 'POL',
+        ];
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -81,8 +98,6 @@ class Policy extends Model
 
     /**
      * Get the user who created this policy.
-     *
-     * @return BelongsTo
      */
     public function creator(): BelongsTo
     {
@@ -91,8 +106,6 @@ class Policy extends Model
 
     /**
      * Get the user who last updated this policy.
-     *
-     * @return BelongsTo
      */
     public function updater(): BelongsTo
     {
@@ -101,8 +114,6 @@ class Policy extends Model
 
     /**
      * Get the taxonomy scope for this policy.
-     *
-     * @return BelongsTo
      */
     public function scope(): BelongsTo
     {
@@ -111,8 +122,6 @@ class Policy extends Model
 
     /**
      * Get the department taxonomy term for this policy.
-     *
-     * @return BelongsTo
      */
     public function department(): BelongsTo
     {
@@ -121,8 +130,6 @@ class Policy extends Model
 
     /**
      * Get the status taxonomy term.
-     *
-     * @return BelongsTo
      */
     public function status(): BelongsTo
     {
@@ -131,8 +138,6 @@ class Policy extends Model
 
     /**
      * Get the owner (user) of this policy.
-     *
-     * @return BelongsTo
      */
     public function owner(): BelongsTo
     {
@@ -141,8 +146,6 @@ class Policy extends Model
 
     /**
      * Get the controls associated with this policy.
-     *
-     * @return BelongsToMany
      */
     public function controls(): BelongsToMany
     {
@@ -152,8 +155,6 @@ class Policy extends Model
 
     /**
      * Get the implementations associated with this policy.
-     *
-     * @return BelongsToMany
      */
     public function implementations(): BelongsToMany
     {
@@ -163,8 +164,6 @@ class Policy extends Model
 
     /**
      * Get the risks associated with this policy.
-     *
-     * @return BelongsToMany
      */
     public function risks(): BelongsToMany
     {
@@ -174,8 +173,6 @@ class Policy extends Model
 
     /**
      * Get the scope name accessor.
-     *
-     * @return string|null
      */
     public function getScopeNameAttribute(): ?string
     {
@@ -184,8 +181,6 @@ class Policy extends Model
 
     /**
      * Get the status name accessor.
-     *
-     * @return string|null
      */
     public function getStatusNameAttribute(): ?string
     {
@@ -195,8 +190,7 @@ class Policy extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $statusName
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByStatus($query, string $statusName)
@@ -209,8 +203,7 @@ class Policy extends Model
     /**
      * Scope a query to filter by department.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $departmentId
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByDepartment($query, int $departmentId)
@@ -221,8 +214,7 @@ class Policy extends Model
     /**
      * Scope a query to filter by scope.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $scopeName
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByScope($query, string $scopeName)
