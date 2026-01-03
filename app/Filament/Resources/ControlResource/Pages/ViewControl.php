@@ -11,22 +11,34 @@ class ViewControl extends ViewRecord
 {
     protected static string $resource = ControlResource::class;
 
+    public ?string $aiSuggestion = null;
+
     protected function getHeaderActions(): array
     {
         return [
             Actions\EditAction::make(),
             Actions\Action::make('Get Suggestions')
-
                 ->label('Get AI Suggestions')
-                ->modal('get-suggestions')
                 ->hidden(function () {
                     return setting('ai.enabled') != true;
                 })
-                ->closeModalByEscaping(true)
+                ->mountUsing(function () {
+                    $this->aiSuggestion = AiController::getControlSuggestions($this->record)->toHtml();
+                })
+                ->modalDescription(fn () => new \Illuminate\Support\HtmlString($this->aiSuggestion ?? 'Loading...'))
                 ->modalSubmitAction(false)
-                ->modalDescription(function ($record) {
-                    return AiController::getControlSuggestions($record);
-                }),
+                ->closeModalByEscaping(true),
+            Actions\Action::make('Check Implementations')
+                ->label('Check Implementations')
+                ->hidden(function () {
+                    return setting('ai.enabled') != true;
+                })
+                ->mountUsing(function () {
+                    $this->aiSuggestion = AiController::getImplementationCheck($this->record)->toHtml();
+                })
+                ->modalDescription(fn () => new \Illuminate\Support\HtmlString($this->aiSuggestion ?? 'Loading...'))
+                ->modalSubmitAction(false)
+                ->closeModalByEscaping(true),
         ];
     }
 
