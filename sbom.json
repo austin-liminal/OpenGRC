@@ -2,14 +2,14 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:75480f08-1175-4e30-a889-8a4f854badf7",
+    "serialNumber": "urn:uuid:7f9be7da-8ae5-4f9c-896f-e9c0733f4ba0",
     "version": 1,
     "metadata": {
-        "timestamp": "2025-12-15T00:32:39Z",
+        "timestamp": "2026-01-03T21:38:37Z",
         "tools": [
             {
                 "name": "composer",
-                "version": "2.7.8"
+                "version": "2.8.3"
             },
             {
                 "vendor": "cyclonedx",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "329170f6da1a343a5b6802e4bc33f13c801988cc"
+                    "value": "111a1a913986b768154e9de31ecfe7985292f254"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "329170f6da1a343a5b6802e4bc33f13c801988cc"
+                    "value": "111a1a913986b768154e9de31ecfe7985292f254"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3080,6 +3080,64 @@
             ]
         },
         {
+            "bom-ref": "illuminate/json-schema-12.44.0.0",
+            "type": "library",
+            "name": "json-schema",
+            "version": "v12.44.0",
+            "group": "illuminate",
+            "description": "The Illuminate Json Schema package.",
+            "author": "Taylor Otwell",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/illuminate/json-schema@v12.44.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/illuminate/json-schema/zipball/d161f398dab36f08cf131997362bc2e3ecb0309a",
+                    "comment": "dist reference: d161f398dab36f08cf131997362bc2e3ecb0309a"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/illuminate/json-schema.git",
+                    "comment": "source reference: d161f398dab36f08cf131997362bc2e3ecb0309a"
+                },
+                {
+                    "type": "website",
+                    "url": "https://laravel.com",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/laravel/framework/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/laravel/framework",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "d161f398dab36f08cf131997362bc2e3ecb0309a"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "d161f398dab36f08cf131997362bc2e3ecb0309a"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "jaybizzle/crawler-detect-1.3.6.0",
             "type": "library",
             "name": "crawler-detect",
@@ -3529,6 +3587,64 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "86693ffa1ba32f56f8c44e31416c6665095a62c5"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "laravel/mcp-0.5.1.0",
+            "type": "library",
+            "name": "mcp",
+            "version": "v0.5.1",
+            "group": "laravel",
+            "description": "Rapidly build MCP servers for your Laravel applications.",
+            "author": "Taylor Otwell",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/laravel/mcp@v0.5.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/laravel/mcp/zipball/10dedea054fa4eeaa9ef2ccbfdad6c3e1dbd17a4",
+                    "comment": "dist reference: 10dedea054fa4eeaa9ef2ccbfdad6c3e1dbd17a4"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/laravel/mcp.git",
+                    "comment": "source reference: 10dedea054fa4eeaa9ef2ccbfdad6c3e1dbd17a4"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/laravel/mcp",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/laravel/mcp/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/laravel/mcp",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "10dedea054fa4eeaa9ef2ccbfdad6c3e1dbd17a4"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "10dedea054fa4eeaa9ef2ccbfdad6c3e1dbd17a4"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12553,6 +12669,9 @@
             "ref": "iamcal/sql-parser-0.5.0.0"
         },
         {
+            "ref": "illuminate/json-schema-12.44.0.0"
+        },
+        {
             "ref": "jaybizzle/crawler-detect-1.3.6.0"
         },
         {
@@ -12642,6 +12761,12 @@
                 "tijsverkoyen/css-to-inline-styles-2.4.0.0",
                 "vlucas/phpdotenv-5.6.2.0",
                 "voku/portable-ascii-2.0.3.0"
+            ]
+        },
+        {
+            "ref": "laravel/mcp-0.5.1.0",
+            "dependsOn": [
+                "illuminate/json-schema-12.44.0.0"
             ]
         },
         {
@@ -13495,6 +13620,7 @@
                 "jeffgreco13/filament-breezy-2.6.4.0",
                 "kirschbaum-development/commentions-0.7.5.0",
                 "laravel/framework-11.47.0.0",
+                "laravel/mcp-0.5.1.0",
                 "laravel/prompts-0.3.8.0",
                 "laravel/sanctum-4.2.1.0",
                 "laravel/tinker-2.10.2.0",

@@ -27,6 +27,7 @@
         "jeffgreco13/filament-breezy": "^2.6.4",
         "kirschbaum-development/commentions": "^0.7.5",
         "laravel/framework": "^11.47.0",
+        "laravel/mcp": "^0.5.1",
         "laravel/prompts": "^0.3.8",
         "laravel/sanctum": "^4.2.1",
         "laravel/tinker": "^2.10.2",
