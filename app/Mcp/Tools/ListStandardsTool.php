@@ -63,11 +63,12 @@ class ListStandardsTool extends Tool
                     'description' => \Illuminate\Support\Str::limit(strip_tags($standard->description), 200),
                     'controls_count' => $standard->controls_count,
                     'reference_url' => $standard->reference_url,
+                    'url' => url("/app/standards/{$standard->id}"),
                 ];
             })->toArray(),
         ];
 
-        return Response::text(json_encode($result, JSON_PRETTY_PRINT));
+        return Response::text(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**

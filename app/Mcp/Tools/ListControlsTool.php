@@ -82,12 +82,14 @@ class ListControlsTool extends Tool
                         'id' => $control->standard?->id,
                         'code' => $control->standard?->code,
                         'name' => $control->standard?->name,
+                        'url' => $control->standard ? url("/app/standards/{$control->standard->id}") : null,
                     ],
+                    'url' => url("/app/controls/{$control->id}"),
                 ];
             })->toArray(),
         ];
 
-        return Response::text(json_encode($result, JSON_PRETTY_PRINT));
+        return Response::text(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**

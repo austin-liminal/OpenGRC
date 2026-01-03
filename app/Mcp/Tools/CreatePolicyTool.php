@@ -98,8 +98,9 @@ class CreatePolicyTool extends Tool
                         'effective_date' => $policy->effective_date?->format('Y-m-d'),
                         'controls_count' => $policy->controls->count(),
                         'created_at' => $policy->created_at->toIso8601String(),
+                        'url' => url("/app/policies/{$policy->id}"),
                     ],
-                ], JSON_PRETTY_PRINT));
+                ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             });
         } catch (\Exception $e) {
             return Response::text(json_encode([

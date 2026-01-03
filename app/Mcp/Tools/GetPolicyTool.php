@@ -89,19 +89,22 @@ class GetPolicyTool extends Tool
                     'id' => $c->id,
                     'code' => $c->code,
                     'title' => $c->title,
+                    'url' => url("/app/controls/{$c->id}"),
                 ])->toArray(),
                 'implementations' => $policy->implementations->map(fn ($i) => [
                     'id' => $i->id,
                     'name' => $i->name ?? $i->title ?? 'Implementation #' . $i->id,
+                    'url' => url("/app/implementations/{$i->id}"),
                 ])->toArray(),
                 'created_by' => $policy->creator?->name,
                 'updated_by' => $policy->updater?->name,
                 'created_at' => $policy->created_at->toIso8601String(),
                 'updated_at' => $policy->updated_at->toIso8601String(),
+                'url' => url("/app/policies/{$policy->id}"),
             ],
         ];
 
-        return Response::text(json_encode($result, JSON_PRETTY_PRINT));
+        return Response::text(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**

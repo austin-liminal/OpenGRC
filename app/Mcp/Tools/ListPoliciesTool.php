@@ -81,11 +81,12 @@ class ListPoliciesTool extends Tool
                     'owner' => $policy->owner?->name,
                     'effective_date' => $policy->effective_date?->format('Y-m-d'),
                     'created_at' => $policy->created_at->format('Y-m-d'),
+                    'url' => url("/app/policies/{$policy->id}"),
                 ];
             })->toArray(),
         ];
 
-        return Response::text(json_encode($result, JSON_PRETTY_PRINT));
+        return Response::text(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 
     /**
