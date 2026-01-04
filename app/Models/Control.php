@@ -65,8 +65,6 @@ class Control extends Model
      */
     public bool $asYouType = true;
 
-    protected $guarded = ['id'];
-
     /**
      * The attributes that should be cast.
      *

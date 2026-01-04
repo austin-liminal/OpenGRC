@@ -39,7 +39,23 @@ class Policy extends Model
         ];
     }
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'code',
+        'name',
+        'policy_scope',
+        'purpose',
+        'body',
+        'document_path',
+        'scope_id',
+        'department_id',
+        'status_id',
+        'owner_id',
+        'effective_date',
+        'retired_date',
+        'revision_history',
+        'created_by',
+        'updated_by',
+    ];
 
     /**
      * The attributes that should be cast.

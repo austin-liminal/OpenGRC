@@ -46,8 +46,6 @@ class Standard extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity, SoftDeletes;
 
-    protected $guarded = ['id'];
-
     /**
      * The attributes that should be cast.
      *

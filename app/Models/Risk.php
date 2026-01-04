@@ -15,7 +15,11 @@ class Risk extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'likelihood',
+        'impact',
+    ];
 
     protected $casts = [
         'id' => 'integer',

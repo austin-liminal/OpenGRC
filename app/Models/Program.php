@@ -16,7 +16,13 @@ class Program extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'description',
+        'program_manager_id',
+        'last_audit_date',
+        'scope_status',
+    ];
 
     protected $casts = [
         'last_audit_date' => 'date',

@@ -16,14 +16,108 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Class Asset
  *
  * Represents an IT asset in the organization's asset management system.
- *
- * @package App\Models
  */
 class Asset extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, SoftDeletes;
 
-    protected $guarded = ['id'];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        // Core Identification
+        'asset_tag',
+        'serial_number',
+        'name',
+        'asset_type_id',
+        'category_id',
+        'status_id',
+
+        // Hardware Specifications
+        'manufacturer',
+        'model',
+        'processor',
+        'ram_gb',
+        'storage_type',
+        'storage_capacity_gb',
+        'graphics_card',
+        'screen_size',
+        'mac_address',
+        'ip_address',
+        'hostname',
+        'operating_system',
+        'os_version',
+
+        // Assignment & Location
+        'assigned_to_user_id',
+        'assigned_at',
+        'location_id',
+        'building',
+        'floor',
+        'room',
+        'department_id',
+
+        // Financial Information
+        'purchase_date',
+        'purchase_price',
+        'purchase_order_number',
+        'supplier_id',
+        'invoice_number',
+        'depreciation_method',
+        'depreciation_rate',
+        'current_value',
+        'residual_value',
+
+        // Warranty & Support
+        'warranty_start_date',
+        'warranty_end_date',
+        'warranty_type',
+        'warranty_provider',
+        'support_contract_number',
+        'support_expiry_date',
+
+        // Lifecycle Management
+        'received_date',
+        'deployment_date',
+        'last_audit_date',
+        'next_audit_date',
+        'retirement_date',
+        'disposal_date',
+        'disposal_method',
+        'expected_life_years',
+
+        // Maintenance & Service
+        'last_maintenance_date',
+        'next_maintenance_date',
+        'maintenance_notes',
+        'condition_id',
+
+        // Software & Licensing
+        'license_key',
+        'license_type',
+        'license_seats',
+        'license_expiry_date',
+
+        // Security & Compliance
+        'encryption_enabled',
+        'antivirus_installed',
+        'last_security_scan',
+        'compliance_status_id',
+        'data_classification_id',
+
+        // Relationships & Dependencies
+        'parent_asset_id',
+
+        // Additional Metadata
+        'notes',
+        'custom_fields',
+        'tags',
+        'image_url',
+        'qr_code',
+        'is_active',
+    ];
 
     /**
      * The attributes that should be cast.
@@ -81,8 +175,6 @@ class Asset extends Model
 
     /**
      * Get the user to whom this asset is assigned.
-     *
-     * @return BelongsTo
      */
     public function assignedToUser(): BelongsTo
     {
@@ -91,8 +183,6 @@ class Asset extends Model
 
     /**
      * Get the user who created this asset record.
-     *
-     * @return BelongsTo
      */
     public function creator(): BelongsTo
     {
@@ -101,8 +191,6 @@ class Asset extends Model
 
     /**
      * Get the user who last updated this asset record.
-     *
-     * @return BelongsTo
      */
     public function updater(): BelongsTo
     {
@@ -111,8 +199,6 @@ class Asset extends Model
 
     /**
      * Get the category this asset belongs to.
-     *
-     * @return BelongsTo
      */
     public function category(): BelongsTo
     {
@@ -121,8 +207,6 @@ class Asset extends Model
 
     /**
      * Get the location of this asset.
-     *
-     * @return BelongsTo
      */
     public function location(): BelongsTo
     {
@@ -131,8 +215,6 @@ class Asset extends Model
 
     /**
      * Get the department this asset belongs to.
-     *
-     * @return BelongsTo
      */
     public function department(): BelongsTo
     {
@@ -141,8 +223,6 @@ class Asset extends Model
 
     /**
      * Get the supplier of this asset.
-     *
-     * @return BelongsTo
      */
     public function supplier(): BelongsTo
     {
@@ -151,8 +231,6 @@ class Asset extends Model
 
     /**
      * Get the parent asset (for hierarchical assets).
-     *
-     * @return BelongsTo
      */
     public function parentAsset(): BelongsTo
     {
@@ -161,8 +239,6 @@ class Asset extends Model
 
     /**
      * Get the child assets.
-     *
-     * @return HasMany
      */
     public function childAssets(): HasMany
     {
@@ -171,8 +247,6 @@ class Asset extends Model
 
     /**
      * Get the asset type taxonomy term.
-     *
-     * @return BelongsTo
      */
     public function assetType(): BelongsTo
     {
@@ -181,8 +255,6 @@ class Asset extends Model
 
     /**
      * Get the status taxonomy term.
-     *
-     * @return BelongsTo
      */
     public function status(): BelongsTo
     {
@@ -191,8 +263,6 @@ class Asset extends Model
 
     /**
      * Get the condition taxonomy term.
-     *
-     * @return BelongsTo
      */
     public function condition(): BelongsTo
     {
@@ -201,8 +271,6 @@ class Asset extends Model
 
     /**
      * Get the compliance status taxonomy term.
-     *
-     * @return BelongsTo
      */
     public function complianceStatus(): BelongsTo
     {
@@ -211,8 +279,6 @@ class Asset extends Model
 
     /**
      * Get the data classification taxonomy term.
-     *
-     * @return BelongsTo
      */
     public function dataClassification(): BelongsTo
     {
@@ -221,8 +287,6 @@ class Asset extends Model
 
     /**
      * Get the implementations associated with this asset.
-     *
-     * @return BelongsToMany
      */
     public function implementations(): BelongsToMany
     {
@@ -232,8 +296,6 @@ class Asset extends Model
 
     /**
      * Get the asset type name accessor.
-     *
-     * @return string|null
      */
     public function getAssetTypeNameAttribute(): ?string
     {
@@ -242,8 +304,6 @@ class Asset extends Model
 
     /**
      * Get the status name accessor.
-     *
-     * @return string|null
      */
     public function getStatusNameAttribute(): ?string
     {
@@ -252,8 +312,6 @@ class Asset extends Model
 
     /**
      * Get the condition name accessor.
-     *
-     * @return string|null
      */
     public function getConditionNameAttribute(): ?string
     {
@@ -262,8 +320,6 @@ class Asset extends Model
 
     /**
      * Get the compliance status name accessor.
-     *
-     * @return string|null
      */
     public function getComplianceStatusNameAttribute(): ?string
     {
@@ -272,8 +328,6 @@ class Asset extends Model
 
     /**
      * Get the data classification name accessor.
-     *
-     * @return string|null
      */
     public function getDataClassificationNameAttribute(): ?string
     {
@@ -283,7 +337,7 @@ class Asset extends Model
     /**
      * Scope a query to only include active assets.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeActive($query)
@@ -294,7 +348,7 @@ class Asset extends Model
     /**
      * Scope a query to only include assigned assets.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeAssigned($query)
@@ -305,8 +359,7 @@ class Asset extends Model
     /**
      * Scope a query to filter by asset type.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $assetTypeName
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByAssetType($query, string $assetTypeName)
@@ -319,8 +372,7 @@ class Asset extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $statusName
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeByStatus($query, string $statusName)

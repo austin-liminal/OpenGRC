@@ -17,7 +17,22 @@ class Vendor extends Model
 {
     use HasFactory, HasMcpSupport, LogsActivity, SoftDeletes;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'description',
+        'url',
+        'logo',
+        'vendor_manager_id',
+        'contact_name',
+        'contact_email',
+        'contact_phone',
+        'address',
+        'status',
+        'risk_rating',
+        'risk_score',
+        'risk_score_calculated_at',
+        'notes',
+    ];
 
     protected $casts = [
         'status' => VendorStatus::class,

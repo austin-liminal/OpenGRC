@@ -62,13 +62,13 @@ class Implementation extends Model
      */
     public bool $asYouType = true;
 
+    protected $fillable = ['details', 'status', 'notes', 'effectiveness', 'test_procedure'];
+
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
-    protected $guarded = ['id'];
-
     protected $casts = [
         'id' => 'integer',
         'status' => ImplementationStatus::class,

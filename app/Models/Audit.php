@@ -55,7 +55,19 @@ class Audit extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity;
 
-    protected $guarded = ['id'];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'title',
+        'description',
+        'status',
+        'start_date',
+        'end_date',
+        'program_id',
+    ];
 
     /**
      * The attributes that should be cast.
