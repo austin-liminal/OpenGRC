@@ -7,8 +7,6 @@ use App\Mcp\Prompts\ComplianceSummaryPrompt;
 use App\Mcp\Prompts\GapAnalysisPrompt;
 use App\Mcp\Prompts\PolicyDraftPrompt;
 use App\Mcp\Prompts\RiskAssessmentPrompt;
-use App\Mcp\Resources\SchemaResource;
-use App\Mcp\Resources\TaxonomyResource;
 use App\Mcp\Tools\ManageApplicationTool;
 use App\Mcp\Tools\ManageAssetTool;
 use App\Mcp\Tools\ManageAuditItemTool;
@@ -88,18 +86,11 @@ class OpenGrcServer extends Server
         {"action": "delete", "id": 1, "confirm": true}
         ```
 
-        ## Resources (Metadata)
-
-        - `opengrc://schema/{type}` - Get field definitions for an entity type (e.g., `opengrc://schema/policy`)
-        - `opengrc://taxonomy/{type}` - Get valid values for lookups (e.g., `opengrc://taxonomy/policy-status`)
-
         ## Common Workflows
 
         ### Creating a Policy
-        1. Read `opengrc://schema/policy` to see available fields
-        2. Read `opengrc://taxonomy/policy-status` for valid status values
-        3. Use ManageControl with action="list" to find controls to reference
-        4. Use ManagePolicy with action="create" and data
+        1. Use ManageControl with action="list" to find controls to reference
+        2. Use ManagePolicy with action="create" and data
 
         ### Reviewing Compliance
         1. Use ManageStandard with action="list" to see frameworks
@@ -141,16 +132,6 @@ class OpenGrcServer extends Server
         ManageRiskTool::class,
         ManageStandardTool::class,
         ManageVendorTool::class,
-    ];
-
-    /**
-     * The resources registered with this MCP server.
-     *
-     * @var array<int, class-string<\Laravel\Mcp\Server\Resource>>
-     */
-    protected array $resources = [
-        SchemaResource::class,
-        TaxonomyResource::class,
     ];
 
     /**
