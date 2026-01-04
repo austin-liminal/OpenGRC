@@ -40,13 +40,68 @@ All CRUD tools support these entity types via the `type` parameter:
 POST /mcp/opengrc
 ```
 
-The endpoint requires Sanctum authentication via Bearer token.
+The endpoint requires OAuth 2.1 authentication via Bearer token (Laravel Passport).
+
+---
+
+## Prerequisites
+
+Before enabling the MCP server, you must have Passport encryption keys configured. These are required for OAuth token generation.
+
+### Option 1: Generate Key Files (Recommended for Development)
+
+```bash
+php artisan passport:keys
+```
+
+This creates `storage/oauth-private.key` and `storage/oauth-public.key`.
+
+### Option 2: Environment Variables (Recommended for Production)
+
+Set the keys directly in your `.env` file:
+
+```env
+PASSPORT_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----
+...your private key...
+-----END RSA PRIVATE KEY-----"
+
+PASSPORT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
+...your public key...
+-----END PUBLIC KEY-----"
+```
+
+**Important:** If Passport keys are not configured, you will not be able to enable the MCP server.
 
 ---
 
 ## Setup for Claude Code
 
-### 1. Start the Development Server
+### 1. Ensure Passport Keys Exist
+
+Verify keys are configured:
+
+```bash
+# Check for key files
+ls -la storage/oauth-*.key
+
+# Or check if environment variables are set
+php artisan tinker --execute="echo config('passport.private_key') ? 'Keys configured' : 'Keys missing';"
+```
+
+If missing, generate them:
+
+```bash
+php artisan passport:keys
+```
+
+### 2. Enable the MCP Server
+
+1. Log in to OpenGRC as an administrator
+2. Navigate to **Admin** > **Settings** > **AI Settings**
+3. Toggle **Enable MCP Server** to on
+4. Click **Save**
+
+### 3. Start the Development Server
 
 ```bash
 php artisan serve
@@ -54,35 +109,9 @@ php artisan serve
 
 This starts the server at `http://127.0.0.1:8000`
 
-### 2. Create an API Token
+### 4. Configure Claude Code with OAuth
 
-Generate a Sanctum API token for authentication:
-
-```bash
-php artisan tinker
-```
-
-```php
-// Create or get a user
-$user = \App\Models\User::first();
-
-// Or create a new user if needed
-// $user = \App\Models\User::create([
-//     'name' => 'MCP Test User',
-//     'email' => 'mcp@example.com',
-//     'password' => bcrypt('password'),
-// ]);
-
-// Create an API token
-$token = $user->createToken('mcp-client');
-echo $token->plainTextToken;
-```
-
-Save this token - you'll need it for authentication.
-
-### 3. Configure Claude Code
-
-Add the following to your Claude Code MCP settings:
+Claude Code supports OAuth 2.1 authentication natively. Add the following to your Claude Code MCP settings:
 
 **For local development:**
 ```json
@@ -90,10 +119,7 @@ Add the following to your Claude Code MCP settings:
   "mcpServers": {
     "opengrc": {
       "type": "http",
-      "url": "http://127.0.0.1:8000/mcp/opengrc",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN_HERE"
-      }
+      "url": "http://127.0.0.1:8000/mcp/opengrc"
     }
   }
 }
@@ -105,18 +131,19 @@ Add the following to your Claude Code MCP settings:
   "mcpServers": {
     "opengrc": {
       "type": "http",
-      "url": "https://your-opengrc-domain.com/mcp/opengrc",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN_HERE"
-      }
+      "url": "https://your-opengrc-domain.com/mcp/opengrc"
     }
   }
 }
 ```
 
-Replace `YOUR_TOKEN_HERE` with the token generated in step 2.
+When you first connect, Claude Code will:
+1. Discover OAuth endpoints via `/.well-known/oauth-authorization-server`
+2. Dynamically register as a client via `/oauth/register`
+3. Redirect you to authorize the connection
+4. Obtain access and refresh tokens automatically
 
-### 4. Test the Connection
+### 5. Test the Connection
 
 In Claude Code, try commands like:
 - "List all policies in OpenGRC"
@@ -127,32 +154,75 @@ In Claude Code, try commands like:
 
 ---
 
+## OAuth 2.1 Endpoints
+
+The MCP server exposes these OAuth 2.1 endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /.well-known/oauth-authorization-server` | OAuth server metadata discovery |
+| `GET /.well-known/oauth-protected-resource/{path?}` | Protected resource metadata |
+| `POST /oauth/register` | Dynamic client registration |
+| `GET /oauth/authorize` | Authorization endpoint |
+| `POST /oauth/token` | Token endpoint |
+
+### OAuth Scopes
+
+| Scope | Description |
+|-------|-------------|
+| `mcp:use` | Access to the MCP server (required) |
+
+### Token Expiration
+
+| Token Type | Expiration |
+|------------|------------|
+| Access Token | 60 minutes |
+| Refresh Token | 7 days |
+| Personal Access Token | 6 months |
+
+---
+
 ## Testing with cURL
 
-You can test the MCP server directly with cURL:
+### 1. Register an OAuth Client (Optional)
+
+If you need to test manually without Claude's automatic registration:
+
+```bash
+curl -X POST http://127.0.0.1:8000/oauth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redirect_uris": ["http://localhost:8080/callback"],
+    "client_name": "Test MCP Client"
+  }'
+```
+
+### 2. Test MCP Endpoint (with Bearer Token)
+
+Once you have a token:
 
 ```bash
 # Initialize the connection
 curl -X POST http://127.0.0.1:8000/mcp/opengrc \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "method": "initialize", "id": 1, "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0"}}}'
 
 # List available tools
 curl -X POST http://127.0.0.1:8000/mcp/opengrc \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 2}'
 
 # List policies
 curl -X POST http://127.0.0.1:8000/mcp/opengrc \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "method": "tools/call", "id": 3, "params": {"name": "ListEntities", "arguments": {"type": "policy"}}}'
 
 # Get a specific standard
 curl -X POST http://127.0.0.1:8000/mcp/opengrc \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc": "2.0", "method": "tools/call", "id": 4, "params": {"name": "GetEntity", "arguments": {"type": "standard", "id": 1}}}'
 ```
@@ -380,18 +450,30 @@ Gets available taxonomy values for entity fields.
 
 For production use:
 
-1. Update `APP_URL` in your `.env` to your production URL
-2. Ensure HTTPS is enabled
-3. Consider adding additional rate limiting in `app/Providers/RouteServiceProvider.php`
-4. Review and restrict the `redirect_domains` in the MCP config if using OAuth
+1. **Passport Keys**: Set `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY` environment variables instead of using key files
+2. **HTTPS**: Ensure HTTPS is enabled (required for OAuth 2.1)
+3. **Redirect Domains**: Configure `mcp.redirect_domains` in config to restrict allowed OAuth redirect URIs
+4. **Rate Limiting**: The MCP endpoint is rate-limited to 120 requests per minute
 
 ---
 
 ## Troubleshooting
 
+### MCP Server Cannot Be Enabled
+
+**Passport keys not configured:**
+- Run `php artisan passport:keys` to generate key files
+- Or set `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY` in your `.env`
+
 ### 401 Unauthorized
-- Verify your Sanctum token is valid
+- Your OAuth access token may have expired (tokens expire after 60 minutes)
+- The client should automatically refresh using the refresh token
 - Ensure the `Authorization` header is correctly formatted as `Bearer YOUR_TOKEN`
+
+### 503 Service Unavailable
+- The MCP server is disabled
+- Enable it in Admin > Settings > AI Settings
+- If you can't enable it, check that Passport keys are configured
 
 ### 404 Not Found
 - Verify the server is running and accessible
@@ -404,6 +486,10 @@ For production use:
 ### Invalid Entity Type
 - Check that the `type` parameter matches one of the supported types
 - Entity types are case-sensitive and use snake_case (e.g., `audit_item`)
+
+### OAuth Client Registration Fails
+- Check that the redirect URI is a valid URL
+- Verify the domain is in the allowed list (see `config/mcp.php` `redirect_domains`)
 
 ### CORS Issues (Browser-based clients)
 - Configure CORS in `config/cors.php` to allow your client domain

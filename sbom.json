@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:e8b3dc9b-d935-4213-8f6c-04cc7ddc6f4f",
+    "serialNumber": "urn:uuid:6da1ffdf-e149-4cfc-be9f-b2fcb343e2fc",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-01-03T23:10:58Z",
+        "timestamp": "2026-01-04T01:02:13Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "046699df6b2a6608cbcf1be7dea6ecd116ddaa98"
+                    "value": "80bed65f8ff45e374207a74a1052391c75073af0"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "046699df6b2a6608cbcf1be7dea6ecd116ddaa98"
+                    "value": "80bed65f8ff45e374207a74a1052391c75073af0"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1255,6 +1255,59 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "e2741add99b5f9360a7a58a58ce97781569e4cc6"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "defuse/php-encryption-2.4.0.0",
+            "type": "library",
+            "name": "php-encryption",
+            "version": "v2.4.0",
+            "group": "defuse",
+            "description": "Secure PHP Encryption Library",
+            "author": "Taylor Hornby, Scott Arciszewski",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/defuse/php-encryption@v2.4.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/defuse/php-encryption/zipball/f53396c2d34225064647a05ca76c1da9d99e5828",
+                    "comment": "dist reference: f53396c2d34225064647a05ca76c1da9d99e5828"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/defuse/php-encryption.git",
+                    "comment": "source reference: f53396c2d34225064647a05ca76c1da9d99e5828"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/defuse/php-encryption/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/defuse/php-encryption/tree/v2.4.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "f53396c2d34225064647a05ca76c1da9d99e5828"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "f53396c2d34225064647a05ca76c1da9d99e5828"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3653,6 +3706,59 @@
             ]
         },
         {
+            "bom-ref": "laravel/passport-12.4.2.0",
+            "type": "library",
+            "name": "passport",
+            "version": "v12.4.2",
+            "group": "laravel",
+            "description": "Laravel Passport provides OAuth2 server support to Laravel.",
+            "author": "Taylor Otwell",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/laravel/passport@v12.4.2",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/laravel/passport/zipball/65a885607b62d361aedaeb10a946bc6b5a954262",
+                    "comment": "dist reference: 65a885607b62d361aedaeb10a946bc6b5a954262"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/laravel/passport.git",
+                    "comment": "source reference: 65a885607b62d361aedaeb10a946bc6b5a954262"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/laravel/passport/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/laravel/passport",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "65a885607b62d361aedaeb10a946bc6b5a954262"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "65a885607b62d361aedaeb10a946bc6b5a954262"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "laravel/pint-1.26.0.0",
             "type": "library",
             "name": "pint",
@@ -4041,6 +4147,112 @@
             ]
         },
         {
+            "bom-ref": "lcobucci/clock-3.5.0.0",
+            "type": "library",
+            "name": "clock",
+            "version": "3.5.0",
+            "group": "lcobucci",
+            "description": "Yet another clock abstraction",
+            "author": "Lu\u00eds Cobucci",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/lcobucci/clock@3.5.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/lcobucci/clock/zipball/a3139d9e97d47826f27e6a17bb63f13621f86058",
+                    "comment": "dist reference: a3139d9e97d47826f27e6a17bb63f13621f86058"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/lcobucci/clock.git",
+                    "comment": "source reference: a3139d9e97d47826f27e6a17bb63f13621f86058"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/lcobucci/clock/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/lcobucci/clock/tree/3.5.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "a3139d9e97d47826f27e6a17bb63f13621f86058"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "a3139d9e97d47826f27e6a17bb63f13621f86058"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "lcobucci/jwt-5.6.0.0",
+            "type": "library",
+            "name": "jwt",
+            "version": "5.6.0",
+            "group": "lcobucci",
+            "description": "A simple library to work with JSON Web Token and JSON Web Signature",
+            "author": "Lu\u00eds Cobucci",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/lcobucci/jwt@5.6.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/lcobucci/jwt/zipball/bb3e9f21e4196e8afc41def81ef649c164bca25e",
+                    "comment": "dist reference: bb3e9f21e4196e8afc41def81ef649c164bca25e"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/lcobucci/jwt.git",
+                    "comment": "source reference: bb3e9f21e4196e8afc41def81ef649c164bca25e"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/lcobucci/jwt/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/lcobucci/jwt/tree/5.6.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "bb3e9f21e4196e8afc41def81ef649c164bca25e"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "bb3e9f21e4196e8afc41def81ef649c164bca25e"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "league/commonmark-2.8.0.0",
             "type": "library",
             "name": "commonmark",
@@ -4242,6 +4454,59 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "26de738b8fccf785397d05ee2fc07b6cd8749797"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "league/event-2.3.0.0",
+            "type": "library",
+            "name": "event",
+            "version": "2.3.0",
+            "group": "league",
+            "description": "Event package",
+            "author": "Frank de Jonge",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/league/event@2.3.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/thephpleague/event/zipball/062ebb450efbe9a09bc2478e89b7c933875b0935",
+                    "comment": "dist reference: 062ebb450efbe9a09bc2478e89b7c933875b0935"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/thephpleague/event.git",
+                    "comment": "source reference: 062ebb450efbe9a09bc2478e89b7c933875b0935"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/thephpleague/event/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/thephpleague/event/tree/2.3.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "062ebb450efbe9a09bc2478e89b7c933875b0935"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "062ebb450efbe9a09bc2478e89b7c933875b0935"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -4555,6 +4820,64 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "f9c94b088837eb1aae1ad7c4f23eb65cc6993055"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "league/oauth2-server-8.5.5.0",
+            "type": "library",
+            "name": "oauth2-server",
+            "version": "8.5.5",
+            "group": "league",
+            "description": "A lightweight and powerful OAuth 2.0 authorization and resource server library with support for all the core specification grants. This library will allow you to secure your API with OAuth and allow your applications users to approve apps that want to access their data from your API.",
+            "author": "Alex Bilbie, Andy Millington",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/league/oauth2-server@8.5.5",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/thephpleague/oauth2-server/zipball/cc8778350f905667e796b3c2364a9d3bd7a73518",
+                    "comment": "dist reference: cc8778350f905667e796b3c2364a9d3bd7a73518"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/thephpleague/oauth2-server.git",
+                    "comment": "source reference: cc8778350f905667e796b3c2364a9d3bd7a73518"
+                },
+                {
+                    "type": "website",
+                    "url": "https://oauth2.thephpleague.com/",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/thephpleague/oauth2-server/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/thephpleague/oauth2-server/tree/8.5.5",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "cc8778350f905667e796b3c2364a9d3bd7a73518"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "cc8778350f905667e796b3c2364a9d3bd7a73518"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -5578,6 +5901,64 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "6fb2a640ff502caace8e05fd7be3b503a7e1c017"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "nyholm/psr7-1.8.2.0",
+            "type": "library",
+            "name": "psr7",
+            "version": "1.8.2",
+            "group": "nyholm",
+            "description": "A fast PHP7 implementation of PSR-7",
+            "author": "Tobias Nyholm, Martijn van der Ven",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/nyholm/psr7@1.8.2",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Nyholm/psr7/zipball/a71f2b11690f4b24d099d6b16690a90ae14fc6f3",
+                    "comment": "dist reference: a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Nyholm/psr7.git",
+                    "comment": "source reference: a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "type": "website",
+                    "url": "https://tnyholm.se",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Nyholm/psr7/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Nyholm/psr7/tree/1.8.2",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -11399,6 +11780,59 @@
             ]
         },
         {
+            "bom-ref": "symfony/psr-http-message-bridge-7.4.0.0",
+            "type": "library",
+            "name": "psr-http-message-bridge",
+            "version": "v7.4.0",
+            "group": "symfony",
+            "description": "PSR HTTP message bridge",
+            "author": "Fabien Potencier, Symfony Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/symfony/psr-http-message-bridge@v7.4.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/symfony/psr-http-message-bridge/zipball/0101ff8bd0506703b045b1670960302d302a726c",
+                    "comment": "dist reference: 0101ff8bd0506703b045b1670960302d302a726c"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/psr-http-message-bridge.git",
+                    "comment": "source reference: 0101ff8bd0506703b045b1670960302d302a726c"
+                },
+                {
+                    "type": "website",
+                    "url": "https://symfony.com",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/psr-http-message-bridge/tree/v7.4.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "0101ff8bd0506703b045b1670960302d302a726c"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "0101ff8bd0506703b045b1670960302d302a726c"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "symfony-bridge"
+                }
+            ]
+        },
+        {
             "bom-ref": "symfony/routing-7.4.0.0",
             "type": "library",
             "name": "routing",
@@ -12516,6 +12950,12 @@
             ]
         },
         {
+            "ref": "defuse/php-encryption-2.4.0.0",
+            "dependsOn": [
+                "paragonie/random_compat-9.99.100.0"
+            ]
+        },
+        {
             "ref": "dflydev/dot-access-data-3.0.3.0"
         },
         {
@@ -12826,6 +13266,18 @@
             ]
         },
         {
+            "ref": "laravel/passport-12.4.2.0",
+            "dependsOn": [
+                "firebase/php-jwt-6.11.1.0",
+                "lcobucci/jwt-5.6.0.0",
+                "league/oauth2-server-8.5.5.0",
+                "nyholm/psr7-1.8.2.0",
+                "phpseclib/phpseclib-3.0.47.0",
+                "symfony/console-7.4.1.0",
+                "symfony/psr-http-message-bridge-7.4.0.0"
+            ]
+        },
+        {
             "ref": "laravel/pint-1.26.0.0"
         },
         {
@@ -12867,6 +13319,18 @@
             ]
         },
         {
+            "ref": "lcobucci/clock-3.5.0.0",
+            "dependsOn": [
+                "psr/clock-1.0.0.0"
+            ]
+        },
+        {
+            "ref": "lcobucci/jwt-5.6.0.0",
+            "dependsOn": [
+                "psr/clock-1.0.0.0"
+            ]
+        },
+        {
             "ref": "league/commonmark-2.8.0.0",
             "dependsOn": [
                 "league/config-1.2.0.0",
@@ -12884,6 +13348,9 @@
         },
         {
             "ref": "league/csv-9.27.1.0"
+        },
+        {
+            "ref": "league/event-2.3.0.0"
         },
         {
             "ref": "league/flysystem-3.30.2.0",
@@ -12918,6 +13385,17 @@
             "dependsOn": [
                 "guzzlehttp/guzzle-7.10.0.0",
                 "guzzlehttp/psr7-2.8.0.0"
+            ]
+        },
+        {
+            "ref": "league/oauth2-server-8.5.5.0",
+            "dependsOn": [
+                "defuse/php-encryption-2.4.0.0",
+                "lcobucci/clock-3.5.0.0",
+                "lcobucci/jwt-5.6.0.0",
+                "league/event-2.3.0.0",
+                "league/uri-7.7.0.0",
+                "psr/http-message-2.0.0.0"
             ]
         },
         {
@@ -13020,6 +13498,13 @@
             "ref": "nunomaduro/termwind-2.3.3.0",
             "dependsOn": [
                 "symfony/console-7.4.1.0"
+            ]
+        },
+        {
+            "ref": "nyholm/psr7-1.8.2.0",
+            "dependsOn": [
+                "psr/http-factory-1.1.0.0",
+                "psr/http-message-2.0.0.0"
             ]
         },
         {
@@ -13548,6 +14033,13 @@
             "ref": "symfony/process-7.4.0.0"
         },
         {
+            "ref": "symfony/psr-http-message-bridge-7.4.0.0",
+            "dependsOn": [
+                "psr/http-message-2.0.0.0",
+                "symfony/http-foundation-7.4.1.0"
+            ]
+        },
+        {
             "ref": "symfony/routing-7.4.0.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.6.0.0"
@@ -13683,6 +14175,7 @@
                 "kirschbaum-development/commentions-0.7.5.0",
                 "laravel/framework-11.47.0.0",
                 "laravel/mcp-0.5.1.0",
+                "laravel/passport-12.4.2.0",
                 "laravel/prompts-0.3.8.0",
                 "laravel/sanctum-4.2.1.0",
                 "laravel/tinker-2.10.2.0",

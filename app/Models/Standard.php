@@ -46,19 +46,7 @@ class Standard extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'description',
-        'code',
-        'authority',
-        'reference_url',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be cast.

@@ -2,13 +2,24 @@
 
 namespace App\Mcp\Servers;
 
-use App\Mcp\Tools\CreateEntityTool;
-use App\Mcp\Tools\DeleteEntityTool;
-use App\Mcp\Tools\DescribeEntityTool;
-use App\Mcp\Tools\GetEntityTool;
-use App\Mcp\Tools\GetTaxonomyValuesTool;
-use App\Mcp\Tools\ListEntitiesTool;
-use App\Mcp\Tools\UpdateEntityTool;
+use App\Mcp\Prompts\AuditPreparationPrompt;
+use App\Mcp\Prompts\ComplianceSummaryPrompt;
+use App\Mcp\Prompts\GapAnalysisPrompt;
+use App\Mcp\Prompts\PolicyDraftPrompt;
+use App\Mcp\Prompts\RiskAssessmentPrompt;
+use App\Mcp\Resources\SchemaResource;
+use App\Mcp\Resources\TaxonomyResource;
+use App\Mcp\Tools\ManageApplicationTool;
+use App\Mcp\Tools\ManageAssetTool;
+use App\Mcp\Tools\ManageAuditItemTool;
+use App\Mcp\Tools\ManageAuditTool;
+use App\Mcp\Tools\ManageControlTool;
+use App\Mcp\Tools\ManageImplementationTool;
+use App\Mcp\Tools\ManagePolicyTool;
+use App\Mcp\Tools\ManageProgramTool;
+use App\Mcp\Tools\ManageRiskTool;
+use App\Mcp\Tools\ManageStandardTool;
+use App\Mcp\Tools\ManageVendorTool;
 use Laravel\Mcp\Server;
 
 class OpenGrcServer extends Server
@@ -21,7 +32,7 @@ class OpenGrcServer extends Server
     /**
      * The MCP server's version.
      */
-    protected string $version = '2.0.0';
+    protected string $version = '3.0.0';
 
     /**
      * The MCP server's instructions for the LLM.
@@ -29,57 +40,76 @@ class OpenGrcServer extends Server
     protected string $instructions = <<<'MARKDOWN'
         # OpenGRC MCP Server
 
-        This MCP server provides unified tools to interact with OpenGRC, a Governance, Risk, and Compliance (GRC) platform.
+        This MCP server provides tools and resources to interact with OpenGRC, a Governance, Risk, and Compliance (GRC) platform.
 
-        ## Available Tools
+        ## Tools (Entity Management)
 
-        ### Entity Management (CRUD)
-        - **ListEntities**: List any entity type with filtering and pagination
-        - **GetEntity**: Get detailed information about a specific entity
-        - **DescribeEntity**: Get schema and field descriptions for an entity type (use before creating)
-        - **CreateEntity**: Create a new entity of any supported type
-        - **UpdateEntity**: Update an existing entity
-        - **DeleteEntity**: Delete an entity (with confirmation)
+        Each entity type has a management tool with list, get, create, update, and delete actions:
 
-        ### Reference Data
-        - **GetTaxonomyValues**: Get valid values for statuses, scopes, departments
+        - `ManageApplication` - Manage applications/systems
+        - `ManageAsset` - Manage IT assets
+        - `ManageAudit` - Manage assessment/audit records
+        - `ManageAuditItem` - Manage individual audit questions/items
+        - `ManageControl` - Manage security controls within standards
+        - `ManageImplementation` - Manage how controls are implemented
+        - `ManagePolicy` - Manage security and compliance policies
+        - `ManageProgram` - Manage organizational security programs
+        - `ManageRisk` - Manage risk register entries
+        - `ManageStandard` - Manage compliance frameworks (NIST, ISO, SOC2, etc.)
+        - `ManageVendor` - Manage third-party vendors
 
-        ## Supported Entity Types
+        ### Tool Actions
 
-        All CRUD tools support these entity types via the `type` parameter:
-        - `standard`: Compliance frameworks (NIST, ISO, SOC2, etc.)
-        - `control`: Security controls within standards
-        - `implementation`: How controls are implemented
-        - `policy`: Security and compliance policies
-        - `risk`: Risk register entries
-        - `program`: Organizational security programs
-        - `audit`: Assessment/audit records
-        - `audit_item`: Individual audit questions/items
-        - `vendor`: Third-party vendors
-        - `application`: Applications/systems
-        - `asset`: IT assets
+        All Manage* tools support these actions:
+
+        **List (paginated):**
+        ```json
+        {"action": "list"}
+        {"action": "list", "page": 2}
+        ```
+
+        **Get (by ID):**
+        ```json
+        {"action": "get", "id": 1}
+        ```
+
+        **Create:**
+        ```json
+        {"action": "create", "data": {"name": "Security Policy", "purpose": "<p>Objective...</p>"}}
+        ```
+
+        **Update:**
+        ```json
+        {"action": "update", "id": 1, "data": {"name": "Updated Name"}}
+        ```
+
+        **Delete:**
+        ```json
+        {"action": "delete", "id": 1, "confirm": true}
+        ```
+
+        ## Resources (Metadata)
+
+        - `opengrc://schema/{type}` - Get field definitions for an entity type (e.g., `opengrc://schema/policy`)
+        - `opengrc://taxonomy/{type}` - Get valid values for lookups (e.g., `opengrc://taxonomy/policy-status`)
 
         ## Common Workflows
 
         ### Creating a Policy
-        1. Use `DescribeEntity(type: "policy")` to see available fields and their types
-        2. Use `GetTaxonomyValues` to get valid status/scope values
-        3. Use `ListEntities(type: "control")` to find controls to reference
-        4. Use `CreateEntity(type: "policy", data: {...})` with:
-           - `name`: Clear policy name (required)
-           - `purpose`: HTML content for policy objective
-           - `policy_scope`: HTML content for applicability
-           - `body`: HTML content with requirements
+        1. Read `opengrc://schema/policy` to see available fields
+        2. Read `opengrc://taxonomy/policy-status` for valid status values
+        3. Use ManageControl with action="list" to find controls to reference
+        4. Use ManagePolicy with action="create" and data
 
         ### Reviewing Compliance
-        1. Use `ListEntities(type: "standard")` to see frameworks
-        2. Use `ListEntities(type: "control", filter: {standard_id: X})` for controls
-        3. Use `GetEntity(type: "control", id: X)` for control details with implementations
+        1. Use ManageStandard with action="list" to see frameworks
+        2. Use ManageControl with action="list" to list controls
+        3. Use ManageControl with action="get" and id for control details
 
         ### Managing Audits
-        1. Use `ListEntities(type: "audit")` to see audits
-        2. Use `GetEntity(type: "audit", id: X)` for audit details with items
-        3. Use `UpdateEntity(type: "audit_item", id: X, data: {...})` to update findings
+        1. Use ManageAudit with action="list" to see audits
+        2. Use ManageAudit with action="get" and id for audit details
+        3. Use ManageAuditItem with action="update" to update items
 
         ## HTML Formatting
 
@@ -100,13 +130,17 @@ class OpenGrcServer extends Server
      * @var array<int, class-string<\Laravel\Mcp\Server\Tool>>
      */
     protected array $tools = [
-        ListEntitiesTool::class,
-        GetEntityTool::class,
-        DescribeEntityTool::class,
-        CreateEntityTool::class,
-        UpdateEntityTool::class,
-        DeleteEntityTool::class,
-        GetTaxonomyValuesTool::class,
+        ManageApplicationTool::class,
+        ManageAssetTool::class,
+        ManageAuditTool::class,
+        ManageAuditItemTool::class,
+        ManageControlTool::class,
+        ManageImplementationTool::class,
+        ManagePolicyTool::class,
+        ManageProgramTool::class,
+        ManageRiskTool::class,
+        ManageStandardTool::class,
+        ManageVendorTool::class,
     ];
 
     /**
@@ -115,7 +149,8 @@ class OpenGrcServer extends Server
      * @var array<int, class-string<\Laravel\Mcp\Server\Resource>>
      */
     protected array $resources = [
-        //
+        SchemaResource::class,
+        TaxonomyResource::class,
     ];
 
     /**
@@ -124,6 +159,10 @@ class OpenGrcServer extends Server
      * @var array<int, class-string<\Laravel\Mcp\Server\Prompt>>
      */
     protected array $prompts = [
-        //
+        GapAnalysisPrompt::class,
+        RiskAssessmentPrompt::class,
+        PolicyDraftPrompt::class,
+        AuditPreparationPrompt::class,
+        ComplianceSummaryPrompt::class,
     ];
 }

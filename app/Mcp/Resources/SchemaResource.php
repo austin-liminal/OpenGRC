@@ -1,42 +1,64 @@
 <?php
 
-namespace App\Mcp\Tools;
+namespace App\Mcp\Resources;
 
 use App\Mcp\EntityConfig;
-use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Str;
+use Laravel\Mcp\Enums\Role;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
-use Laravel\Mcp\Server\Tool;
-use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
+use Laravel\Mcp\Server\Annotations\Audience;
+use Laravel\Mcp\Server\Contracts\HasUriTemplate;
+use Laravel\Mcp\Server\Resource;
+use Laravel\Mcp\Support\UriTemplate;
 
-#[IsReadOnly]
-class DescribeEntityTool extends Tool
+/**
+ * MCP Resource for entity schema descriptions.
+ *
+ * Provides read-only access to entity type schemas including
+ * field types, constraints, and relation information.
+ * URI format: opengrc://schema/{type}
+ *
+ * @example opengrc://schema/policy
+ * @example opengrc://schema/control
+ */
+#[Audience(Role::User)]
+class SchemaResource extends Resource implements HasUriTemplate
 {
     /**
-     * The tool's name.
+     * The resource's name.
      */
-    protected string $name = 'DescribeEntity';
+    protected string $name = 'schema';
 
     /**
-     * The tool's description.
+     * The resource's description.
      */
     protected string $description = 'Describes the schema and available fields for a GRC entity type. Use this to understand what fields are available before creating or updating entities.';
 
     /**
-     * Handle the tool request.
+     * The resource's MIME type.
+     */
+    protected string $mimeType = 'application/json';
+
+    /**
+     * Get the URI template for this resource.
+     */
+    public function uriTemplate(): UriTemplate
+    {
+        return new UriTemplate('opengrc://schema/{type}');
+    }
+
+    /**
+     * Handle the resource request.
      */
     public function handle(Request $request): Response
     {
-        $validated = $request->validate([
-            'type' => 'required|string',
-        ]);
+        $type = $request->get('type');
 
-        $type = $validated['type'];
         $config = EntityConfig::get($type);
 
         if (! $config) {
-            return Response::text(json_encode([
+            return Response::error(json_encode([
                 'success' => false,
                 'error' => "Unknown entity type: {$type}",
                 'available_types' => EntityConfig::types(),
@@ -193,20 +215,5 @@ class DescribeEntityTool extends Tool
         $notes[] = 'View in app: '.url($config['url_path']);
 
         return $notes;
-    }
-
-    /**
-     * Get the tool's input schema.
-     *
-     * @return array<string, \Illuminate\Contracts\JsonSchema\JsonSchema>
-     */
-    public function schema(JsonSchema $schema): array
-    {
-        return [
-            'type' => $schema->string()
-                ->enum(EntityConfig::types())
-                ->description('The entity type to describe. Options: '.implode(', ', EntityConfig::types()))
-                ->required(),
-        ];
     }
 }

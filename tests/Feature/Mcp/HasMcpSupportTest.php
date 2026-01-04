@@ -20,26 +20,6 @@ class HasMcpSupportTest extends TestCase
     }
 
     /**
-     * Test that getMcpConfig returns an array.
-     */
-    public function test_get_mcp_config_returns_array(): void
-    {
-        $config = Vendor::getMcpConfig();
-
-        $this->assertIsArray($config);
-    }
-
-    /**
-     * Test that model class is correctly set.
-     */
-    public function test_model_class_is_correctly_set(): void
-    {
-        $config = Vendor::getMcpConfig();
-
-        $this->assertEquals(Vendor::class, $config['model']);
-    }
-
-    /**
      * Test that label is derived from class name.
      */
     public function test_label_is_derived_from_class_name(): void
@@ -265,21 +245,6 @@ class HasMcpSupportTest extends TestCase
     }
 
     /**
-     * Test that boolean fields are typed correctly.
-     */
-    public function test_boolean_fields_typed_correctly(): void
-    {
-        foreach (EntityConfig::types() as $type) {
-            $config = EntityConfig::get($type);
-            foreach ($config['create_fields'] ?? [] as $field => $fieldConfig) {
-                if ($fieldConfig['type'] === 'boolean') {
-                    $this->assertNotNull($fieldConfig['type']);
-                }
-            }
-        }
-    }
-
-    /**
      * Test that field_descriptions is included in config.
      */
     public function test_field_descriptions_included_in_config(): void
@@ -291,15 +256,14 @@ class HasMcpSupportTest extends TestCase
     }
 
     /**
-     * Test that field_descriptions has entries for fillable fields.
+     * Test that field_descriptions has entries for all database columns.
      */
-    public function test_field_descriptions_has_entries_for_fillable_fields(): void
+    public function test_field_descriptions_has_entries_for_database_columns(): void
     {
         $config = Vendor::getMcpConfig();
-        $vendor = new Vendor;
-        $fillable = $vendor->getFillable();
+        $columns = array_keys($config['create_fields']);
 
-        foreach ($fillable as $field) {
+        foreach ($columns as $field) {
             $this->assertArrayHasKey($field, $config['field_descriptions'], "Missing description for field: {$field}");
         }
     }

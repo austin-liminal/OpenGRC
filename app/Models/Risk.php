@@ -15,15 +15,11 @@ class Risk extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity;
 
+    protected $guarded = ['id'];
+
     protected $casts = [
         'id' => 'integer',
         'action' => MitigationType::class,
-    ];
-
-    protected $fillable = [
-        'name',
-        'likelihood',
-        'impact',
     ];
 
     public function implementations(): BelongsToMany

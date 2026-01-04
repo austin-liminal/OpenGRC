@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Traits;
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
@@ -10,7 +11,7 @@ use ReflectionMethod;
  * Trait for models to provide MCP (Model Context Protocol) support.
  *
  * This trait auto-discovers model configuration from:
- * - $fillable array for create/update fields
+ * - Database schema for available fields
  * - $casts array for field types
  * - Relationship methods via reflection
  * - Conventions for common patterns
@@ -41,25 +42,38 @@ trait HasMcpSupport
     protected static function buildDefaultMcpConfig(self $instance): array
     {
         $className = class_basename(static::class);
-        $fillable = $instance->getFillable();
+        $columns = static::getTableColumns($instance);
         $casts = $instance->getCasts();
 
         return [
             'model' => static::class,
             'label' => static::deriveLabel($className),
             'plural' => static::derivePlural($className),
-            'code_field' => static::deriveCodeField($fillable),
-            'name_field' => static::deriveNameField($fillable),
-            'search_fields' => static::deriveSearchFields($fillable, $casts),
-            'list_fields' => static::deriveListFields($fillable, $casts),
+            'code_field' => static::deriveCodeField($columns),
+            'name_field' => static::deriveNameField($columns),
+            'search_fields' => static::deriveSearchFields($columns, $casts),
+            'list_fields' => static::deriveListFields($columns, $casts),
             'list_relations' => static::deriveListRelations($instance),
             'list_counts' => static::deriveListCounts($instance),
             'detail_relations' => static::deriveDetailRelations($instance),
-            'create_fields' => static::deriveCreateFields($fillable, $casts),
-            'update_fields' => static::deriveUpdateFields($fillable),
-            'field_descriptions' => static::deriveFieldDescriptions($fillable, $casts),
+            'create_fields' => static::deriveCreateFields($columns, $casts),
+            'update_fields' => static::deriveUpdateFields($columns),
+            'field_descriptions' => static::deriveFieldDescriptions($columns, $casts),
             'url_path' => static::deriveUrlPath($className),
         ];
+    }
+
+    /**
+     * Get all columns from the model's database table.
+     *
+     * @return array<string>
+     */
+    protected static function getTableColumns(self $instance): array
+    {
+        $table = $instance->getTable();
+        $connection = $instance->getConnectionName();
+
+        return Schema::connection($connection)->getColumnListing($table);
     }
 
     /**
@@ -82,18 +96,18 @@ trait HasMcpSupport
     /**
      * Derive code field if model has one.
      */
-    protected static function deriveCodeField(array $fillable): ?string
+    protected static function deriveCodeField(array $columns): ?string
     {
-        return in_array('code', $fillable) ? 'code' : null;
+        return in_array('code', $columns) ? 'code' : null;
     }
 
     /**
      * Derive name/title field.
      */
-    protected static function deriveNameField(array $fillable): ?string
+    protected static function deriveNameField(array $columns): ?string
     {
         foreach (['name', 'title'] as $field) {
-            if (in_array($field, $fillable)) {
+            if (in_array($field, $columns)) {
                 return $field;
             }
         }
@@ -102,14 +116,14 @@ trait HasMcpSupport
     }
 
     /**
-     * Derive searchable fields from fillable string fields.
+     * Derive searchable fields from columns.
      */
-    protected static function deriveSearchFields(array $fillable, array $casts): array
+    protected static function deriveSearchFields(array $columns, array $casts): array
     {
         $searchable = [];
         $textFields = ['name', 'title', 'code', 'description', 'details', 'notes', 'body', 'purpose'];
 
-        foreach ($fillable as $field) {
+        foreach ($columns as $field) {
             // Include common text fields
             if (in_array($field, $textFields)) {
                 $searchable[] = $field;
@@ -130,22 +144,22 @@ trait HasMcpSupport
     }
 
     /**
-     * Derive list fields (subset of fillable for list views).
+     * Derive list fields (subset of columns for list views).
      */
-    protected static function deriveListFields(array $fillable, array $casts): array
+    protected static function deriveListFields(array $columns, array $casts): array
     {
         $listFields = ['id'];
         $priority = ['code', 'name', 'title', 'status', 'description', 'type', 'category'];
 
         // Add priority fields first
         foreach ($priority as $field) {
-            if (in_array($field, $fillable)) {
+            if (in_array($field, $columns)) {
                 $listFields[] = $field;
             }
         }
 
         // Add date fields
-        foreach ($fillable as $field) {
+        foreach ($columns as $field) {
             if (Str::contains($field, 'date') && ! in_array($field, $listFields)) {
                 $listFields[] = $field;
             }
@@ -253,15 +267,16 @@ trait HasMcpSupport
     }
 
     /**
-     * Derive create fields with type info from fillable and casts.
+     * Derive create fields with type info from database columns and casts.
      */
-    protected static function deriveCreateFields(array $fillable, array $casts): array
+    protected static function deriveCreateFields(array $columns, array $casts): array
     {
         $fields = [];
         $requiredFields = ['name', 'title', 'code'];
-        $excludeFromCreate = ['created_by', 'updated_by', 'created_at', 'updated_at', 'deleted_at'];
+        // Exclude auto-managed fields
+        $excludeFromCreate = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'deleted_at'];
 
-        foreach ($fillable as $field) {
+        foreach ($columns as $field) {
             if (in_array($field, $excludeFromCreate)) {
                 continue;
             }
@@ -332,13 +347,13 @@ trait HasMcpSupport
     }
 
     /**
-     * Derive update fields (same as fillable minus audit fields).
+     * Derive update fields (all columns minus auto-managed fields).
      */
-    protected static function deriveUpdateFields(array $fillable): array
+    protected static function deriveUpdateFields(array $columns): array
     {
-        $exclude = ['created_by', 'updated_by'];
+        $exclude = ['id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'deleted_at'];
 
-        return array_values(array_diff($fillable, $exclude));
+        return array_values(array_diff($columns, $exclude));
     }
 
     /**
@@ -346,7 +361,7 @@ trait HasMcpSupport
      */
     protected static function deriveUrlPath(string $className): string
     {
-        return '/app/'.Str::kebab(Str::pluralStudly($className));
+        return '/app/' . Str::kebab(Str::pluralStudly($className));
     }
 
     /**
@@ -357,11 +372,11 @@ trait HasMcpSupport
      *
      * @return array<string, string>
      */
-    protected static function deriveFieldDescriptions(array $fillable, array $casts): array
+    protected static function deriveFieldDescriptions(array $columns, array $casts): array
     {
         $descriptions = [];
 
-        foreach ($fillable as $field) {
+        foreach ($columns as $field) {
             $descriptions[$field] = static::deriveFieldDescription($field, $casts[$field] ?? null);
         }
 

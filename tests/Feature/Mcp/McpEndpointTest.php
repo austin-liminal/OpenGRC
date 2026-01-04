@@ -4,8 +4,9 @@ namespace Tests\Feature\Mcp;
 
 use App\Models\Standard;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
+use Laravel\Passport\Passport;
 use Tests\TestCase;
 use Yethee\Tiktoken\EncoderProvider;
 
@@ -17,8 +18,22 @@ class McpEndpointTest extends TestCase
     {
         parent::setUp();
 
+        // Seed permissions and roles
+        $this->seed(RolePermissionSeeder::class);
+
         // Enable MCP for all tests by default
         setting(['mcp.enabled' => true]);
+    }
+
+    /**
+     * Create a user with Super Admin role for tests.
+     */
+    protected function createAdminUser(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole('Super Admin');
+
+        return $user;
     }
 
     /**
@@ -27,7 +42,7 @@ class McpEndpointTest extends TestCase
     public function test_mcp_endpoint_returns_503_when_disabled(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         setting(['mcp.enabled' => false]);
 
@@ -56,7 +71,7 @@ class McpEndpointTest extends TestCase
         setting(['mcp.enabled' => true]);
 
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         $response = $this->postJson('/mcp/opengrc', [
             'jsonrpc' => '2.0',
@@ -98,8 +113,11 @@ class McpEndpointTest extends TestCase
             'id' => 1,
             'method' => 'tools/call',
             'params' => [
-                'name' => 'ListEntities',
-                'arguments' => ['type' => 'standard'],
+                'name' => 'ManageStandard',
+                'arguments' => [
+                    'action' => 'create',
+                    'data' => ['name' => 'Test'],
+                ],
             ],
         ]);
 
@@ -107,12 +125,12 @@ class McpEndpointTest extends TestCase
     }
 
     /**
-     * Test MCP endpoint accepts valid Sanctum token.
+     * Test MCP endpoint accepts valid OAuth token.
      */
     public function test_mcp_endpoint_accepts_valid_token(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         // Create a standard to list
         Standard::factory()->create();
@@ -132,7 +150,7 @@ class McpEndpointTest extends TestCase
     public function test_mcp_endpoint_returns_tools_list(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         $response = $this->postJson('/mcp/opengrc', [
             'jsonrpc' => '2.0',
@@ -152,31 +170,36 @@ class McpEndpointTest extends TestCase
         $tools = $response->json('result.tools');
         $toolNames = array_column($tools, 'name');
 
-        $this->assertContains('ListEntities', $toolNames);
-        $this->assertContains('GetEntity', $toolNames);
-        $this->assertContains('CreateEntity', $toolNames);
-        $this->assertContains('UpdateEntity', $toolNames);
-        $this->assertContains('DeleteEntity', $toolNames);
-        $this->assertContains('GetTaxonomyValues', $toolNames);
+        // Individual tools for each entity type
+        $this->assertContains('ManageStandard', $toolNames);
+        $this->assertContains('ManageControl', $toolNames);
+        $this->assertContains('ManagePolicy', $toolNames);
+        $this->assertContains('ManageVendor', $toolNames);
     }
 
     /**
-     * Test MCP endpoint can call ListEntities tool.
+     * Test MCP endpoint can call ManageStandard tool for create.
      */
-    public function test_mcp_endpoint_can_call_list_entities(): void
+    public function test_mcp_endpoint_can_call_manage_standard_create(): void
     {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
-
-        Standard::factory()->count(3)->create();
+        $user = $this->createAdminUser();
+        Passport::actingAs($user, ['mcp:use']);
 
         $response = $this->postJson('/mcp/opengrc', [
             'jsonrpc' => '2.0',
             'id' => 1,
             'method' => 'tools/call',
             'params' => [
-                'name' => 'ListEntities',
-                'arguments' => ['type' => 'standard'],
+                'name' => 'ManageStandard',
+                'arguments' => [
+                    'action' => 'create',
+                    'data' => [
+                        'name' => 'Test Standard',
+                        'code' => 'TST-001',
+                        'authority' => 'Test',
+                        'description' => 'A test standard',
+                    ],
+                ],
             ],
         ]);
 
@@ -188,15 +211,17 @@ class McpEndpointTest extends TestCase
                 'content',
             ],
         ]);
+
+        $this->assertDatabaseHas('standards', ['code' => 'TST-001']);
     }
 
     /**
-     * Test MCP endpoint can call GetEntity tool.
+     * Test MCP endpoint can call ManageStandard tool for update.
      */
-    public function test_mcp_endpoint_can_call_get_entity(): void
+    public function test_mcp_endpoint_can_call_manage_standard_update(): void
     {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        $user = $this->createAdminUser();
+        Passport::actingAs($user, ['mcp:use']);
 
         $standard = Standard::factory()->create([
             'name' => 'Test Standard',
@@ -208,45 +233,50 @@ class McpEndpointTest extends TestCase
             'id' => 1,
             'method' => 'tools/call',
             'params' => [
-                'name' => 'GetEntity',
+                'name' => 'ManageStandard',
                 'arguments' => [
-                    'type' => 'standard',
+                    'action' => 'update',
                     'id' => $standard->id,
+                    'data' => ['name' => 'Updated Standard'],
                 ],
             ],
         ]);
 
         $response->assertStatus(200);
+        $this->assertDatabaseHas('standards', [
+            'id' => $standard->id,
+            'name' => 'Updated Standard',
+        ]);
     }
 
     /**
-     * Test MCP endpoint can call CreateEntity tool.
+     * Test MCP endpoint can call ManageStandard tool for delete.
      */
-    public function test_mcp_endpoint_can_call_create_entity(): void
+    public function test_mcp_endpoint_can_call_manage_standard_delete(): void
     {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        $user = $this->createAdminUser();
+        Passport::actingAs($user, ['mcp:use']);
+
+        $standard = Standard::factory()->create([
+            'name' => 'Delete Me',
+            'code' => 'DEL-001',
+        ]);
 
         $response = $this->postJson('/mcp/opengrc', [
             'jsonrpc' => '2.0',
             'id' => 1,
             'method' => 'tools/call',
             'params' => [
-                'name' => 'CreateEntity',
+                'name' => 'ManageStandard',
                 'arguments' => [
-                    'type' => 'standard',
-                    'data' => [
-                        'name' => 'New Standard',
-                        'code' => 'NEW-001',
-                        'authority' => 'Test',
-                        'description' => 'A test standard for MCP endpoint testing',
-                    ],
+                    'action' => 'delete',
+                    'id' => $standard->id,
+                    'confirm' => true,
                 ],
             ],
         ]);
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('standards', ['code' => 'NEW-001']);
     }
 
     /**
@@ -255,7 +285,7 @@ class McpEndpointTest extends TestCase
     public function test_mcp_endpoint_returns_error_for_invalid_request(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         $response = $this->postJson('/mcp/opengrc', [
             'invalid' => 'request',
@@ -271,7 +301,7 @@ class McpEndpointTest extends TestCase
     public function test_mcp_endpoint_returns_server_info(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         $response = $this->postJson('/mcp/opengrc', [
             'jsonrpc' => '2.0',
@@ -289,7 +319,7 @@ class McpEndpointTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonPath('result.serverInfo.name', 'OpenGRC MCP Server');
-        $response->assertJsonPath('result.serverInfo.version', '2.0.0');
+        $response->assertJsonPath('result.serverInfo.version', '3.0.0');
     }
 
     /**
@@ -298,7 +328,7 @@ class McpEndpointTest extends TestCase
     public function test_mcp_endpoint_has_rate_limiting(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         // Make requests up to the limit - should not trigger rate limiting
         // Rate limit is 120 per minute, we'll just verify the middleware is applied
@@ -311,26 +341,6 @@ class McpEndpointTest extends TestCase
         // Check for rate limit headers
         $response->assertStatus(200);
         // The rate limiter should add headers, but exact behavior depends on configuration
-    }
-
-    /**
-     * Test MCP endpoint with Bearer token in header.
-     */
-    public function test_mcp_endpoint_accepts_bearer_token(): void
-    {
-        $user = User::factory()->create();
-        $token = $user->createToken('test-token')->plainTextToken;
-
-        Standard::factory()->create();
-
-        $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/mcp/opengrc', [
-                'jsonrpc' => '2.0',
-                'id' => 1,
-                'method' => 'tools/list',
-            ]);
-
-        $response->assertStatus(200);
     }
 
     /**
@@ -349,15 +359,18 @@ class McpEndpointTest extends TestCase
     }
 
     /**
-     * Test MCP server context size is under 1000 tokens.
+     * Test MCP server context size is under 4000 tokens.
      *
      * This ensures the MCP server doesn't consume too much of an AI's context window
      * when the server is enabled. Uses tiktoken with cl100k_base encoding (GPT-4/Claude approx).
+     *
+     * Note: With individual Manage* tools for each entity type (11 tools), the context is
+     * larger than a unified ManageEntity tool but provides better discoverability for LLMs.
      */
-    public function test_mcp_context_size_is_under_1000_tokens(): void
+    public function test_mcp_context_size_is_under_4000_tokens(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         // Get server instructions via initialize
         $initResponse = $this->postJson('/mcp/opengrc', [
@@ -421,9 +434,9 @@ class McpEndpointTest extends TestCase
         $maxTokens = max($claudeTokens, $gptTokens);
 
         $this->assertLessThan(
-            1000,
+            4000,
             $maxTokens,
-            'MCP context exceeds 1000 token limit. '
+            'MCP context exceeds 4000 token limit. '
             ."Claude 4.5 Sonnet (cl100k_base): {$claudeTokens} tokens. "
             ."GPT-5.2 (o200k_base): {$gptTokens} tokens. "
             .'Context length: '.strlen($fullContext).' characters.'
@@ -436,7 +449,7 @@ class McpEndpointTest extends TestCase
     public function test_mcp_endpoint_returns_valid_jsonrpc_response(): void
     {
         $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        Passport::actingAs($user, ['mcp:use']);
 
         $response = $this->postJson('/mcp/opengrc', [
             'jsonrpc' => '2.0',
@@ -453,6 +466,58 @@ class McpEndpointTest extends TestCase
             'jsonrpc',
             'id',
             'result',
+        ]);
+    }
+
+    /**
+     * Test OAuth discovery endpoint returns correct metadata.
+     */
+    public function test_oauth_discovery_returns_metadata(): void
+    {
+        setting(['mcp.enabled' => true]);
+
+        $response = $this->getJson('/.well-known/oauth-authorization-server');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'issuer',
+            'authorization_endpoint',
+            'token_endpoint',
+            'registration_endpoint',
+            'scopes_supported',
+        ]);
+    }
+
+    /**
+     * Test OAuth protected resource endpoint.
+     */
+    public function test_oauth_protected_resource_endpoint(): void
+    {
+        setting(['mcp.enabled' => true]);
+
+        $response = $this->getJson('/.well-known/oauth-protected-resource/mcp/opengrc');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('scopes_supported', ['mcp:use']);
+    }
+
+    /**
+     * Test dynamic client registration endpoint.
+     */
+    public function test_oauth_dynamic_client_registration(): void
+    {
+        setting(['mcp.enabled' => true]);
+
+        $response = $this->postJson('/oauth/register', [
+            'client_name' => 'Test AI Client',
+            'redirect_uris' => ['https://example.com/callback'],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'client_id',
+            'grant_types',
+            'redirect_uris',
         ]);
     }
 }

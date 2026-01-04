@@ -67,18 +67,13 @@ class Implementation extends Model
      *
      * @var array<string, string>
      */
+    protected $guarded = ['id'];
+
     protected $casts = [
         'id' => 'integer',
         'status' => ImplementationStatus::class,
         'effectiveness' => Effectiveness::class,
     ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = ['details', 'status', 'notes', 'effectiveness', 'test_procedure'];
 
     /**
      * The controls that belong to the implementation.

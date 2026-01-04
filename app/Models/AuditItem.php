@@ -17,7 +17,7 @@ class AuditItem extends Model
 {
     use HasMcpSupport, LogsActivity;
 
-    protected $fillable = ['audit_id', 'user_id', 'control_id', 'auditor_notes', 'status', 'effectiveness', 'applicability'];
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be cast.

@@ -4,18 +4,17 @@ namespace Tests\Feature\Mcp;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Mcp\EntityConfig;
-use App\Mcp\Tools\CreateEntityTool;
-use App\Mcp\Tools\DeleteEntityTool;
-use App\Mcp\Tools\DescribeEntityTool;
-use App\Mcp\Tools\GetEntityTool;
-use App\Mcp\Tools\GetTaxonomyValuesTool;
-use App\Mcp\Tools\ListEntitiesTool;
-use App\Mcp\Tools\UpdateEntityTool;
+use App\Mcp\Resources\SchemaResource;
+use App\Mcp\Resources\TaxonomyResource;
+use App\Mcp\Tools\ManagePolicyTool;
+use App\Mcp\Tools\ManageStandardTool;
+use App\Mcp\Tools\ManageVendorTool;
 use App\Models\Control;
 use App\Models\Policy;
 use App\Models\Standard;
 use App\Models\User;
 use App\Models\Vendor;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Mcp\Request;
 use Tests\TestCase;
@@ -24,17 +23,42 @@ class McpToolsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected User $adminUser;
+
+    protected User $regularUser;
+
+    protected User $noPermissionsUser;
+
     protected function setUp(): void
     {
         parent::setUp();
         EntityConfig::clearCache();
+
+        // Seed permissions and roles
+        $this->seed(RolePermissionSeeder::class);
+
+        // Create users with different permission levels
+        $this->adminUser = User::factory()->create();
+        $this->adminUser->assignRole('Super Admin');
+
+        $this->regularUser = User::factory()->create();
+        $this->regularUser->assignRole('Regular User');
+
+        $this->noPermissionsUser = User::factory()->create();
+        $this->noPermissionsUser->assignRole('None');
     }
 
     /**
-     * Helper to get JSON response from a tool.
+     * Helper to get JSON response from a tool with an authenticated user.
      */
-    protected function getToolResponse(object $tool, array $arguments): array
+    protected function getToolResponse(object $tool, array $arguments, ?User $user = null): array
     {
+        // Default to admin user for backward compatibility
+        $user = $user ?? $this->adminUser;
+
+        // Authenticate the user so $request->user() returns the user
+        $this->actingAs($user);
+
         $request = new Request($arguments);
         $response = $tool->handle($request);
 
@@ -42,113 +66,37 @@ class McpToolsTest extends TestCase
     }
 
     // ========================================
-    // ListEntitiesTool Tests
+    // Tool List Action Tests
     // ========================================
 
     /**
-     * Test ListEntitiesTool returns error for invalid type.
+     * Test ManageVendorTool list action lists vendors.
      */
-    public function test_list_entities_returns_error_for_invalid_type(): void
-    {
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'invalid_type']);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Unknown entity type', $result['error']);
-        $this->assertArrayHasKey('available_types', $result);
-    }
-
-    /**
-     * Test ListEntitiesTool lists vendors.
-     */
-    public function test_list_entities_lists_vendors(): void
+    public function test_manage_vendor_list_action_lists_vendors(): void
     {
         Vendor::factory()->count(3)->create();
 
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'vendor']);
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, ['action' => 'list']);
 
         $this->assertTrue($result['success']);
+        $this->assertEquals('list', $result['action']);
         $this->assertEquals('vendor', $result['type']);
-        $this->assertEquals('Vendor', $result['label']);
         $this->assertArrayHasKey('pagination', $result);
         $this->assertArrayHasKey('vendors', $result);
         $this->assertCount(3, $result['vendors']);
     }
 
     /**
-     * Test ListEntitiesTool pagination works.
+     * Test ManageVendorTool list action includes relation data.
      */
-    public function test_list_entities_pagination_works(): void
-    {
-        Vendor::factory()->count(25)->create();
-
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
-            'per_page' => 10,
-            'page' => 2,
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertEquals(2, $result['pagination']['current_page']);
-        $this->assertEquals(10, $result['pagination']['per_page']);
-        $this->assertEquals(25, $result['pagination']['total']);
-        $this->assertEquals(3, $result['pagination']['last_page']);
-        $this->assertCount(10, $result['vendors']);
-    }
-
-    /**
-     * Test ListEntitiesTool search works with Vendor.
-     */
-    public function test_list_entities_search_works(): void
-    {
-        Vendor::factory()->create(['name' => 'Microsoft Corporation']);
-        Vendor::factory()->create(['name' => 'Google Inc']);
-        Vendor::factory()->create(['name' => 'Amazon Web Services']);
-
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
-            'search' => 'Microsoft',
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertCount(1, $result['vendors']);
-        $this->assertEquals('Microsoft Corporation', $result['vendors'][0]['name']);
-    }
-
-    /**
-     * Test ListEntitiesTool filter by related ID works.
-     */
-    public function test_list_entities_filter_by_related_id(): void
-    {
-        $standard1 = Standard::factory()->create();
-        $standard2 = Standard::factory()->create();
-
-        Control::factory()->count(3)->create(['standard_id' => $standard1->id]);
-        Control::factory()->count(2)->create(['standard_id' => $standard2->id]);
-
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'control',
-            'filter' => ['standard_id' => $standard1->id],
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertCount(3, $result['controls']);
-    }
-
-    /**
-     * Test ListEntitiesTool includes relation data.
-     */
-    public function test_list_entities_includes_relation_data(): void
+    public function test_manage_vendor_list_action_includes_relation_data(): void
     {
         $user = User::factory()->create(['name' => 'Test Manager']);
         Vendor::factory()->create(['name' => 'Test Vendor', 'vendor_manager_id' => $user->id]);
 
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'vendor']);
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, ['action' => 'list']);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('vendor_manager', $result['vendors'][0]);
@@ -156,15 +104,15 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test ListEntitiesTool includes counts.
+     * Test ManageStandardTool list action includes counts.
      */
-    public function test_list_entities_includes_counts(): void
+    public function test_manage_standard_list_action_includes_counts(): void
     {
         $standard = Standard::factory()->create();
         Control::factory()->count(5)->create(['standard_id' => $standard->id]);
 
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'standard']);
+        $tool = new ManageStandardTool;
+        $result = $this->getToolResponse($tool, ['action' => 'list']);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('controls_count', $result['standards'][0]);
@@ -172,14 +120,14 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test ListEntitiesTool includes URL.
+     * Test ManageVendorTool list action includes URL.
      */
-    public function test_list_entities_includes_url(): void
+    public function test_manage_vendor_list_action_includes_url(): void
     {
         $vendor = Vendor::factory()->create();
 
-        $tool = new ListEntitiesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'vendor']);
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, ['action' => 'list']);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('url', $result['vendors'][0]);
@@ -187,104 +135,43 @@ class McpToolsTest extends TestCase
     }
 
     // ========================================
-    // GetEntityTool Tests
+    // Tool Get Action Tests
     // ========================================
 
     /**
-     * Test GetEntityTool returns error for invalid type.
+     * Test ManageVendorTool get action retrieves entity by ID.
      */
-    public function test_get_entity_returns_error_for_invalid_type(): void
-    {
-        $tool = new GetEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'invalid_type',
-            'id' => 1,
-        ]);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Unknown entity type', $result['error']);
-    }
-
-    /**
-     * Test GetEntityTool returns error when neither id nor code provided.
-     */
-    public function test_get_entity_returns_error_without_id_or_code(): void
-    {
-        $tool = new GetEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'vendor']);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('id or code', $result['error']);
-    }
-
-    /**
-     * Test GetEntityTool retrieves entity by ID.
-     */
-    public function test_get_entity_retrieves_by_id(): void
+    public function test_manage_vendor_get_action_retrieves_by_id(): void
     {
         $vendor = Vendor::factory()->create([
             'name' => 'Test Vendor',
             'description' => 'A test vendor',
         ]);
 
-        $tool = new GetEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'get',
             'id' => $vendor->id,
         ]);
 
         $this->assertTrue($result['success']);
+        $this->assertEquals('get', $result['action']);
         $this->assertEquals('vendor', $result['type']);
         $this->assertArrayHasKey('vendor', $result);
         $this->assertEquals('Test Vendor', $result['vendor']['name']);
     }
 
     /**
-     * Test GetEntityTool retrieves policy by code.
+     * Test ManageStandardTool get action includes relations.
      */
-    public function test_get_entity_retrieves_by_code(): void
-    {
-        Policy::create([
-            'name' => 'Security Policy',
-            'code' => 'SEC-001',
-        ]);
-
-        $tool = new GetEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'policy',
-            'code' => 'SEC-001',
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertEquals('Security Policy', $result['policy']['name']);
-    }
-
-    /**
-     * Test GetEntityTool returns error for non-existent entity.
-     */
-    public function test_get_entity_returns_error_for_nonexistent(): void
-    {
-        $tool = new GetEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
-            'id' => 99999,
-        ]);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('not found', $result['error']);
-    }
-
-    /**
-     * Test GetEntityTool includes relations.
-     */
-    public function test_get_entity_includes_relations(): void
+    public function test_manage_standard_get_action_includes_relations(): void
     {
         $standard = Standard::factory()->create();
         Control::factory()->count(3)->create(['standard_id' => $standard->id]);
 
-        $tool = new GetEntityTool;
+        $tool = new ManageStandardTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'standard',
+            'action' => 'get',
             'id' => $standard->id,
         ]);
 
@@ -294,15 +181,15 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test GetEntityTool includes URL.
+     * Test ManageVendorTool get action includes URL.
      */
-    public function test_get_entity_includes_url(): void
+    public function test_manage_vendor_get_action_includes_url(): void
     {
         $vendor = Vendor::factory()->create();
 
-        $tool = new GetEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'get',
             'id' => $vendor->id,
         ]);
 
@@ -311,17 +198,32 @@ class McpToolsTest extends TestCase
         $this->assertStringContainsString("/app/vendors/{$vendor->id}", $result['vendor']['url']);
     }
 
+    /**
+     * Test ManageVendorTool get action returns error for not found.
+     */
+    public function test_manage_vendor_get_action_returns_error_for_not_found(): void
+    {
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'get',
+            'id' => 99999,
+        ]);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('not found', $result['error']);
+    }
+
     // ========================================
-    // DescribeEntityTool Tests
+    // SchemaResource Tests
     // ========================================
 
     /**
-     * Test DescribeEntityTool returns error for invalid type.
+     * Test SchemaResource returns error for invalid type.
      */
-    public function test_describe_entity_returns_error_for_invalid_type(): void
+    public function test_schema_resource_returns_error_for_invalid_type(): void
     {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'invalid_type']);
+        $resource = new SchemaResource;
+        $result = $this->getToolResponse($resource, ['type' => 'invalid_type']);
 
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('Unknown entity type', $result['error']);
@@ -329,12 +231,12 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test DescribeEntityTool returns field descriptions.
+     * Test SchemaResource returns field descriptions.
      */
-    public function test_describe_entity_returns_field_descriptions(): void
+    public function test_schema_resource_returns_field_descriptions(): void
     {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy']);
+        $resource = new SchemaResource;
+        $result = $this->getToolResponse($resource, ['type' => 'policy']);
 
         $this->assertTrue($result['success']);
         $this->assertEquals('policy', $result['type']);
@@ -345,24 +247,24 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test DescribeEntityTool includes field types.
+     * Test SchemaResource includes field types.
      */
-    public function test_describe_entity_includes_field_types(): void
+    public function test_schema_resource_includes_field_types(): void
     {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy']);
+        $resource = new SchemaResource;
+        $result = $this->getToolResponse($resource, ['type' => 'policy']);
 
         $this->assertArrayHasKey('type', $result['fields']['name']);
         $this->assertArrayHasKey('required', $result['fields']['name']);
     }
 
     /**
-     * Test DescribeEntityTool includes foreign key references.
+     * Test SchemaResource includes foreign key references.
      */
-    public function test_describe_entity_includes_foreign_key_references(): void
+    public function test_schema_resource_includes_foreign_key_references(): void
     {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy']);
+        $resource = new SchemaResource;
+        $result = $this->getToolResponse($resource, ['type' => 'policy']);
 
         $this->assertArrayHasKey('owner_id', $result['fields']);
         $this->assertArrayHasKey('references', $result['fields']['owner_id']);
@@ -370,12 +272,12 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test DescribeEntityTool includes relations.
+     * Test SchemaResource includes relations.
      */
-    public function test_describe_entity_includes_relations(): void
+    public function test_schema_resource_includes_relations(): void
     {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'standard']);
+        $resource = new SchemaResource;
+        $result = $this->getToolResponse($resource, ['type' => 'standard']);
 
         $this->assertArrayHasKey('relations', $result);
         $this->assertArrayHasKey('controls', $result['relations']);
@@ -383,85 +285,77 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test DescribeEntityTool includes notes.
+     * Test SchemaResource includes notes.
      */
-    public function test_describe_entity_includes_notes(): void
+    public function test_schema_resource_includes_notes(): void
     {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy']);
+        $resource = new SchemaResource;
+        $result = $this->getToolResponse($resource, ['type' => 'policy']);
 
         $this->assertArrayHasKey('notes', $result);
         $this->assertIsArray($result['notes']);
         $this->assertNotEmpty($result['notes']);
     }
 
-    /**
-     * Test DescribeEntityTool notes mention auto-generated codes.
-     */
-    public function test_describe_entity_notes_mention_auto_code(): void
-    {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy']);
-
-        $notesText = implode(' ', $result['notes']);
-        $this->assertStringContainsString('POL', $notesText);
-        $this->assertStringContainsString('auto-generated', $notesText);
-    }
-
-    /**
-     * Test DescribeEntityTool notes mention HTML support.
-     */
-    public function test_describe_entity_notes_mention_html_support(): void
-    {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy']);
-
-        $notesText = implode(' ', $result['notes']);
-        $this->assertStringContainsString('HTML', $notesText);
-    }
-
-    /**
-     * Test DescribeEntityTool includes app URL.
-     */
-    public function test_describe_entity_includes_app_url(): void
-    {
-        $tool = new DescribeEntityTool;
-        $result = $this->getToolResponse($tool, ['type' => 'vendor']);
-
-        $notesText = implode(' ', $result['notes']);
-        $this->assertStringContainsString('/app/vendors', $notesText);
-    }
-
     // ========================================
-    // CreateEntityTool Tests
+    // TaxonomyResource Tests
     // ========================================
 
     /**
-     * Test CreateEntityTool returns error for invalid type.
+     * Test TaxonomyResource returns values.
      */
-    public function test_create_entity_returns_error_for_invalid_type(): void
+    public function test_taxonomy_resource_returns_values(): void
     {
-        $tool = new CreateEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'invalid_type',
-            'data' => ['name' => 'Test'],
+        Taxonomy::create(['type' => 'policy-status', 'name' => 'Draft', 'slug' => 'draft']);
+        Taxonomy::create(['type' => 'policy-status', 'name' => 'Approved', 'slug' => 'approved']);
+
+        $resource = new TaxonomyResource;
+        $result = $this->getToolResponse($resource, ['type' => 'policy-status']);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('policy-status', $result['type']);
+        $this->assertArrayHasKey('values', $result);
+        $this->assertCount(2, $result['values']);
+    }
+
+    /**
+     * Test TaxonomyResource includes taxonomy details.
+     */
+    public function test_taxonomy_resource_includes_details(): void
+    {
+        Taxonomy::create([
+            'type' => 'policy-status',
+            'name' => 'Draft',
+            'slug' => 'draft',
+            'description' => 'A draft policy',
         ]);
 
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Unknown entity type', $result['error']);
+        $resource = new TaxonomyResource;
+        $result = $this->getToolResponse($resource, ['type' => 'policy-status']);
+
+        $this->assertTrue($result['success']);
+        $taxonomy = $result['values'][0];
+        $this->assertArrayHasKey('id', $taxonomy);
+        $this->assertArrayHasKey('name', $taxonomy);
+        $this->assertArrayHasKey('slug', $taxonomy);
+        $this->assertArrayHasKey('description', $taxonomy);
+        $this->assertEquals('Draft', $taxonomy['name']);
     }
 
+    // ========================================
+    // Individual Manage*Tool Tests - Create Action
+    // ========================================
+
     /**
-     * Test CreateEntityTool creates vendor with required manager.
+     * Test ManageVendorTool create creates vendor.
      */
-    public function test_create_entity_creates_vendor(): void
+    public function test_manage_vendor_create_creates_vendor(): void
     {
-        // Vendor requires a vendor_manager_id (FK to users)
         $user = User::factory()->create();
 
-        $tool = new CreateEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'create',
             'data' => [
                 'name' => 'Acme Corporation',
                 'description' => 'A vendor for testing',
@@ -470,6 +364,7 @@ class McpToolsTest extends TestCase
         ]);
 
         $this->assertTrue($result['success']);
+        $this->assertEquals('created', $result['action']);
         $this->assertStringContainsString('created successfully', $result['message']);
         $this->assertArrayHasKey('vendor', $result);
         $this->assertEquals('Acme Corporation', $result['vendor']['name']);
@@ -480,15 +375,14 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test CreateEntityTool validates required fields.
+     * Test ManageVendorTool create validates required fields.
      */
-    public function test_create_entity_validates_required_fields(): void
+    public function test_manage_vendor_create_validates_required_fields(): void
     {
-        $tool = new CreateEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'create',
             'data' => [
-                // Missing required 'name' field
                 'description' => 'Test description',
             ],
         ]);
@@ -499,15 +393,15 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test CreateEntityTool prevents duplicate codes for Policy.
+     * Test ManagePolicyTool create prevents duplicate codes.
      */
-    public function test_create_entity_prevents_duplicate_codes(): void
+    public function test_manage_policy_create_prevents_duplicate_codes(): void
     {
         Policy::create(['name' => 'First Policy', 'code' => 'POL-001']);
 
-        $tool = new CreateEntityTool;
+        $tool = new ManagePolicyTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'policy',
+            'action' => 'create',
             'data' => [
                 'name' => 'New Policy',
                 'code' => 'POL-001',
@@ -519,23 +413,21 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test CreateEntityTool auto-generates policy code.
+     * Test ManagePolicyTool create auto-generates policy code.
      */
-    public function test_create_entity_auto_generates_policy_code(): void
+    public function test_manage_policy_create_auto_generates_policy_code(): void
     {
-        // Create taxonomy for policy status
         Taxonomy::create([
             'type' => 'policy-status',
             'name' => 'Draft',
             'slug' => 'draft',
         ]);
 
-        $tool = new CreateEntityTool;
+        $tool = new ManagePolicyTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'policy',
+            'action' => 'create',
             'data' => [
                 'name' => 'Test Policy',
-                // No code provided - should auto-generate
             ],
         ]);
 
@@ -544,23 +436,21 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test CreateEntityTool sequential policy code generation.
+     * Test ManagePolicyTool create sequential policy codes.
      */
-    public function test_create_entity_sequential_policy_codes(): void
+    public function test_manage_policy_create_sequential_policy_codes(): void
     {
-        // Create taxonomy for policy status
         Taxonomy::create([
             'type' => 'policy-status',
             'name' => 'Draft',
             'slug' => 'draft',
         ]);
 
-        // Create first policy
         Policy::create(['name' => 'First', 'code' => 'POL-001']);
 
-        $tool = new CreateEntityTool;
+        $tool = new ManagePolicyTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'policy',
+            'action' => 'create',
             'data' => ['name' => 'Second Policy'],
         ]);
 
@@ -568,55 +458,18 @@ class McpToolsTest extends TestCase
         $this->assertEquals('POL-002', $result['policy']['code']);
     }
 
-    /**
-     * Test CreateEntityTool returns URL in response.
-     */
-    public function test_create_entity_returns_url(): void
-    {
-        $user = User::factory()->create();
-
-        $tool = new CreateEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
-            'data' => [
-                'name' => 'URL Test Vendor',
-                'vendor_manager_id' => $user->id,
-            ],
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('url', $result['vendor']);
-        $this->assertStringContainsString('/app/vendors/', $result['vendor']['url']);
-    }
-
     // ========================================
-    // UpdateEntityTool Tests
+    // Individual Manage*Tool Tests - Update Action
     // ========================================
 
     /**
-     * Test UpdateEntityTool returns error for invalid type.
+     * Test ManageVendorTool update returns error for nonexistent entity.
      */
-    public function test_update_entity_returns_error_for_invalid_type(): void
+    public function test_manage_vendor_update_returns_error_for_nonexistent(): void
     {
-        $tool = new UpdateEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'invalid_type',
-            'id' => 1,
-            'data' => ['name' => 'Updated'],
-        ]);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Unknown entity type', $result['error']);
-    }
-
-    /**
-     * Test UpdateEntityTool returns error for nonexistent entity.
-     */
-    public function test_update_entity_returns_error_for_nonexistent(): void
-    {
-        $tool = new UpdateEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'update',
             'id' => 99999,
             'data' => ['name' => 'Updated'],
         ]);
@@ -626,20 +479,21 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test UpdateEntityTool updates entity.
+     * Test ManageVendorTool update updates entity.
      */
-    public function test_update_entity_updates_entity(): void
+    public function test_manage_vendor_update_updates_entity(): void
     {
         $vendor = Vendor::factory()->create(['name' => 'Original Name']);
 
-        $tool = new UpdateEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'update',
             'id' => $vendor->id,
             'data' => ['name' => 'Updated Name'],
         ]);
 
         $this->assertTrue($result['success']);
+        $this->assertEquals('updated', $result['action']);
         $this->assertStringContainsString('updated successfully', $result['message']);
         $this->assertContains('name', $result['updated_fields']);
 
@@ -650,16 +504,16 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test UpdateEntityTool prevents duplicate codes for Policy.
+     * Test ManagePolicyTool update prevents duplicate codes.
      */
-    public function test_update_entity_prevents_duplicate_codes(): void
+    public function test_manage_policy_update_prevents_duplicate_codes(): void
     {
         Policy::create(['name' => 'First', 'code' => 'POL-001']);
         $policy = Policy::create(['name' => 'Second', 'code' => 'POL-002']);
 
-        $tool = new UpdateEntityTool;
+        $tool = new ManagePolicyTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'policy',
+            'action' => 'update',
             'id' => $policy->id,
             'data' => ['code' => 'POL-001'],
         ]);
@@ -669,19 +523,19 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test UpdateEntityTool only updates allowed fields.
+     * Test ManageVendorTool update only updates allowed fields.
      */
-    public function test_update_entity_only_updates_allowed_fields(): void
+    public function test_manage_vendor_update_only_updates_allowed_fields(): void
     {
         $vendor = Vendor::factory()->create(['name' => 'Original']);
 
-        $tool = new UpdateEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'update',
             'id' => $vendor->id,
             'data' => [
                 'name' => 'Updated',
-                'id' => 99999, // Should be ignored
+                'id' => 99999,
             ],
         ]);
 
@@ -691,40 +545,20 @@ class McpToolsTest extends TestCase
         $this->assertNotEquals(99999, $vendor->id);
     }
 
-    /**
-     * Test UpdateEntityTool returns error when no valid fields provided.
-     */
-    public function test_update_entity_returns_error_when_no_valid_fields(): void
-    {
-        $vendor = Vendor::factory()->create();
-
-        $tool = new UpdateEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
-            'id' => $vendor->id,
-            'data' => [
-                'invalid_field' => 'value',
-            ],
-        ]);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('No valid fields', $result['error']);
-    }
-
     // ========================================
-    // DeleteEntityTool Tests
+    // Individual Manage*Tool Tests - Delete Action
     // ========================================
 
     /**
-     * Test DeleteEntityTool returns error without confirmation.
+     * Test ManageVendorTool delete returns error without confirmation.
      */
-    public function test_delete_entity_returns_error_without_confirmation(): void
+    public function test_manage_vendor_delete_returns_error_without_confirmation(): void
     {
         $vendor = Vendor::factory()->create();
 
-        $tool = new DeleteEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'delete',
             'id' => $vendor->id,
             'confirm' => false,
         ]);
@@ -734,29 +568,13 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test DeleteEntityTool returns error for invalid type.
+     * Test ManageVendorTool delete returns error for nonexistent entity.
      */
-    public function test_delete_entity_returns_error_for_invalid_type(): void
+    public function test_manage_vendor_delete_returns_error_for_nonexistent(): void
     {
-        $tool = new DeleteEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'invalid_type',
-            'id' => 1,
-            'confirm' => true,
-        ]);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Unknown entity type', $result['error']);
-    }
-
-    /**
-     * Test DeleteEntityTool returns error for nonexistent entity.
-     */
-    public function test_delete_entity_returns_error_for_nonexistent(): void
-    {
-        $tool = new DeleteEntityTool;
-        $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'delete',
             'id' => 99999,
             'confirm' => true,
         ]);
@@ -766,34 +584,35 @@ class McpToolsTest extends TestCase
     }
 
     /**
-     * Test DeleteEntityTool deletes entity.
+     * Test ManageVendorTool delete deletes entity.
      */
-    public function test_delete_entity_deletes_entity(): void
+    public function test_manage_vendor_delete_deletes_entity(): void
     {
         $vendor = Vendor::factory()->create(['name' => 'Delete Me']);
 
-        $tool = new DeleteEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'delete',
             'id' => $vendor->id,
             'confirm' => true,
         ]);
 
         $this->assertTrue($result['success']);
+        $this->assertEquals('deleted', $result['action']);
         $this->assertStringContainsString('deleted', $result['message']);
         $this->assertStringContainsString('Delete Me', $result['message']);
     }
 
     /**
-     * Test DeleteEntityTool soft deletes when model supports it.
+     * Test ManageVendorTool delete soft deletes when model supports it.
      */
-    public function test_delete_entity_soft_deletes(): void
+    public function test_manage_vendor_delete_soft_deletes(): void
     {
         $vendor = Vendor::factory()->create();
 
-        $tool = new DeleteEntityTool;
+        $tool = new ManageVendorTool;
         $result = $this->getToolResponse($tool, [
-            'type' => 'vendor',
+            'action' => 'delete',
             'id' => $vendor->id,
             'confirm' => true,
         ]);
@@ -802,83 +621,292 @@ class McpToolsTest extends TestCase
         $this->assertTrue($result['soft_deleted']);
         $this->assertTrue($result['restorable']);
 
-        // Vendor should be soft deleted
         $this->assertSoftDeleted('vendors', ['id' => $vendor->id]);
     }
 
     // ========================================
-    // GetTaxonomyValuesTool Tests
+    // Authorization Tests
     // ========================================
 
     /**
-     * Test GetTaxonomyValuesTool returns default taxonomies.
+     * Test user without permissions cannot list entities.
      */
-    public function test_get_taxonomy_values_returns_defaults(): void
+    public function test_user_without_permissions_cannot_list_entities(): void
     {
-        // Create some taxonomy values
-        Taxonomy::create(['type' => 'policy-status', 'name' => 'Draft', 'slug' => 'draft']);
-        Taxonomy::create(['type' => 'policy-status', 'name' => 'Approved', 'slug' => 'approved']);
-        Taxonomy::create(['type' => 'policy-scope', 'name' => 'Organization-wide', 'slug' => 'organization-wide']);
+        Vendor::factory()->count(3)->create();
 
-        $tool = new GetTaxonomyValuesTool;
-        $result = $this->getToolResponse($tool, []);
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, ['action' => 'list'], $this->noPermissionsUser);
 
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('taxonomies', $result);
-        $this->assertArrayHasKey('policy-status', $result['taxonomies']);
-        $this->assertArrayHasKey('policy-scope', $result['taxonomies']);
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+        $this->assertEquals('List Vendors', $result['required_permission']);
     }
 
     /**
-     * Test GetTaxonomyValuesTool returns specific type.
+     * Test user without permissions cannot get entity.
      */
-    public function test_get_taxonomy_values_returns_specific_type(): void
+    public function test_user_without_permissions_cannot_get_entity(): void
     {
-        Taxonomy::create(['type' => 'policy-status', 'name' => 'Draft', 'slug' => 'draft']);
-        Taxonomy::create(['type' => 'department', 'name' => 'IT', 'slug' => 'it']);
+        $vendor = Vendor::factory()->create();
 
-        $tool = new GetTaxonomyValuesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy-status']);
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'get',
+            'id' => $vendor->id,
+        ], $this->noPermissionsUser);
 
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('policy-status', $result['taxonomies']);
-        $this->assertArrayNotHasKey('department', $result['taxonomies']);
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+        $this->assertEquals('Read Vendors', $result['required_permission']);
     }
 
     /**
-     * Test GetTaxonomyValuesTool includes taxonomy details.
+     * Test user without permissions cannot create entity.
      */
-    public function test_get_taxonomy_values_includes_details(): void
+    public function test_user_without_permissions_cannot_create_entity(): void
+    {
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => ['name' => 'Test Vendor'],
+        ], $this->noPermissionsUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+        $this->assertEquals('Create Vendors', $result['required_permission']);
+    }
+
+    /**
+     * Test user without permissions cannot update entity.
+     */
+    public function test_user_without_permissions_cannot_update_entity(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'update',
+            'id' => $vendor->id,
+            'data' => ['name' => 'Updated'],
+        ], $this->noPermissionsUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+        $this->assertEquals('Update Vendors', $result['required_permission']);
+    }
+
+    /**
+     * Test user without permissions cannot delete entity.
+     */
+    public function test_user_without_permissions_cannot_delete_entity(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'delete',
+            'id' => $vendor->id,
+            'confirm' => true,
+        ], $this->noPermissionsUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+        $this->assertEquals('Delete Vendors', $result['required_permission']);
+    }
+
+    /**
+     * Test regular user (read-only) can list entities.
+     */
+    public function test_regular_user_can_list_entities(): void
+    {
+        Vendor::factory()->count(3)->create();
+
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, ['action' => 'list'], $this->regularUser);
+
+        $this->assertTrue($result['success']);
+        $this->assertCount(3, $result['vendors']);
+    }
+
+    /**
+     * Test regular user (read-only) can get entity.
+     */
+    public function test_regular_user_can_get_entity(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'get',
+            'id' => $vendor->id,
+        ], $this->regularUser);
+
+        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('vendor', $result);
+    }
+
+    /**
+     * Test regular user (read-only) cannot create entity.
+     */
+    public function test_regular_user_cannot_create_entity(): void
+    {
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => ['name' => 'Test Vendor'],
+        ], $this->regularUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+        $this->assertEquals('Create Vendors', $result['required_permission']);
+    }
+
+    /**
+     * Test regular user (read-only) cannot update entity.
+     */
+    public function test_regular_user_cannot_update_entity(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'update',
+            'id' => $vendor->id,
+            'data' => ['name' => 'Updated'],
+        ], $this->regularUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+    }
+
+    /**
+     * Test regular user (read-only) cannot delete entity.
+     */
+    public function test_regular_user_cannot_delete_entity(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'delete',
+            'id' => $vendor->id,
+            'confirm' => true,
+        ], $this->regularUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('do not have permission', $result['error']);
+    }
+
+    /**
+     * Test super admin can perform all actions.
+     */
+    public function test_super_admin_can_perform_all_actions(): void
+    {
+        // Create
+        $tool = new ManageVendorTool;
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => [
+                'name' => 'Admin Created Vendor',
+                'vendor_manager_id' => $this->adminUser->id,
+            ],
+        ], $this->adminUser);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals('created', $result['action']);
+
+        $vendorId = $result['vendor']['id'];
+
+        // Read
+        $result = $this->getToolResponse($tool, [
+            'action' => 'get',
+            'id' => $vendorId,
+        ], $this->adminUser);
+
+        $this->assertTrue($result['success']);
+
+        // Update
+        $result = $this->getToolResponse($tool, [
+            'action' => 'update',
+            'id' => $vendorId,
+            'data' => ['name' => 'Updated by Admin'],
+        ], $this->adminUser);
+
+        $this->assertTrue($result['success']);
+
+        // Delete
+        $result = $this->getToolResponse($tool, [
+            'action' => 'delete',
+            'id' => $vendorId,
+            'confirm' => true,
+        ], $this->adminUser);
+
+        $this->assertTrue($result['success']);
+    }
+
+    /**
+     * Test authorization works for different entity types (Policy).
+     */
+    public function test_authorization_works_for_policy_entity(): void
     {
         Taxonomy::create([
             'type' => 'policy-status',
             'name' => 'Draft',
             'slug' => 'draft',
-            'description' => 'A draft policy',
         ]);
 
-        $tool = new GetTaxonomyValuesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'policy-status']);
+        $tool = new ManagePolicyTool;
+
+        // Regular user cannot create
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => ['name' => 'Test Policy'],
+        ], $this->regularUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertEquals('Create Policies', $result['required_permission']);
+
+        // Admin can create
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => ['name' => 'Admin Policy'],
+        ], $this->adminUser);
 
         $this->assertTrue($result['success']);
-        $taxonomy = $result['taxonomies']['policy-status'][0];
-        $this->assertArrayHasKey('id', $taxonomy);
-        $this->assertArrayHasKey('name', $taxonomy);
-        $this->assertArrayHasKey('slug', $taxonomy);
-        $this->assertArrayHasKey('description', $taxonomy);
-        $this->assertEquals('Draft', $taxonomy['name']);
     }
 
     /**
-     * Test GetTaxonomyValuesTool returns empty array for nonexistent type.
+     * Test authorization works for Standard entity.
      */
-    public function test_get_taxonomy_values_returns_empty_for_nonexistent(): void
+    public function test_authorization_works_for_standard_entity(): void
     {
-        $tool = new GetTaxonomyValuesTool;
-        $result = $this->getToolResponse($tool, ['type' => 'nonexistent-type']);
+        $tool = new ManageStandardTool;
+
+        // Regular user cannot create
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => [
+                'name' => 'Test Standard',
+                'code' => 'TST-001',
+                'authority' => 'Test',
+            ],
+        ], $this->regularUser);
+
+        $this->assertFalse($result['success']);
+        $this->assertEquals('Create Standards', $result['required_permission']);
+
+        // Admin can create
+        $result = $this->getToolResponse($tool, [
+            'action' => 'create',
+            'data' => [
+                'name' => 'Admin Standard',
+                'code' => 'ADM-001',
+                'authority' => 'Admin',
+                'description' => 'A test standard created by admin',
+            ],
+        ], $this->adminUser);
 
         $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('nonexistent-type', $result['taxonomies']);
-        $this->assertEmpty($result['taxonomies']['nonexistent-type']);
     }
 }

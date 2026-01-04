@@ -16,16 +16,7 @@ class Application extends Model
 {
     use HasFactory, HasMcpSupport, LogsActivity, SoftDeletes;
 
-    protected $fillable = [
-        'name',
-        'owner_id',
-        'type',
-        'description',
-        'status',
-        'url',
-        'notes',
-        'vendor_id',
-    ];
+    protected $guarded = ['id'];
 
     protected $casts = [
         'type' => ApplicationType::class,
