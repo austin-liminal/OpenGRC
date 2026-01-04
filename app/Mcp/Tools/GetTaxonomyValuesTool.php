@@ -13,21 +13,14 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 class GetTaxonomyValuesTool extends Tool
 {
     /**
+     * The tool's name.
+     */
+    protected string $name = 'GetTaxonomyValues';
+
+    /**
      * The tool's description.
      */
-    protected string $description = <<<'MARKDOWN'
-        Gets available taxonomy values for policies in OpenGRC.
-
-        Use this tool to:
-        - Get valid status values (Draft, Approved, In Review, etc.)
-        - Get valid scope values (Organization-wide, Department-specific, etc.)
-        - Get department list for policy assignment
-
-        Common taxonomy types:
-        - policy-status: Policy workflow statuses
-        - policy-scope: Policy scope/applicability options
-        - department: Organizational departments
-    MARKDOWN;
+    protected string $description = 'Gets valid taxonomy values (policy-status, policy-scope, department) for policy fields.';
 
     /**
      * Handle the tool request.

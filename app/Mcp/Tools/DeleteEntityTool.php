@@ -13,29 +13,14 @@ use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 class DeleteEntityTool extends Tool
 {
     /**
+     * The tool's name.
+     */
+    protected string $name = 'DeleteEntity';
+
+    /**
      * The tool's description.
      */
-    protected string $description = <<<'MARKDOWN'
-        Deletes an entity from OpenGRC.
-
-        Supported entity types:
-        - `standard`: Compliance frameworks
-        - `control`: Security controls
-        - `implementation`: Control implementations
-        - `policy`: Policies
-        - `risk`: Risk entries
-        - `program`: Security programs
-        - `audit`: Audits
-        - `audit_item`: Audit items
-        - `vendor`: Vendors
-        - `application`: Applications
-        - `asset`: Assets
-
-        **Warning**: This operation may soft-delete or permanently delete depending on the entity type.
-        Entities with soft-delete support can be restored later.
-
-        Use with caution - this cannot be easily undone for hard-deleted entities.
-    MARKDOWN;
+    protected string $description = 'Deletes a GRC entity. Most entities are soft-deleted and can be restored. Requires confirm=true parameter.';
 
     /**
      * Handle the tool request.

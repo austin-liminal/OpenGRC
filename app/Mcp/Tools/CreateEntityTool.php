@@ -14,27 +14,14 @@ use Laravel\Mcp\Server\Tool;
 class CreateEntityTool extends Tool
 {
     /**
+     * The tool's name.
+     */
+    protected string $name = 'CreateEntity';
+
+    /**
      * The tool's description.
      */
-    protected string $description = <<<'MARKDOWN'
-        Creates a new entity in OpenGRC.
-
-        Supported entity types:
-        - `standard`: Compliance frameworks (code, name, authority, description required)
-        - `control`: Security controls (code, title, standard_id required)
-        - `implementation`: Control implementations (details required)
-        - `policy`: Policies (name required, code auto-generated if not provided)
-        - `risk`: Risk entries (name, likelihood, impact required)
-        - `program`: Security programs (name required)
-        - `audit`: Audits (title required)
-        - `audit_item`: Audit items (title, audit_id required)
-        - `vendor`: Vendors (name required)
-        - `application`: Applications (name required)
-        - `asset`: Assets (name required)
-
-        The `data` parameter should contain the fields for the entity.
-        Use ListEntities or GetEntity first to understand available fields.
-    MARKDOWN;
+    protected string $description = 'Creates a new GRC entity. Use GetEntity on existing items to see available fields. Policy codes are auto-generated if not provided.';
 
     /**
      * Handle the tool request.
@@ -57,15 +44,24 @@ class CreateEntityTool extends Tool
             ], JSON_PRETTY_PRINT));
         }
 
+        $data = $validated['data'];
+
+        // Track if we need to auto-generate code inside the transaction
+        $needsAutoCode = $type === 'policy' && empty($data['code']);
+
         // Build and apply validation rules for the data
         $rules = EntityConfig::createValidationRules($type);
         $prefixedRules = [];
         foreach ($rules as $field => $rule) {
+            // Skip code validation if we're auto-generating it
+            if ($field === 'code' && $needsAutoCode) {
+                continue;
+            }
             $prefixedRules["data.{$field}"] = $rule;
         }
 
         try {
-            $request->validate($prefixedRules);
+            validator($validated, $prefixedRules)->validate();
         } catch (\Illuminate\Validation\ValidationException $e) {
             return Response::text(json_encode([
                 'success' => false,
@@ -74,19 +70,17 @@ class CreateEntityTool extends Tool
             ], JSON_PRETTY_PRINT));
         }
 
-        $data = $validated['data'];
-
         try {
-            return DB::transaction(function () use ($type, $config, $data) {
+            return DB::transaction(function () use ($type, $config, $data, $needsAutoCode) {
                 $modelClass = $config['model'];
 
-                // Handle auto-code generation for policies
-                if ($type === 'policy' && empty($data['code'])) {
+                // Auto-generate code inside transaction with locking to prevent race conditions
+                if ($needsAutoCode) {
                     $data['code'] = $this->generateUniqueCode($modelClass, 'POL');
                 }
 
-                // Check for duplicate code if code field exists
-                if ($config['code_field'] && ! empty($data[$config['code_field']])) {
+                // Check for duplicate code if code field exists (for user-provided codes)
+                if (! $needsAutoCode && $config['code_field'] && ! empty($data[$config['code_field']])) {
                     $code = $data[$config['code_field']];
                     if ($modelClass::where($config['code_field'], $code)->exists()) {
                         return Response::text(json_encode([
@@ -137,20 +131,39 @@ class CreateEntityTool extends Tool
 
     /**
      * Generate a unique code for an entity.
+     * Must be called within a transaction for proper locking.
      */
     protected function generateUniqueCode(string $modelClass, string $prefix): string
     {
         $pattern = $prefix.'-%';
-        $lastEntity = $modelClass::where('code', 'like', $pattern)
-            ->orderByRaw('CAST(SUBSTRING(code, '.(strlen($prefix) + 2).') AS UNSIGNED) DESC')
-            ->first();
 
-        $nextNumber = 1;
-        if ($lastEntity && preg_match('/^'.preg_quote($prefix, '/').'-(\d+)$/', $lastEntity->code, $matches)) {
-            $nextNumber = (int) $matches[1] + 1;
+        // Use lockForUpdate to prevent race conditions when multiple requests
+        // try to generate codes simultaneously within concurrent transactions.
+        // Include soft-deleted records to avoid unique constraint violations.
+        $query = $modelClass::where('code', 'like', $pattern)->lockForUpdate();
+
+        // Include soft-deleted records if the model uses SoftDeletes
+        if (method_exists($modelClass, 'withTrashed')) {
+            $query = $modelClass::withTrashed()->where('code', 'like', $pattern)->lockForUpdate();
         }
 
-        return sprintf('%s-%03d', $prefix, $nextNumber);
+        // Fetch all matching codes and find the max number in PHP
+        // This is database-agnostic (works with SQLite, MySQL, PostgreSQL)
+        $codes = $query->pluck('code');
+
+        $maxNumber = 0;
+        $patternRegex = '/^'.preg_quote($prefix, '/').'-(\d+)$/';
+
+        foreach ($codes as $code) {
+            if (preg_match($patternRegex, $code, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
+
+        return sprintf('%s-%03d', $prefix, $maxNumber + 1);
     }
 
     /**

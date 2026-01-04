@@ -57,6 +57,7 @@ trait HasMcpSupport
             'detail_relations' => static::deriveDetailRelations($instance),
             'create_fields' => static::deriveCreateFields($fillable, $casts),
             'update_fields' => static::deriveUpdateFields($fillable),
+            'field_descriptions' => static::deriveFieldDescriptions($fillable, $casts),
             'url_path' => static::deriveUrlPath($className),
         ];
     }
@@ -287,7 +288,7 @@ trait HasMcpSupport
     {
         // Handle _id fields as integer references
         if (Str::endsWith($field, '_id')) {
-            $table = Str::plural(Str::beforeLast($field, '_id'));
+            $table = static::resolveRelatedTable($field);
 
             return [
                 'type' => 'integer',
@@ -346,5 +347,136 @@ trait HasMcpSupport
     protected static function deriveUrlPath(string $className): string
     {
         return '/app/'.Str::kebab(Str::pluralStudly($className));
+    }
+
+    /**
+     * Derive field descriptions from field names and casts.
+     *
+     * Models can override specific descriptions in mcpConfig():
+     * return ['field_descriptions' => ['my_field' => 'Custom description']];
+     *
+     * @return array<string, string>
+     */
+    protected static function deriveFieldDescriptions(array $fillable, array $casts): array
+    {
+        $descriptions = [];
+
+        foreach ($fillable as $field) {
+            $descriptions[$field] = static::deriveFieldDescription($field, $casts[$field] ?? null);
+        }
+
+        return $descriptions;
+    }
+
+    /**
+     * Derive a description for a single field based on its name and cast.
+     */
+    protected static function deriveFieldDescription(string $field, ?string $cast): string
+    {
+        // Handle foreign key fields
+        if (Str::endsWith($field, '_id')) {
+            $relation = Str::beforeLast($field, '_id');
+            $humanName = Str::title(str_replace('_', ' ', $relation));
+
+            return "ID of the related {$humanName}";
+        }
+
+        // Handle date fields (but not fields that just contain 'date' like 'updated_by')
+        if (Str::endsWith($field, '_date')) {
+            $humanName = Str::title(str_replace('_', ' ', str_replace('_date', '', $field)));
+
+            return "{$humanName} date (YYYY-MM-DD format)";
+        }
+
+        // Handle common field name patterns
+        $commonDescriptions = [
+            'name' => 'Display name of the entity',
+            'title' => 'Title of the entity',
+            'code' => 'Unique identifier code',
+            'description' => 'Brief description',
+            'details' => 'Detailed information (supports HTML)',
+            'notes' => 'Additional notes or comments',
+            'body' => 'Main content body (supports HTML)',
+            'purpose' => 'Purpose or objective (supports HTML)',
+            'policy_scope' => 'Scope of the policy (supports HTML)',
+            'status' => 'Current status',
+            'type' => 'Type classification',
+            'category' => 'Category classification',
+            'likelihood' => 'Likelihood rating (typically 1-5)',
+            'impact' => 'Impact rating (typically 1-5)',
+            'action' => 'Action to be taken',
+            'response' => 'Response or finding',
+            'observation' => 'Observation or comment',
+            'recommendation' => 'Recommended action',
+            'email' => 'Email address',
+            'phone' => 'Phone number',
+            'url' => 'URL or web address',
+            'website' => 'Website URL',
+            'address' => 'Physical address',
+            'city' => 'City name',
+            'state' => 'State or province',
+            'country' => 'Country name',
+            'zip' => 'ZIP or postal code',
+            'contact_name' => 'Contact person name',
+            'contact_email' => 'Contact email address',
+            'contact_phone' => 'Contact phone number',
+            'document_path' => 'Path to associated document file',
+            'revision_history' => 'History of revisions (JSON array)',
+            'created_by' => 'ID of the user who created this entity',
+            'updated_by' => 'ID of the user who last updated this entity',
+        ];
+
+        if (isset($commonDescriptions[$field])) {
+            return $commonDescriptions[$field];
+        }
+
+        // Handle based on cast type
+        if ($cast) {
+            if (class_exists($cast) && enum_exists($cast)) {
+                $enumName = class_basename($cast);
+
+                return "{$enumName} value";
+            }
+
+            return match ($cast) {
+                'boolean', 'bool' => 'Boolean (true/false)',
+                'integer', 'int' => 'Integer value',
+                'float', 'double', 'decimal' => 'Numeric value',
+                'array', 'json', 'collection' => 'JSON array or object',
+                'date' => 'Date (YYYY-MM-DD format)',
+                'datetime' => 'Date and time (ISO 8601 format)',
+                default => Str::title(str_replace('_', ' ', $field)),
+            };
+        }
+
+        // Generate description from field name
+        return Str::title(str_replace('_', ' ', $field));
+    }
+
+    /**
+     * Resolve the related table name for a foreign key field.
+     *
+     * Looks up the relationship method to get the actual related model's table.
+     * Falls back to deriving from field name if relationship not found.
+     */
+    protected static function resolveRelatedTable(string $field): string
+    {
+        $instance = new static;
+        $relationName = Str::camel(Str::beforeLast($field, '_id'));
+
+        // Try to find a relationship method matching the field
+        if (method_exists($instance, $relationName)) {
+            try {
+                $relation = $instance->{$relationName}();
+                if (method_exists($relation, 'getRelated')) {
+                    return $relation->getRelated()->getTable();
+                }
+            } catch (\Throwable $e) {
+                // Fall through to default behavior
+            }
+        }
+
+        // Fallback: derive table name from field name
+        return Str::plural(Str::beforeLast($field, '_id'));
     }
 }

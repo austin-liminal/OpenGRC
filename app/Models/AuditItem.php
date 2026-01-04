@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Enums\Applicability;
 use App\Enums\Effectiveness;
-use App\Mcp\Traits\HasMcpSupport;
 use App\Enums\WorkflowStatus;
+use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

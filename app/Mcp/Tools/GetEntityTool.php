@@ -14,26 +14,14 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 class GetEntityTool extends Tool
 {
     /**
+     * The tool's name.
+     */
+    protected string $name = 'GetEntity';
+
+    /**
      * The tool's description.
      */
-    protected string $description = <<<'MARKDOWN'
-        Retrieves a specific entity from OpenGRC by ID or code.
-
-        Supported entity types:
-        - `standard`: Compliance frameworks (NIST, ISO, SOC2, etc.)
-        - `control`: Security controls within standards
-        - `implementation`: How controls are implemented
-        - `policy`: Security and compliance policies
-        - `risk`: Risk register entries
-        - `program`: Organizational security programs
-        - `audit`: Assessment/audit records
-        - `audit_item`: Individual audit questions/items
-        - `vendor`: Third-party vendors
-        - `application`: Applications/systems
-        - `asset`: IT assets
-
-        Returns complete entity details including related data.
-    MARKDOWN;
+    protected string $description = 'Retrieves a GRC entity by ID or code. Returns complete details with relations.';
 
     /**
      * Handle the tool request.

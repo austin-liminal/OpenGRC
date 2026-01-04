@@ -14,27 +14,14 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 class ListEntitiesTool extends Tool
 {
     /**
+     * The tool's name.
+     */
+    protected string $name = 'ListEntities';
+
+    /**
      * The tool's description.
      */
-    protected string $description = <<<'MARKDOWN'
-        Lists entities from OpenGRC with filtering and pagination.
-
-        Supported entity types:
-        - `standard`: Compliance frameworks (NIST, ISO, SOC2, etc.)
-        - `control`: Security controls within standards
-        - `implementation`: How controls are implemented
-        - `policy`: Security and compliance policies
-        - `risk`: Risk register entries
-        - `program`: Organizational security programs
-        - `audit`: Assessment/audit records
-        - `audit_item`: Individual audit questions/items
-        - `vendor`: Third-party vendors
-        - `application`: Applications/systems
-        - `asset`: IT assets
-
-        Use the `type` parameter to specify which entity to list.
-        Supports search, pagination, and filtering by related entities.
-    MARKDOWN;
+    protected string $description = 'Lists GRC entities with search, pagination, and filtering. Types: standard, control, implementation, policy, risk, program, audit, audit_item, vendor, application, asset.';
 
     /**
      * Handle the tool request.

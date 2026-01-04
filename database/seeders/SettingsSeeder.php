@@ -84,6 +84,10 @@ class SettingsSeeder extends Seeder
                 'key' => 'security.session_timeout',
                 'value' => '15',
             ],
+            [
+                'key' => 'mcp.enabled',
+                'value' => 'false',
+            ],
         ];
 
         foreach ($settings as $setting) {

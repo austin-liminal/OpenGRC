@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:7f9be7da-8ae5-4f9c-896f-e9c0733f4ba0",
+    "serialNumber": "urn:uuid:e8b3dc9b-d935-4213-8f6c-04cc7ddc6f4f",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-01-03T21:38:37Z",
+        "timestamp": "2026-01-03T23:10:58Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "111a1a913986b768154e9de31ecfe7985292f254"
+                    "value": "046699df6b2a6608cbcf1be7dea6ecd116ddaa98"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "111a1a913986b768154e9de31ecfe7985292f254"
+                    "value": "046699df6b2a6608cbcf1be7dea6ecd116ddaa98"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12162,6 +12162,62 @@
             ]
         },
         {
+            "bom-ref": "yethee/tiktoken-1.1.0.0",
+            "type": "library",
+            "name": "tiktoken",
+            "version": "1.1.0",
+            "group": "yethee",
+            "description": "PHP version of tiktoken",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/yethee/tiktoken@1.1.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/yethee/tiktoken-php/zipball/d2b3bcf9c1437c0134da85e02482fc53c80bc37a",
+                    "comment": "dist reference: d2b3bcf9c1437c0134da85e02482fc53c80bc37a"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/yethee/tiktoken-php.git",
+                    "comment": "source reference: d2b3bcf9c1437c0134da85e02482fc53c80bc37a"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/yethee/tiktoken-php/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/yethee/tiktoken-php/tree/1.1.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "d2b3bcf9c1437c0134da85e02482fc53c80bc37a"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "d2b3bcf9c1437c0134da85e02482fc53c80bc37a"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                },
+                {
+                    "name": "cdx:composer:package:isDevRequirement",
+                    "value": "true"
+                }
+            ]
+        },
+        {
             "bom-ref": "zbateson/mail-mime-parser-3.0.5.0",
             "type": "library",
             "name": "mail-mime-parser",
@@ -13577,6 +13633,12 @@
             "ref": "voku/portable-ascii-2.0.3.0"
         },
         {
+            "ref": "yethee/tiktoken-1.1.0.0",
+            "dependsOn": [
+                "symfony/service-contracts-3.6.1.0"
+            ]
+        },
+        {
             "ref": "zbateson/mail-mime-parser-3.0.5.0",
             "dependsOn": [
                 "guzzlehttp/psr7-2.8.0.0",
@@ -13646,7 +13708,8 @@
                 "nunomaduro/collision-8.5.0.0",
                 "phpunit/phpunit-10.5.60.0",
                 "spatie/laravel-ignition-2.9.1.0",
-                "spatie/laravel-ray-1.43.1.0"
+                "spatie/laravel-ray-1.43.1.0",
+                "yethee/tiktoken-1.1.0.0"
             ]
         }
     ]

@@ -13,27 +13,14 @@ use Laravel\Mcp\Server\Tool;
 class UpdateEntityTool extends Tool
 {
     /**
+     * The tool's name.
+     */
+    protected string $name = 'UpdateEntity';
+
+    /**
      * The tool's description.
      */
-    protected string $description = <<<'MARKDOWN'
-        Updates an existing entity in OpenGRC.
-
-        Supported entity types:
-        - `standard`: Compliance frameworks
-        - `control`: Security controls
-        - `implementation`: Control implementations
-        - `policy`: Policies
-        - `risk`: Risk entries
-        - `program`: Security programs
-        - `audit`: Audits
-        - `audit_item`: Audit items
-        - `vendor`: Vendors
-        - `application`: Applications
-        - `asset`: Assets
-
-        Provide the entity `type`, `id`, and `data` containing the fields to update.
-        Only provided fields will be updated; others remain unchanged.
-    MARKDOWN;
+    protected string $description = 'Updates an existing GRC entity. Only provided fields are modified; others remain unchanged.';
 
     /**
      * Handle the tool request.

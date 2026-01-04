@@ -75,6 +75,14 @@ class AiSettings extends BaseSettings
                                             $component->state(null);
                                         }),
                                 ]),
+                            Section::make('MCP Server')
+                                ->description('Model Context Protocol (MCP) allows AI assistants like Claude to interact with OpenGRC data.')
+                                ->schema([
+                                    Toggle::make('mcp.enabled')
+                                        ->label('Enable MCP Server')
+                                        ->helperText('When enabled, authenticated API clients can access OpenGRC via the MCP protocol at /mcp/opengrc')
+                                        ->default(false),
+                                ]),
                         ]),
                     Tabs\Tab::make('Quota Usage')
                         ->icon('heroicon-o-chart-bar')

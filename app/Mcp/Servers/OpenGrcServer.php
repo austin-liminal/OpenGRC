@@ -4,6 +4,7 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\CreateEntityTool;
 use App\Mcp\Tools\DeleteEntityTool;
+use App\Mcp\Tools\DescribeEntityTool;
 use App\Mcp\Tools\GetEntityTool;
 use App\Mcp\Tools\GetTaxonomyValuesTool;
 use App\Mcp\Tools\ListEntitiesTool;
@@ -35,6 +36,7 @@ class OpenGrcServer extends Server
         ### Entity Management (CRUD)
         - **ListEntities**: List any entity type with filtering and pagination
         - **GetEntity**: Get detailed information about a specific entity
+        - **DescribeEntity**: Get schema and field descriptions for an entity type (use before creating)
         - **CreateEntity**: Create a new entity of any supported type
         - **UpdateEntity**: Update an existing entity
         - **DeleteEntity**: Delete an entity (with confirmation)
@@ -60,7 +62,7 @@ class OpenGrcServer extends Server
         ## Common Workflows
 
         ### Creating a Policy
-        1. Use `ListEntities(type: "policy")` to see existing policies and naming patterns
+        1. Use `DescribeEntity(type: "policy")` to see available fields and their types
         2. Use `GetTaxonomyValues` to get valid status/scope values
         3. Use `ListEntities(type: "control")` to find controls to reference
         4. Use `CreateEntity(type: "policy", data: {...})` with:
@@ -100,6 +102,7 @@ class OpenGrcServer extends Server
     protected array $tools = [
         ListEntitiesTool::class,
         GetEntityTool::class,
+        DescribeEntityTool::class,
         CreateEntityTool::class,
         UpdateEntityTool::class,
         DeleteEntityTool::class,
