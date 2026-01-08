@@ -88,7 +88,9 @@ class AdminPanelProvider extends PanelProvider
                 ActivitylogPlugin::make([
                     'enable_cleanup_command' => true,
                     'default_sort_column' => 'created_at',
-                ])->authorize(fn () => auth()->check() && auth()->user()->can('View Audit Log')),
+                ])
+                    ->isResourceActionHidden(true)
+                    ->authorize(fn () => auth()->check() && auth()->user()->can('View Audit Log')),
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,
