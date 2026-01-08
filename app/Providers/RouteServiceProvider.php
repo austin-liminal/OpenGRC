@@ -29,7 +29,12 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('global', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            // Skip rate limiting for authenticated users and Livewire requests
+            if ($request->user() || $request->is('livewire/*')) {
+                return Limit::none();
+            }
+
+            return Limit::perMinute(60)->by($request->ip());
         });
 
         $this->routes(function () {
