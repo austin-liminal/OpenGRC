@@ -176,8 +176,8 @@
         <br><br>
 
         @php
-            $inherentGrid = InherentRisk::generateGrid($risks, 'inherent');
-            $residualGrid = InherentRisk::generateGrid($risks, 'residual');
+            $inherentGrid = array_reverse(InherentRisk::generateGrid($risks, 'inherent'));
+            $residualGrid = array_reverse(InherentRisk::generateGrid($risks, 'residual'));
         @endphp
 
         <div style="text-align: center;">
