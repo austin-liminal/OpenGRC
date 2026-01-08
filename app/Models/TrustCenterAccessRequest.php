@@ -110,6 +110,14 @@ class TrustCenterAccessRequest extends Model
     }
 
     /**
+     * Check if the request is revoked.
+     */
+    public function isRevoked(): bool
+    {
+        return $this->status === AccessRequestStatus::REVOKED;
+    }
+
+    /**
      * Check if the access is still valid.
      */
     public function isAccessValid(): bool
@@ -152,6 +160,21 @@ class TrustCenterAccessRequest extends Model
             'reviewed_by' => $reviewer->id,
             'reviewed_at' => now(),
             'review_notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Revoke an approved access request.
+     */
+    public function revoke(User $reviewer, ?string $notes = null): void
+    {
+        $this->update([
+            'status' => AccessRequestStatus::REVOKED,
+            'reviewed_by' => $reviewer->id,
+            'reviewed_at' => now(),
+            'review_notes' => $notes,
+            'access_token' => null,
+            'access_expires_at' => null,
         ]);
     }
 
