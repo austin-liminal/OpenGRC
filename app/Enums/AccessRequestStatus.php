@@ -11,6 +11,7 @@ enum AccessRequestStatus: string implements HasColor, HasIcon, HasLabel
     case PENDING = 'pending';
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
+    case REVOKED = 'revoked';
 
     public function getLabel(): string
     {
@@ -18,6 +19,7 @@ enum AccessRequestStatus: string implements HasColor, HasIcon, HasLabel
             self::PENDING => 'Pending Review',
             self::APPROVED => 'Approved',
             self::REJECTED => 'Rejected',
+            self::REVOKED => 'Revoked',
         };
     }
 
@@ -27,6 +29,7 @@ enum AccessRequestStatus: string implements HasColor, HasIcon, HasLabel
             self::PENDING => 'warning',
             self::APPROVED => 'success',
             self::REJECTED => 'danger',
+            self::REVOKED => 'gray',
         };
     }
 
@@ -36,6 +39,7 @@ enum AccessRequestStatus: string implements HasColor, HasIcon, HasLabel
             self::PENDING => 'heroicon-o-clock',
             self::APPROVED => 'heroicon-o-check-circle',
             self::REJECTED => 'heroicon-o-x-circle',
+            self::REVOKED => 'heroicon-o-no-symbol',
         };
     }
 }

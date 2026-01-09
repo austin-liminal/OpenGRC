@@ -111,6 +111,15 @@ class Implementation extends Model
     }
 
     /**
+     * The applications that belong to the implementation.
+     */
+    public function applications(): BelongsToMany
+    {
+        return $this->belongsToMany(Application::class)
+            ->withTimestamps();
+    }
+
+    /**
      * Get the name of the index associated with the model.
      */
     public function searchableAs(): string

@@ -113,6 +113,28 @@ class PendingAccessRequestsWidget extends BaseWidget
                                 ->send();
                         }
                     }),
+                Tables\Actions\Action::make('revoke')
+                    ->label(__('Revoke'))
+                    ->icon('heroicon-o-no-symbol')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Revoke Access'))
+                    ->modalDescription(__('Are you sure you want to revoke this user\'s access? Their magic link will be invalidated immediately.'))
+                    ->visible(fn (TrustCenterAccessRequest $record) => $record->status === AccessRequestStatus::APPROVED)
+                    ->form([
+                        Forms\Components\Textarea::make('review_notes')
+                            ->label(__('Reason (Optional)'))
+                            ->rows(2),
+                    ])
+                    ->action(function (TrustCenterAccessRequest $record, array $data) {
+                        $record->revoke(auth()->user(), $data['review_notes'] ?? null);
+
+                        Notification::make()
+                            ->title(__('Access Revoked'))
+                            ->body(__('Access has been revoked for :name', ['name' => $record->requester_name]))
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -375,6 +375,7 @@ class PolicyResource extends Resource
                                     ->icon('heroicon-o-user'),
 
                                 Infolists\Components\TextEntry::make('changes')
+                                    ->html()
                                     ->label('Changes'),
                             ])
                             ->columns(4)

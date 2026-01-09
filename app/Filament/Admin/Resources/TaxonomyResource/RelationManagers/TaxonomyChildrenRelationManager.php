@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\TaxonomyResource\RelationManagers;
 
+use App\Filament\Concerns\RestoresSoftDeletedTaxonomies;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -10,6 +11,8 @@ use Filament\Tables\Table;
 
 class TaxonomyChildrenRelationManager extends RelationManager
 {
+    use RestoresSoftDeletedTaxonomies;
+
     protected static string $relationship = 'children';
 
     protected static ?string $title = 'Terms';
@@ -52,8 +55,8 @@ class TaxonomyChildrenRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading(fn () => 'No ' . $this->getOwnerRecord()->name . ' Terms')
-            ->emptyStateDescription(fn () => 'Click "Add ' . $this->getOwnerRecord()->name . ' Term" to add ' . $this->getOwnerRecord()->name . ' terms.')
+            ->emptyStateHeading(fn () => 'No '.$this->getOwnerRecord()->name.' Terms')
+            ->emptyStateDescription(fn () => 'Click "Add '.$this->getOwnerRecord()->name.' Term" to add '.$this->getOwnerRecord()->name.' terms.')
             ->emptyStateIcon('heroicon-o-tag')
             ->heading(fn () => \Str::plural($this->getOwnerRecord()->name))
             ->recordTitleAttribute('name')
@@ -85,26 +88,29 @@ class TaxonomyChildrenRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label(fn () => 'Add ' . \Str::plural($this->getOwnerRecord()->name))
-                    ->modalHeading(fn () => 'Create New ' . $this->getOwnerRecord()->name . ' Term')
-                    ->createAnother(false),
+                    ->label(fn () => 'Add '.\Str::plural($this->getOwnerRecord()->name))
+                    ->modalHeading(fn () => 'Create New '.$this->getOwnerRecord()->name.' Term')
+                    ->createAnother(false)
+                    ->using(fn (array $data) => $this->createOrRestoreTaxonomy($data, $this->getOwnerRecord()->id)),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->label('View')
-                    ->modalHeading(fn ($record) => 'View ' . $this->getOwnerRecord()->name . ' Term: ' . $record->name),
+                    ->modalHeading(fn ($record) => 'View '.$this->getOwnerRecord()->name.' Term: '.$record->name),
                 Tables\Actions\EditAction::make()
                     ->label('Edit')
-                    ->modalHeading(fn ($record) => 'Edit ' . $this->getOwnerRecord()->name . ' Term: ' . $record->name),
+                    ->modalHeading(fn ($record) => 'Edit '.$this->getOwnerRecord()->name.' Term: '.$record->name),
                 Tables\Actions\DeleteAction::make()
                     ->label('Delete')
                     ->requiresConfirmation()
-                    ->modalHeading(fn ($record) => 'Delete ' . $this->getOwnerRecord()->name . ' Term')
-                    ->modalDescription(fn ($record) => 'Are you sure you want to delete "' . $record->name . '"? This action cannot be undone.'),
+                    ->modalHeading(fn ($record) => 'Delete '.$this->getOwnerRecord()->name.' Term')
+                    ->modalDescription(fn ($record) => 'Are you sure you want to delete "'.$record->name.'"? This action cannot be undone.')
+                    ->action(fn ($record) => RestoresSoftDeletedTaxonomies::deleteTaxonomyWithChildren($record)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(fn ($records) => $records->each(fn ($record) => RestoresSoftDeletedTaxonomies::deleteTaxonomyWithChildren($record))),
                 ]),
             ]);
     }

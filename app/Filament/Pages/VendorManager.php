@@ -9,19 +9,16 @@ use App\Filament\Widgets\SurveyTemplatesTableWidget;
 use App\Filament\Widgets\VendorsTableWidget;
 use App\Filament\Widgets\VendorStatsWidget;
 use Filament\Actions\Action;
-use Filament\Pages\Page;
-use Livewire\Attributes\Url;
 
-class VendorManager extends Page
+class VendorManager extends TabbedPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
+    protected static ?string $navigationLabel = 'Vendor Management';
+
+    protected static ?string $title = 'Vendor Management';
+
     protected static ?int $navigationSort = 10;
-
-    protected static string $view = 'filament.pages.vendor-manager';
-
-    #[Url]
-    public string $activeTab = 'vendors';
 
     public static function canAccess(): bool
     {
@@ -32,16 +29,6 @@ class VendorManager extends Page
         }
 
         return $user->can('List Vendors') || $user->can('List Surveys');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('Vendor Management');
-    }
-
-    public function getTitle(): string
-    {
-        return __('Vendor Management');
     }
 
     protected function getHeaderActions(): array
@@ -61,16 +48,25 @@ class VendorManager extends Page
         ];
     }
 
-    protected function getHeaderWidgets(): array
+    public function getTabs(): array
     {
-        // Show contextual widgets based on active tab
-        return match ($this->activeTab) {
-            'surveys', 'templates' => [SurveyInfoWidget::class],
-            default => [VendorStatsWidget::class],
-        };
+        return [
+            'vendors' => [
+                'label' => __('Vendors'),
+                'icon' => 'heroicon-o-building-storefront',
+            ],
+            'surveys' => [
+                'label' => __('Vendor Surveys'),
+                'icon' => 'heroicon-o-paper-airplane',
+            ],
+            'templates' => [
+                'label' => __('Survey Templates'),
+                'icon' => 'heroicon-o-clipboard-document-list',
+            ],
+        ];
     }
 
-    protected function getFooterWidgets(): array
+    public function getWidgets(): array
     {
         return match ($this->activeTab) {
             'surveys' => [SurveysTableWidget::class],
@@ -79,34 +75,11 @@ class VendorManager extends Page
         };
     }
 
-    public function getFooterWidgetsColumns(): int|array
+    public function getStatsWidgets(): array
     {
-        return 1;
-    }
-
-    public function setActiveTab(string $tab): void
-    {
-        $this->activeTab = $tab;
-    }
-
-    protected function getViewData(): array
-    {
-        return [
-            'activeTab' => $this->activeTab,
-            'tabs' => [
-                'vendors' => [
-                    'label' => __('Vendors'),
-                    'icon' => 'heroicon-o-building-storefront',
-                ],
-                'surveys' => [
-                    'label' => __('Vendor Surveys'),
-                    'icon' => 'heroicon-o-paper-airplane',
-                ],
-                'templates' => [
-                    'label' => __('Survey Templates'),
-                    'icon' => 'heroicon-o-clipboard-document-list',
-                ],
-            ],
-        ];
+        return match ($this->activeTab) {
+            'surveys', 'templates' => [SurveyInfoWidget::class],
+            default => [VendorStatsWidget::class],
+        };
     }
 }

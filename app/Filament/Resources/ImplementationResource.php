@@ -7,6 +7,7 @@ use App\Enums\ImplementationStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Resources\ImplementationResource\Pages;
 use App\Filament\Resources\ImplementationResource\RelationManagers;
+use App\Models\Application;
 use App\Models\Control;
 use App\Models\Implementation;
 use App\Models\User;
@@ -86,6 +87,18 @@ class ImplementationResource extends Resource
                     ->multiple()
                     ->placeholder('Select related controls') // Optional: Adds a placeholder
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: "All implementations should relate to a control. If you don't have a relevant control in place, consider creating a new one first."),
+                Forms\Components\Select::make('applications')
+                    ->label('Related Applications')
+                    ->relationship('applications', 'name')
+                    ->options(
+                        Application::all()->mapWithKeys(function ($application) {
+                            return [$application->id => $application->name];
+                        })->toArray()
+                    )
+                    ->searchable()
+                    ->multiple()
+                    ->placeholder('Select related applications')
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select applications that support or relate to this implementation.'),
                 Forms\Components\TextInput::make('title')
                     ->maxLength(255)
                     ->required()
@@ -358,6 +371,7 @@ class ImplementationResource extends Resource
             RelationManagers\AuditItemRelationManager::class,
             RelationManagers\RisksRelationManager::class,
             RelationManagers\AssetsRelationManager::class,
+            RelationManagers\ApplicationsRelationManager::class,
             RelationManagers\PoliciesRelationManager::class,
         ];
     }

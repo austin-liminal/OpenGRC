@@ -5,9 +5,9 @@ namespace App\Filament\Admin\Resources;
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Filament\Admin\Resources\TaxonomyResource\Pages;
 use App\Filament\Admin\Resources\TaxonomyResource\RelationManagers;
+use App\Filament\Concerns\RestoresSoftDeletedTaxonomies;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -44,19 +44,10 @@ class TaxonomyResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
-                    ->unique('taxonomies', 'name', ignoreRecord: true)
+                    ->unique('taxonomies', 'name', ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule->whereNull('deleted_at'))
                     ->maxLength(255)
                     ->label('Taxonomy Name')
-                    ->helperText('e.g., Department, Scope, Risk Level')
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
-                        if ($state) {
-                            // Auto-set type to lowercase, underscored version of name
-                            $set('type', strtolower(str_replace(' ', '_', $state)));
-                        }
-                    }),
-                Forms\Components\Hidden::make('type'),
-                Forms\Components\Hidden::make('slug'),
+                    ->helperText('e.g., Department, Scope, Risk Level'),
                 Forms\Components\Textarea::make('description')
                     ->maxLength(1000)
                     ->columnSpanFull()
@@ -106,15 +97,16 @@ class TaxonomyResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
                     ->hidden(fn (Taxonomy $record): bool => in_array($record->slug, self::$protectedTaxonomySlugs))
-                    ->disabled(fn (Taxonomy $record): bool => in_array($record->slug, self::$protectedTaxonomySlugs)),
+                    ->disabled(fn (Taxonomy $record): bool => in_array($record->slug, self::$protectedTaxonomySlugs))
+                    ->action(fn (Taxonomy $record) => RestoresSoftDeletedTaxonomies::deleteTaxonomyWithChildren($record)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
                         ->action(function ($records) {
                             $records->each(function ($record) {
-                                if (!in_array($record->slug, self::$protectedTaxonomySlugs)) {
-                                    $record->delete();
+                                if (! in_array($record->slug, self::$protectedTaxonomySlugs)) {
+                                    RestoresSoftDeletedTaxonomies::deleteTaxonomyWithChildren($record);
                                 }
                             });
                         }),

@@ -124,7 +124,7 @@
                                         {{ $revision['author'] ?? '' }}
                                     </td>
                                     <td class="border border-gray-300 dark:border-gray-600 px-4 py-3 text-gray-900 dark:text-gray-100">
-                                        {{ $revision['changes'] ?? '' }}
+                                        {!! $revision['changes'] ?? '' !!}
                                     </td>
                                 </tr>
                             @endforeach

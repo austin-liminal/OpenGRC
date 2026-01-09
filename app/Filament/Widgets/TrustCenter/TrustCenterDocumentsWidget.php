@@ -29,6 +29,11 @@ class TrustCenterDocumentsWidget extends BaseWidget
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label(__('Description'))
+                    ->html()
+                    ->limit(50)
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('trust_level')
                     ->label(__('Trust Level'))
                     ->badge()
