@@ -12,7 +12,7 @@ class McpSettingsSeeder extends Seeder
         $settings = [
             [
                 'key' => 'mcp.enabled',
-                'value' => 'false',
+                'value' => false,
             ],
         ];
 
