@@ -5,9 +5,12 @@ namespace App\Filament\Resources;
 use App\Enums\ApplicationStatus;
 use App\Enums\ApplicationType;
 use App\Filament\Resources\ApplicationResource\Pages;
+use App\Filament\Resources\ApplicationResource\RelationManagers;
 use App\Models\Application;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -93,6 +96,40 @@ class ApplicationResource extends Resource
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\TextEntry::make('name')
+                    ->label(__('Name')),
+                Infolists\Components\TextEntry::make('owner.name')
+                    ->label(__('Owner')),
+                Infolists\Components\TextEntry::make('type')
+                    ->label(__('Type'))
+                    ->badge()
+                    ->color(fn ($record) => $record->type->getColor()),
+                Infolists\Components\TextEntry::make('description')
+                    ->label(__('Description')),
+                Infolists\Components\TextEntry::make('status')
+                    ->label(__('Status'))
+                    ->badge()
+                    ->color(fn ($record) => $record->status->getColor()),
+                Infolists\Components\TextEntry::make('url')
+                    ->label(__('URL'))
+                    ->url(fn ($record) => $record->url, true),
+                Infolists\Components\TextEntry::make('notes')
+                    ->label(__('Notes')),
+                Infolists\Components\TextEntry::make('vendor.name')
+                    ->label(__('Vendor')),
+                Infolists\Components\TextEntry::make('created_at')
+                    ->label(__('Created'))
+                    ->dateTime(),
+                Infolists\Components\TextEntry::make('updated_at')
+                    ->label(__('Updated'))
+                    ->dateTime(),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -110,6 +147,7 @@ class ApplicationResource extends Resource
 
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -123,7 +161,7 @@ class ApplicationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ImplementationsRelationManager::class,
         ];
     }
 
@@ -132,6 +170,7 @@ class ApplicationResource extends Resource
         return [
             'index' => Pages\ListApplications::route('/'),
             'create' => Pages\CreateApplication::route('/create'),
+            'view' => Pages\ViewApplication::route('/{record}'),
             'edit' => Pages\EditApplication::route('/{record}/edit'),
         ];
     }
