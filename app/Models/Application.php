@@ -7,6 +7,7 @@ use App\Enums\ApplicationType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -40,6 +41,12 @@ class Application extends Model
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
+    }
+
+    public function implementations(): BelongsToMany
+    {
+        return $this->belongsToMany(Implementation::class)
+            ->withTimestamps();
     }
 
     public function getActivitylogOptions(): LogOptions
