@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('implementation_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['application_id', 'implementation_id']);
+            $table->unique(['application_id', 'implementation_id'], 'app_impl_unique');
         });
     }
 
