@@ -31,6 +31,10 @@ class ImplementationsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('details')
             ->columns([
+                Tables\Columns\TextColumn::make('code')
+                    ->label(__('Code'))
+                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('details')
                     ->label(__('Details'))
                     ->searchable()
