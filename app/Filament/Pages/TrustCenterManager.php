@@ -8,19 +8,16 @@ use App\Filament\Widgets\TrustCenter\PendingAccessRequestsWidget;
 use App\Filament\Widgets\TrustCenter\TrustCenterDocumentsWidget;
 use App\Filament\Widgets\TrustCenter\TrustCenterStatsWidget;
 use Filament\Actions\Action;
-use Filament\Pages\Page;
-use Livewire\Attributes\Url;
 
-class TrustCenterManager extends Page
+class TrustCenterManager extends TabbedPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
 
+    protected static ?string $navigationLabel = 'Trust Center';
+
+    protected static ?string $title = 'Trust Center';
+
     protected static ?int $navigationSort = 15;
-
-    protected static string $view = 'filament.pages.trust-center-manager';
-
-    #[Url]
-    public string $activeTab = 'documents';
 
     public static function canAccess(): bool
     {
@@ -31,21 +28,6 @@ class TrustCenterManager extends Page
         }
 
         return $user->can('Manage Trust Center') || $user->can('Manage Trust Access');
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('Trust Center');
-    }
-
-    public static function getNavigationGroup(): ?string
-    {
-        return null; // Top-level navigation
-    }
-
-    public function getTitle(): string
-    {
-        return __('Trust Center');
     }
 
     protected function getHeaderActions(): array
@@ -66,14 +48,29 @@ class TrustCenterManager extends Page
         ];
     }
 
-    protected function getHeaderWidgets(): array
+    public function getTabs(): array
     {
         return [
-            TrustCenterStatsWidget::class,
+            'documents' => [
+                'label' => __('Documents'),
+                'icon' => 'heroicon-o-document-text',
+            ],
+            'certifications' => [
+                'label' => __('Certifications'),
+                'icon' => 'heroicon-o-shield-check',
+            ],
+            'access_requests' => [
+                'label' => __('Access Requests'),
+                'icon' => 'heroicon-o-inbox',
+            ],
+            'content' => [
+                'label' => __('Content Blocks'),
+                'icon' => 'heroicon-o-squares-2x2',
+            ],
         ];
     }
 
-    protected function getFooterWidgets(): array
+    public function getWidgets(): array
     {
         return match ($this->activeTab) {
             'documents' => [TrustCenterDocumentsWidget::class],
@@ -84,33 +81,8 @@ class TrustCenterManager extends Page
         };
     }
 
-    public function setActiveTab(string $tab): void
+    public function getStatsWidgets(): array
     {
-        $this->activeTab = $tab;
-    }
-
-    protected function getViewData(): array
-    {
-        return [
-            'activeTab' => $this->activeTab,
-            'tabs' => [
-                'documents' => [
-                    'label' => __('Documents'),
-                    'icon' => 'heroicon-o-document-text',
-                ],
-                'certifications' => [
-                    'label' => __('Certifications'),
-                    'icon' => 'heroicon-o-shield-check',
-                ],
-                'access_requests' => [
-                    'label' => __('Access Requests'),
-                    'icon' => 'heroicon-o-inbox',
-                ],
-                'content' => [
-                    'label' => __('Content Blocks'),
-                    'icon' => 'heroicon-o-squares-2x2',
-                ],
-            ],
-        ];
+        return [TrustCenterStatsWidget::class];
     }
 }
