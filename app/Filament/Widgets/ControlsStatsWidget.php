@@ -10,6 +10,9 @@ use Filament\Widgets\ChartWidget;
 
 class ControlsStatsWidget extends ChartWidget
 {
+
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = null;
 
     protected static ?string $maxHeight = '250px';

@@ -8,6 +8,8 @@ use Filament\Widgets\ChartWidget;
 
 class ImplementationsStatsWidget extends ChartWidget
 {
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = null;
 
     protected static ?string $maxHeight = '250px';
