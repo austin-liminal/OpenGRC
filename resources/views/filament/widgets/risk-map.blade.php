@@ -2,8 +2,8 @@
     use App\Filament\Resources\RiskResource\Widgets\InherentRisk;
 @endphp
 
-<x-filament-widgets::widget>
-    <x-filament::card>
+<x-filament-widgets::widget class="overflow-visible">
+    <x-filament::card class="overflow-visible">
         <div class="bg-grcblue-200 bg-red-200 bg-red-500 bg-orange-200 bg-orange-500"></div>
         <div class="bg-grcblue-500 bg-green-200 bg-green-500 bg-yellow-200 bg-yellow-500"></div>
         <div class="bg-grcblue-500"></div>
@@ -18,7 +18,7 @@
         </header>
 
         <!-- Top section: Impact + row labels + main 5-col grid -->
-        <div class="flex h-[300px]">
+        <div class="flex h-[300px] overflow-visible">
             <!-- Narrow column for rotated "Impact" label -->
             <div style="width: 0;" class="flex items-center justify-center flex-none">
                 <div class="transform -rotate-90 text-sm font-bold leading-none">
@@ -27,7 +27,7 @@
             </div>
 
             <!-- Row labels + main grid -->
-            <div class="flex-1 flex items-start">
+            <div class="flex-1 flex items-start overflow-visible">
                 <!-- Row labels column -->
                 <div class="w-20 flex flex-col gap-0.5">
                     <div class="h-[60px] flex items-center justify-end text-xs p-1">Very High</div>
@@ -38,8 +38,8 @@
                 </div>
 
                 <!-- 5-col risk map grid -->
-                <div class="flex-1">
-                    <div class="grid grid-cols-5 gap-0.5 h-full w-full">
+                <div class="flex-1 overflow-visible">
+                    <div class="grid grid-cols-5 gap-0.5 h-full w-full overflow-visible">
                         @foreach (array_reverse($grid) as $impactIndex => $impactRow)
                             @foreach ($impactRow as $likelihoodIndex => $risks)
                                 @php
@@ -49,12 +49,30 @@
                                         $colorWeight = 500;
                                     }
                                     $colorClass = \App\Filament\Resources\RiskResource::getRiskColor($likelihoodIndex + 1, sizeof($grid) - $impactIndex, $colorWeight);
+
+                                    // Calculate actual likelihood and impact values (1-5)
+                                    $likelihoodValue = $likelihoodIndex + 1;
+                                    $impactValue = sizeof($grid) - $impactIndex;
+
+                                    // Build the filter URL based on risk type
+                                    $cellFilterUrl = $filterUrl . '?' . http_build_query([
+                                        'tableFilters' => [
+                                            $type . '_likelihood' => ['value' => $likelihoodValue],
+                                            $type . '_impact' => ['value' => $impactValue],
+                                        ]
+                                    ]);
+
+                                    // Determine tooltip position based on column (0-4)
+                                    // Left columns (0,1): show tooltip to the right
+                                    // Middle and right columns (2,3,4): show tooltip to the left to avoid edge
+                                    $showOnLeft = $likelihoodIndex >= 2;
                                 @endphp
 
                                 <div
-                                        class="text-center flex items-center justify-center {{ $colorClass }}"
-                                        style="height: 60px;"
                                         x-data="{ show: false }"
+                                        x-on:click="$dispatch('filter-risks', { type: '{{ $type }}', likelihood: {{ $likelihoodValue }}, impact: {{ $impactValue }} })"
+                                        class="text-center flex items-center justify-center {{ $colorClass }} transition-opacity hover:opacity-80 cursor-pointer"
+                                        style="height: 60px;"
                                         @mouseenter="show = true"
                                         @mouseleave="show = false"
                                 >
@@ -64,12 +82,13 @@
                                             <div
                                                     x-show="show"
                                                     x-cloak
-                                                    class="absolute z-10 bg-gray-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2 shadow-lg whitespace-normal max-w-xs overflow-y-auto max-h-48"
+                                                    class="absolute z-10 bg-gray-800 text-white text-xs rounded py-2 px-3 top-0 shadow-lg whitespace-nowrap overflow-y-auto max-h-48 text-left {{ $showOnLeft ? 'right-full mr-2' : 'left-full ml-2' }}"
+                                                    style="min-width: 200px; max-width: 300px;"
                                             >
-                                                <div class="font-medium">Risks:</div>
-                                                <ul class="list-disc list-outside pl-4 mt-1 space-y-0.5">
+                                                <div class="font-medium mb-1">Risks:</div>
+                                                <ul class="list-disc list-outside pl-4 space-y-0.5">
                                                 @foreach($risks as $risk)
-                                                    <li class="ml-0">{{ $risk->name }}</li>
+                                                    <li class="ml-0 truncate" title="{{ $risk->name }}">{{ Str::limit($risk->name, 40) }}</li>
                                                 @endforeach
                                                 </ul>
                                             </div>

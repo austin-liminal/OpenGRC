@@ -211,6 +211,42 @@ class RiskResource extends Resource
                     ->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('inherent_likelihood')
+                    ->label('Inherent Likelihood')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
+                Tables\Filters\SelectFilter::make('inherent_impact')
+                    ->label('Inherent Impact')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
+                Tables\Filters\SelectFilter::make('residual_likelihood')
+                    ->label('Residual Likelihood')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
+                Tables\Filters\SelectFilter::make('residual_impact')
+                    ->label('Residual Impact')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
                 Tables\Filters\SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
@@ -257,6 +293,14 @@ class RiskResource extends Resource
                             $query->where('taxonomy_id', $data['value']);
                         });
                     }),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('reset_filters')
+                    ->label('Reset Filters')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('gray')
+                    ->alpineClickHandler("\$dispatch('reset-risk-filters')")
+                    ->visible(fn ($livewire) => $livewire->hasActiveRiskFilters ?? request()->has('tableFilters')),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

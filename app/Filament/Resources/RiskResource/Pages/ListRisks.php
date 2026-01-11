@@ -7,12 +7,31 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Enums\ActionSize;
+use Livewire\Attributes\On;
 
 class ListRisks extends ListRecords
 {
     protected static string $resource = RiskResource::class;
 
     protected ?string $heading = 'Risk Management';
+
+    public bool $hasActiveRiskFilters = false;
+
+    #[On('filter-risks')]
+    public function filterRisks(string $type, int $likelihood, int $impact): void
+    {
+        $this->tableFilters[$type . '_likelihood']['value'] = (string) $likelihood;
+        $this->tableFilters[$type . '_impact']['value'] = (string) $impact;
+        $this->hasActiveRiskFilters = true;
+        $this->resetPage();
+    }
+
+    #[On('reset-risk-filters')]
+    public function resetRiskFilters(): void
+    {
+        $this->resetTableFiltersForm();
+        $this->hasActiveRiskFilters = false;
+    }
 
     protected function getHeaderActions(): array
     {
