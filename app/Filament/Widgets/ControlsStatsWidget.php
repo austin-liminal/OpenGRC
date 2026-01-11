@@ -28,24 +28,27 @@ class ControlsStatsWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $in_scope_standards = Standard::where('status', 'In Scope')->get();
+        $inScopeStandardIds = Standard::where('status', 'In Scope')->pluck('id');
 
-        $effective = Control::where('effectiveness', Effectiveness::EFFECTIVE)
-            ->where('applicability', Applicability::APPLICABLE)
-            ->whereIn('standard_id', $in_scope_standards->pluck('id'))
-            ->count() ?: 0;
-        $partial = Control::where('effectiveness', Effectiveness::PARTIAL)
-            ->where('applicability', Applicability::APPLICABLE)
-            ->whereIn('standard_id', $in_scope_standards->pluck('id'))
-            ->count() ?: 0;
-        $ineffective = Control::where('effectiveness', Effectiveness::INEFFECTIVE)
-            ->where('applicability', Applicability::APPLICABLE)
-            ->whereIn('standard_id', $in_scope_standards->pluck('id'))
-            ->count() ?: 0;
-        $unknown = Control::where('effectiveness', Effectiveness::UNKNOWN)
-            ->where('applicability', '!=', Applicability::NOTAPPLICABLE)
-            ->whereIn('standard_id', $in_scope_standards->pluck('id'))
-            ->count() ?: 0;
+        // Single query with conditional aggregation for all effectiveness counts
+        $counts = Control::whereIn('standard_id', $inScopeStandardIds)
+            ->selectRaw("
+                SUM(CASE WHEN effectiveness = ? AND applicability = ? THEN 1 ELSE 0 END) as effective,
+                SUM(CASE WHEN effectiveness = ? AND applicability = ? THEN 1 ELSE 0 END) as partial,
+                SUM(CASE WHEN effectiveness = ? AND applicability = ? THEN 1 ELSE 0 END) as ineffective,
+                SUM(CASE WHEN effectiveness = ? AND applicability != ? THEN 1 ELSE 0 END) as unknown
+            ", [
+                Effectiveness::EFFECTIVE->value, Applicability::APPLICABLE->value,
+                Effectiveness::PARTIAL->value, Applicability::APPLICABLE->value,
+                Effectiveness::INEFFECTIVE->value, Applicability::APPLICABLE->value,
+                Effectiveness::UNKNOWN->value, Applicability::NOTAPPLICABLE->value,
+            ])
+            ->first();
+
+        $effective = (int) ($counts->effective ?? 0);
+        $partial = (int) ($counts->partial ?? 0);
+        $ineffective = (int) ($counts->ineffective ?? 0);
+        $unknown = (int) ($counts->unknown ?? 0);
 
         return [
             'labels' => [

@@ -18,7 +18,7 @@ class AuditListWidget extends BaseWidget
     {
         return $table
             ->query(
-                Audit::query()->latest('updated_at')->take(5)
+                Audit::query()->with('manager')->latest('updated_at')->limit(5)
             )
             ->heading(trans('widgets.audit_list.heading'))
             ->emptyStateHeading(new HtmlString(trans('widgets.audit_list.empty_heading')))
