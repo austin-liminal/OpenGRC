@@ -76,9 +76,9 @@ class SendCommentMentionNotification // implements ShouldQueue
      */
     protected function getCommentUrl($commentable): ?string
     {
-        // For DataRequestResponse, generate the edit URL
+        // For DataRequestResponse, generate the view URL (not edit, since followers may not have edit access)
         if ($commentable instanceof \App\Models\DataRequestResponse) {
-            return route('filament.app.resources.data-request-responses.edit', ['record' => $commentable->id]);
+            return route('filament.app.resources.data-request-responses.view', ['record' => $commentable->id]);
         }
 
         // Add more model types as needed
