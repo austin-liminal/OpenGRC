@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Auto-Start Queue Worker
+    |--------------------------------------------------------------------------
+    |
+    | When true, the application will automatically start a queue worker when
+    | jobs are dispatched if one is not already running. Set to false if you
+    | are using a dedicated worker process (e.g., supervisor, systemd).
+    |
+    */
+
+    'auto_start' => env('QUEUE_AUTO_START', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Connections
     |--------------------------------------------------------------------------
     |
