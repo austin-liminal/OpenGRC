@@ -8,6 +8,8 @@ use Illuminate\Support\Collection;
 
 class InherentRisk extends Widget
 {
+    protected static bool $isLazy = false;
+
     protected static string $view = 'filament.widgets.risk-map';
 
     public $grid;

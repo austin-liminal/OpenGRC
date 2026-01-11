@@ -8,6 +8,7 @@ use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Support\Facades\FilamentColor;
 use Filament\Support\Facades\FilamentView;
+use Filament\Tables\Table;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
@@ -163,6 +164,10 @@ class AppServiceProvider extends ServiceProvider
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
             $switch
                 ->locales(['en', 'es', 'fr', 'hr']);
+        });
+
+        Table::configureUsing(function (Table $table): Table {
+            return $table->paginationPageOptions([10, 25, 50, 100]);
         });
 
         FilamentColor::register([

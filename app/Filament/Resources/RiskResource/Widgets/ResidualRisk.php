@@ -7,6 +7,8 @@ use Filament\Widgets\Widget;
 
 class ResidualRisk extends Widget
 {
+    protected static bool $isLazy = false;
+
     protected static string $view = 'filament.widgets.risk-map';
 
     public $grid;

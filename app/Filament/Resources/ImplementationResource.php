@@ -85,7 +85,15 @@ class ImplementationResource extends Resource
                     )
                     ->searchable()
                     ->multiple()
-                    ->placeholder('Select related controls') // Optional: Adds a placeholder
+                    ->default(function (Forms\Components\Select $component) {
+                        $livewire = $component->getLivewire();
+                        if ($livewire instanceof \Filament\Resources\RelationManagers\RelationManager) {
+                            return [$livewire->getOwnerRecord()->getKey()];
+                        }
+
+                        return null;
+                    })
+                    ->placeholder('Select related controls')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: "All implementations should relate to a control. If you don't have a relevant control in place, consider creating a new one first."),
                 Forms\Components\Select::make('applications')
                     ->label('Related Applications')

@@ -195,3 +195,7 @@ a.fi-logo {
     line-height: 0;
     font-size: 0;
 }
+/* Make page transition instant (removes fade but keeps FOUC prevention) */
+.fi-main-ctn.transition-all {
+    transition-duration: 0s !important;
+}

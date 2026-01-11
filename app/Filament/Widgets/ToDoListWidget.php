@@ -10,13 +10,20 @@ use Illuminate\Support\HtmlString;
 
 class ToDoListWidget extends BaseWidget
 {
+    protected static bool $isLazy = false;
+    
     protected int|string|array $columnSpan = '2';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                DataRequestResponse::query()->where('requestee_id', auth()->id())->take(5)->whereIn('status', ['Pending', 'in_progress'])->orderBy('due_at', 'asc')
+                DataRequestResponse::query()
+                    ->with(['dataRequest.audit'])
+                    ->where('requestee_id', auth()->id())
+                    ->whereIn('status', ['Pending', 'in_progress'])
+                    ->orderBy('due_at', 'asc')
+                    ->limit(5)
             )
             ->heading(trans('widgets.todo.heading'))
             ->emptyStateHeading(new HtmlString(trans('widgets.todo.empty_heading')))
