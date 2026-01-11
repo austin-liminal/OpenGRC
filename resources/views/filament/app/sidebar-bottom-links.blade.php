@@ -1,13 +1,45 @@
-<div class="fi-sidebar-bottom-links flex flex-col gap-2 p-4">
-    <hr class="border-t-1 my-2">
-    @canany(['Manage Users', 'View Audit Log', 'Manage Permissions', 'Configure Authentication'])
-    <a href="/admin/settings" class="flex items-center gap-2 text-sm text-primary-600 hover:underline">
-        <x-heroicon-o-cog class="w-5 h-5" />
-        Settings
-    </a>
-    @endcanany
-    <a href="https://docs.opengrc.com" target="_blank" class="flex items-center gap-2 text-sm text-primary-600 hover:underline">
-        <x-heroicon-o-question-mark-circle class="w-5 h-5" />
-        Help
-    </a>
-</div> 
+@php
+    $sidebarCollapsible = filament()->isSidebarCollapsibleOnDesktop();
+
+    $links = [
+        [
+            'label' => 'Settings',
+            'url' => '/admin/settings',
+            'icon' => 'heroicon-o-cog-6-tooth',
+            'external' => false,
+            'permissions' => ['Manage Users', 'View Audit Log', 'Manage Permissions', 'Configure Authentication'],
+        ],
+        [
+            'label' => 'Help',
+            'url' => 'https://docs.opengrc.com',
+            'icon' => 'heroicon-o-question-mark-circle',
+            'external' => true,
+            'permissions' => null,
+        ],
+    ];
+@endphp
+
+<ul class="fi-sidebar-nav-groups -mx-2 flex flex-col gap-y-1 px-4 pb-4">
+    <hr class="border-gray-600 mb-2 mx-2">
+    @foreach ($links as $link)
+        @if ($link['permissions'])
+            @canany($link['permissions'])
+                <x-filament-panels::sidebar.item
+                    :icon="$link['icon']"
+                    :url="$link['url']"
+                    :should-open-url-in-new-tab="$link['external']"
+                >
+                    {{ $link['label'] }}
+                </x-filament-panels::sidebar.item>
+            @endcanany
+        @else
+            <x-filament-panels::sidebar.item
+                :icon="$link['icon']"
+                :url="$link['url']"
+                :should-open-url-in-new-tab="$link['external']"
+            >
+                {{ $link['label'] }}
+            </x-filament-panels::sidebar.item>
+        @endif
+    @endforeach
+</ul> 

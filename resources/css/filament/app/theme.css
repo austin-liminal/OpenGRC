@@ -138,19 +138,6 @@ a.fi-logo {
     color: #000000;
 }
 
-.fi-sidebar-bottom-links {
-    background: inherit;
-    width: 100%;
-    z-index: 10;
-    /* Optionally add padding or border if you want separation */
-}
-.fi-sidebar-bottom-links a {
-    color: #fff !important;
-}
-.fi-sidebar-bottom-links a:hover {
-    color: #d4e7ef !important;
-    text-decoration: underline;
-}
 
 /* Custom sidebar scrollbar */
 .fi-sidebar-nav {
