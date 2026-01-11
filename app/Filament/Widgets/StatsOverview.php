@@ -16,6 +16,8 @@ class StatsOverview extends BaseWidget
 {
     public ?Program $program = null;
 
+    protected static bool $isLazy = false;
+
     protected function getStats(): array
     {
         if ($this->program) {
