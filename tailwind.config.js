@@ -2,6 +2,8 @@ import preset from './vendor/filament/support/tailwind.config.preset'
 const colors = require('tailwindcss/colors')
 const plugin = require('tailwindcss/plugin');
 
+//IMPORTANT: Most changes will be made to resources/css/filament/app/tailwind.config.js
+
 export default {
     presets: [preset],
     content: [
@@ -12,6 +14,16 @@ export default {
         './vendor/filament/**/*.blade.php',
     ],
     safelist: [
+        // Margin classes used in seeder data (CSV content)
+        'ml-4',
+        'ml-8',
+        'block',
+        'hidden',
+        'text-sm',
+        'text-lg',
+        'font-medium',
+        'font-semibold',
+        'font-bold',
         // Ensure grcblue colors are never purged
         'bg-grcblue-200',
         'bg-grcblue-400',
