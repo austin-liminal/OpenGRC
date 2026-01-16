@@ -43,8 +43,12 @@ class ListRisks extends ListRecords
                 ->size(ActionSize::Small)
                 ->color('primary')
                 ->action(function () {
-                    // Get all risks with their implementations, sorted by residual risk
+                    // Get active risks (or null status) with their implementations, sorted by residual risk
                     $risks = \App\Models\Risk::with(['implementations'])
+                        ->where(function ($query) {
+                            $query->where('is_active', true)
+                                ->orWhereNull('is_active');
+                        })
                         ->get()
                         ->sortByDesc(function ($risk) {
                             return ($risk->residual_likelihood + $risk->residual_impact) / 2;
