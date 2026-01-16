@@ -24,7 +24,12 @@ class ResidualRisk extends Widget
 
     public function mount(string $title = 'Residual Risk'): void
     {
-        $risks = Risk::select(['id', 'name', 'residual_likelihood', 'residual_impact'])->get();
+        $risks = Risk::select(['id', 'name', 'residual_likelihood', 'residual_impact'])
+            ->where(function ($query) {
+                $query->where('is_active', true)
+                    ->orWhereNull('is_active');
+            })
+            ->get();
         $this->grid = InherentRisk::generateGrid($risks, 'residual');
         $this->title = $title;
         $this->type = 'residual';

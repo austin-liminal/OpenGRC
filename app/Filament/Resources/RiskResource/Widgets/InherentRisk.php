@@ -25,7 +25,12 @@ class InherentRisk extends Widget
 
     public function mount(string $title = 'Inherent Risk'): void
     {
-        $risks = Risk::select(['id', 'name', 'inherent_likelihood', 'inherent_impact'])->get();
+        $risks = Risk::select(['id', 'name', 'inherent_likelihood', 'inherent_impact'])
+            ->where(function ($query) {
+                $query->where('is_active', true)
+                    ->orWhereNull('is_active');
+            })
+            ->get();
         $this->grid = self::generateGrid($risks, 'inherent');
         $this->title = $title;
         $this->type = 'inherent';
