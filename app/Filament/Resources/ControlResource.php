@@ -84,6 +84,20 @@ class ControlResource extends Resource
                     ->searchable()
                     ->options(Standard::pluck('name', 'id')->toArray())
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.standard.tooltip'))
+                    ->default(function (Forms\Get $get, Forms\Components\Select $component) {
+                        $livewire = $component->getLivewire();
+                        if ($livewire instanceof \Filament\Resources\RelationManagers\RelationManager) {
+                            return $livewire->getOwnerRecord()->getKey();
+                        }
+
+                        return null;
+                    })
+                    ->disabled(function (Forms\Components\Select $component) {
+                        $livewire = $component->getLivewire();
+
+                        return $livewire instanceof \Filament\Resources\RelationManagers\RelationManager;
+                    })
+                    ->dehydrated()
                     ->required(),
                 Forms\Components\Select::make('enforcement')
                     ->options(ControlEnforcementCategory::class)

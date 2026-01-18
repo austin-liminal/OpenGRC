@@ -1,4 +1,4 @@
-<div class="relative" x-data="{ open: @entangle('isOpen') }">
+<div class="relative" x-data="{ open: @entangle('isOpen') }" wire:poll.30s="refreshNotifications">
     <!-- Bell Icon Button -->
     <button
         type="button"

@@ -1,12 +1,4 @@
 <x-filament-panels::page.simple>
-    @if($this->surveyRecord)
-        <div class="mb-6 text-center">
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ $this->getSubheading() }}
-            </p>
-        </div>
-    @endif
-
     @if($mode === 'login')
         <x-filament-panels::form wire:submit="login">
             {{ $this->loginForm }}

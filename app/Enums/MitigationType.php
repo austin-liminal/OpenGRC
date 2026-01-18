@@ -12,6 +12,7 @@ enum MitigationType: string implements hasColor, hasLabel
     case MITIGATE = 'Mitigate';
     case TRANSFER = 'Transfer';
     case ACCEPT = 'Accept';
+    case EXPLOITED = 'Exploited';
 
     public function getLabel(): ?string
     {
@@ -21,6 +22,7 @@ enum MitigationType: string implements hasColor, hasLabel
             self::MITIGATE => 'Mitigate',
             self::TRANSFER => 'Transfer',
             self::ACCEPT => 'Accept',
+            self::EXPLOITED => 'Exploited',
         };
     }
 
@@ -30,8 +32,9 @@ enum MitigationType: string implements hasColor, hasLabel
             self::OPEN => 'danger',
             self::AVOID => 'success',
             self::MITIGATE => 'warning',
-            self::TRANSFER => 'danger',
+            self::TRANSFER => 'info',
             self::ACCEPT => 'primary',
+            self::EXPLOITED => 'danger',
         };
     }
 }
