@@ -11,28 +11,22 @@ ENV NODE_VERSION=20.x
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Install repository management tools and add custom repositories
-# Step 1: Update base Ubuntu repos and install tools needed to add repos
-# Step 2: Add PHP and Node.js repos (both scripts do their own apt-get update)
-# Step 3: Clean up to minimize layer size
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        software-properties-common \
-        curl \
-        ca-certificates \
-        gnupg \
-        apt-utils \
+    software-properties-common \
+    curl \
+    ca-certificates \
+    gnupg \
+    apt-utils \
     && add-apt-repository ppa:ondrej/php \
     && curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION} | bash - \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install all application packages (repos already configured above)
+# Install all application packages
 RUN apt-get update && apt-get install -y \
     # Apache2
     apache2 \
-    # ModSecurity2 Install
-    libapache2-mod-security2 \
-    modsecurity-crs \
     # PHP and extensions
     php${PHP_VERSION} \
     php${PHP_VERSION}-cli \
@@ -56,18 +50,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     git \
-    vim \
     openssl \
     sudo \
-    rsyslog \
-    net-tools \
-    jq \
-    # Security scanning
-    yara \
-    # Install Fluent Bit
-    && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
-    # Install Trivy vulnerability scanner
-    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin \
     # Cleanup
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -75,7 +59,7 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configure PHP-FPM pool for performance (optimized for 1GB container)
+# Configure PHP-FPM pool for performance
 RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
     && sed -i 's/pm.max_children = .*/pm.max_children = 20/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
     && sed -i 's/;pm.process_idle_timeout = .*/pm.process_idle_timeout = 10s/' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf \
@@ -85,7 +69,7 @@ RUN sed -i 's/pm = dynamic/pm = ondemand/' /etc/php/${PHP_VERSION}/fpm/pool.d/ww
     && sed -i 's/post_max_size = .*/post_max_size = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini \
     && sed -i 's/max_execution_time = .*/max_execution_time = 60/' /etc/php/${PHP_VERSION}/fpm/php.ini
 
-# Configure PHP-FPM to log to file (for rsyslog forwarding)
+# Configure PHP-FPM to log to file
 RUN sed -i 's|;error_log = log/php8.3-fpm.log|error_log = /var/log/php8.3-fpm.log|' /etc/php/${PHP_VERSION}/fpm/php-fpm.conf \
     && sed -i 's|;catch_workers_output = yes|catch_workers_output = yes|' /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
 
@@ -100,12 +84,10 @@ RUN a2enmod rewrite \
     && a2enmod remoteip \
     && a2dismod mpm_prefork \
     && a2enmod mpm_event \
-    && a2enmod security2 \    
     && a2enconf php${PHP_VERSION}-fpm
 
-# Configure RemoteIP to trust DigitalOcean load balancer
-RUN echo '# Trust DigitalOcean load balancer for X-Forwarded-For\n\
-RemoteIPHeader X-Forwarded-For\n\
+# Configure RemoteIP to trust load balancer
+RUN echo 'RemoteIPHeader X-Forwarded-For\n\
 RemoteIPTrustedProxy 10.0.0.0/8\n\
 RemoteIPTrustedProxy 172.16.0.0/12\n\
 RemoteIPTrustedProxy 192.168.0.0/16\n\
@@ -116,13 +98,28 @@ RemoteIPInternalProxy 192.168.0.0/16\n\
 RemoteIPInternalProxy 100.64.0.0/10' > /etc/apache2/conf-available/remoteip.conf
 
 RUN a2enconf remoteip
-RUN a2enconf security
 
 # Configure Apache to listen on port 80
 RUN echo 'Listen 80' > /etc/apache2/ports.conf
 
-# Overwrite the default Apache site with OpenGRC configuration
-COPY enterprise-deploy/apache/opengrc.conf /etc/apache2/sites-available/000-default.conf
+# Create Apache VirtualHost for Laravel
+RUN echo '<VirtualHost *:80>\n\
+    ServerAdmin webmaster@localhost\n\
+    DocumentRoot /var/www/html/public\n\
+    \n\
+    <Directory /var/www/html/public>\n\
+        Options -Indexes +FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    \n\
+    <FilesMatch \\.php$>\n\
+        SetHandler "proxy:unix:/run/php/php8.3-fpm.sock|fcgi://localhost"\n\
+    </FilesMatch>\n\
+    \n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Set ServerName to suppress warnings
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -133,13 +130,11 @@ WORKDIR /var/www/html
 # Copy application code
 COPY . .
 
-# Install PHP dependencies (without dev dependencies for production)
-RUN composer install
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-# Copy package files
+# Copy package files and install Node dependencies
 COPY package*.json ./
-
-# Install Node dependencies (including dev dependencies needed for build)
 RUN npm ci
 
 # Complete Composer installation with autoloader optimization
@@ -152,7 +147,6 @@ RUN npm run build
 RUN rm -rf node_modules
 
 # Create necessary directories and set permissions
-# Note: SSL is handled by DigitalOcean load balancer, no certificates needed in container
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/views \
@@ -164,69 +158,44 @@ RUN mkdir -p storage/framework/cache/data \
     && chmod -R 775 storage bootstrap/cache database \
     && chmod 664 storage/logs/laravel.log
 
-# Copy enterprise deployment scripts
-COPY enterprise-deploy/ /var/www/html/enterprise-deploy/
-RUN chmod +x /var/www/html/enterprise-deploy/*.sh
+# Create PHP-FPM run directory
+RUN mkdir -p /run/php
 
-# Copy Fluent Bit configuration files (must be after enterprise-deploy is copied)
-RUN mkdir -p /etc/fluent-bit
-COPY enterprise-deploy/fluent-bit/*.conf /etc/fluent-bit/
-COPY enterprise-deploy/fluent-bit/*.lua /etc/fluent-bit/
+# Set up Laravel scheduler cron job
+RUN echo "* * * * * www-data cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/laravel-cron \
+    && chmod 0644 /etc/cron.d/laravel-cron
 
-# Copy Trivy vulnerability scanning script
-COPY enterprise-deploy/trivy-scan.sh /usr/local/bin/trivy-scan
-RUN chmod 0755 /usr/local/bin/trivy-scan
-
-# Copy FIM (File Integrity Monitoring) scripts
-RUN mkdir -p /var/lib/fim /var/log/fim
-COPY enterprise-deploy/fim/fim-init.sh /usr/local/bin/fim-init
-COPY enterprise-deploy/fim/fim-check.sh /usr/local/bin/fim-check
-COPY enterprise-deploy/fim/setup-fim-cron.sh /var/www/html/enterprise-deploy/setup-fim-cron.sh
-RUN chmod 0755 /usr/local/bin/fim-init /usr/local/bin/fim-check \
-    && chmod 0755 /var/www/html/enterprise-deploy/setup-fim-cron.sh \
-    && chmod 0700 /var/lib/fim \
-    && chmod 0755 /var/log/fim
-
-# Copy YARA malware scanning scripts and rules
-RUN mkdir -p /var/log/yara /etc/yara/rules
-COPY enterprise-deploy/yara/yara-scan.sh /usr/local/bin/yara-scan
-COPY enterprise-deploy/yara/setup-yara-cron.sh /var/www/html/enterprise-deploy/setup-yara-cron.sh
-COPY enterprise-deploy/yara/yara-exceptions.conf /etc/yara/yara-exceptions.conf
-COPY enterprise-deploy/yara/rules/*.yar /etc/yara/rules/
-RUN chmod 0755 /usr/local/bin/yara-scan \
-    && chmod 0755 /var/www/html/enterprise-deploy/setup-yara-cron.sh \
-    && chmod 0755 /var/log/yara \
-    && chmod 0644 /etc/yara/rules/*.yar \
-    && chmod 0644 /etc/yara/yara-exceptions.conf
-
-# Configure rsyslog for FIM and YARA alerts
-RUN echo '# FIM alerts\n\
-:programname, isequal, "fim-init" /var/log/fim/fim.log\n\
-:programname, isequal, "fim-check" /var/log/fim/fim.log\n\
-\n\
-# Stop processing if it'"'"'s a FIM message to prevent duplicates\n\
-:programname, isequal, "fim-init" stop\n\
-:programname, isequal, "fim-check" stop' > /etc/rsyslog.d/30-fim.conf
-
-RUN echo '# YARA alerts\n\
-:programname, isequal, "yara-scan" /var/log/yara/scan.log\n\
-\n\
-# Stop processing if it'"'"'s a YARA message to prevent duplicates\n\
-:programname, isequal, "yara-scan" stop' > /etc/rsyslog.d/31-yara.conf
-
-# Set up cron jobs (Laravel, Trivy, FIM, and YARA)
-COPY enterprise-deploy/laravel-cron /etc/cron.d/laravel-cron
-RUN chmod 0644 /etc/cron.d/laravel-cron \
-    && /var/www/html/enterprise-deploy/setup-cron.sh \
-    && /var/www/html/enterprise-deploy/setup-fim-cron.sh \
-    && /var/www/html/enterprise-deploy/setup-yara-cron.sh
-
-# Expose port 80 (DigitalOcean load balancer forwards to this port)
+# Expose port 80
 EXPOSE 80
 
-# Health check using HTTP on port 80
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=5 \
     CMD curl -f http://localhost/ || exit 1
 
-# Use entrypoint script to handle migrations and start Apache
-ENTRYPOINT ["/var/www/html/enterprise-deploy/entrypoint.sh"]
+# Create entrypoint script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Run migrations if DATABASE_URL or DB_DATABASE is set\n\
+if [ -n "$DATABASE_URL" ] || [ -f "/var/www/html/database/database.sqlite" ]; then\n\
+    php artisan migrate --force || true\n\
+fi\n\
+\n\
+# Clear and cache config for production\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
+\n\
+# Start cron\n\
+service cron start\n\
+\n\
+# Start PHP-FPM\n\
+service php8.3-fpm start\n\
+\n\
+# Start Apache in foreground\n\
+exec apache2ctl -D FOREGROUND\n\
+' > /var/www/html/docker-entrypoint.sh \
+    && chmod +x /var/www/html/docker-entrypoint.sh
+
+# Use entrypoint script
+ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
