@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cd47dff224850fab3d1404a6d1f0d1d6",
+    "content-hash": "93ea906c761afef74a54d43307ace296",
     "packages": [
         {
             "name": "aliziodev/laravel-taxonomy",
@@ -4898,89 +4898,6 @@
                 }
             ],
             "time": "2025-12-19T02:00:29+00:00"
-        },
-        {
-            "name": "lucasgiovanny/filament-multiselect-two-sides",
-            "version": "v2.1.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/lucasgiovanny/filament-multiselect-two-sides.git",
-                "reference": "63767022c274b494bbf13026ba36abcc4440ab25"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/lucasgiovanny/filament-multiselect-two-sides/zipball/63767022c274b494bbf13026ba36abcc4440ab25",
-                "reference": "63767022c274b494bbf13026ba36abcc4440ab25",
-                "shasum": ""
-            },
-            "require": {
-                "filament/filament": "^3.0",
-                "filament/forms": "^3.0",
-                "php": "^8.1",
-                "spatie/laravel-package-tools": "^1.15.0"
-            },
-            "require-dev": {
-                "laravel/pint": "^1.0",
-                "nunomaduro/collision": "^7.9",
-                "nunomaduro/larastan": "^2.0",
-                "orchestra/testbench": "^8.0",
-                "pestphp/pest": "^2.1",
-                "pestphp/pest-plugin-arch": "^2.0",
-                "pestphp/pest-plugin-laravel": "^2.0",
-                "phpstan/extension-installer": "^1.1",
-                "phpstan/phpstan-deprecation-rules": "^1.0",
-                "phpstan/phpstan-phpunit": "^1.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "FilamentMultiselectTwoSides": "LucasGiovanny\\FilamentMultiselectTwoSides\\Facades\\FilamentMultiselectTwoSides"
-                    },
-                    "providers": [
-                        "LucasGiovanny\\FilamentMultiselectTwoSides\\FilamentMultiselectTwoSidesServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "LucasGiovanny\\FilamentMultiselectTwoSides\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Lucas Giovanny",
-                    "email": "lucasgiovanny@gmail.com",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Leo França",
-                    "email": "leoarkiteto@gmail.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "This package is a Filament package that allows you to create a multiselect with two sides.",
-            "homepage": "https://github.com/lucasgiovanny/filament-multiselect-two-sides",
-            "keywords": [
-                "filament-multiselect-two-sides",
-                "laravel",
-                "lucasgiovanny"
-            ],
-            "support": {
-                "issues": "https://github.com/lucasgiovanny/filament-multiselect-two-sides/issues",
-                "source": "https://github.com/lucasgiovanny/filament-multiselect-two-sides"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/lucasgiovanny",
-                    "type": "github"
-                }
-            ],
-            "time": "2024-03-13T08:39:37+00:00"
         },
         {
             "name": "masterminds/html5",

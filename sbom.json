@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:af71fbd0-5ff6-4596-b208-2bfcf06da198",
+    "serialNumber": "urn:uuid:69c408e6-9f75-4bc5-846c-57ee8ef0f016",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-01-09T00:00:25Z",
+        "timestamp": "2026-01-20T19:44:54Z",
         "tools": [
             {
                 "name": "composer",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "03abcbd217b8ee138778fa4d99668bf818a97039"
+                    "value": "759c51a0f3114ce89b0918bb1b04ca41dbefd239"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "03abcbd217b8ee138778fa4d99668bf818a97039"
+                    "value": "759c51a0f3114ce89b0918bb1b04ca41dbefd239"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -4686,64 +4686,6 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "a5384df9fbd3eaf02e053bc49aabc8ace293fc1c"
-                },
-                {
-                    "name": "cdx:composer:package:type",
-                    "value": "library"
-                }
-            ]
-        },
-        {
-            "bom-ref": "lucasgiovanny/filament-multiselect-two-sides-2.1.2.0",
-            "type": "library",
-            "name": "filament-multiselect-two-sides",
-            "version": "v2.1.2",
-            "group": "lucasgiovanny",
-            "description": "This package is a Filament package that allows you to create a multiselect with two sides.",
-            "author": "Lucas Giovanny, Leo Fran\u00e7a",
-            "licenses": [
-                {
-                    "license": {
-                        "id": "MIT"
-                    }
-                }
-            ],
-            "purl": "pkg:composer/lucasgiovanny/filament-multiselect-two-sides@v2.1.2",
-            "externalReferences": [
-                {
-                    "type": "distribution",
-                    "url": "https://api.github.com/repos/lucasgiovanny/filament-multiselect-two-sides/zipball/63767022c274b494bbf13026ba36abcc4440ab25",
-                    "comment": "dist reference: 63767022c274b494bbf13026ba36abcc4440ab25"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/lucasgiovanny/filament-multiselect-two-sides.git",
-                    "comment": "source reference: 63767022c274b494bbf13026ba36abcc4440ab25"
-                },
-                {
-                    "type": "website",
-                    "url": "https://github.com/lucasgiovanny/filament-multiselect-two-sides",
-                    "comment": "as detected from Composer manifest 'homepage'"
-                },
-                {
-                    "type": "issue-tracker",
-                    "url": "https://github.com/lucasgiovanny/filament-multiselect-two-sides/issues",
-                    "comment": "as detected from Composer manifest 'support.issues'"
-                },
-                {
-                    "type": "vcs",
-                    "url": "https://github.com/lucasgiovanny/filament-multiselect-two-sides",
-                    "comment": "as detected from Composer manifest 'support.source'"
-                }
-            ],
-            "properties": [
-                {
-                    "name": "cdx:composer:package:distReference",
-                    "value": "63767022c274b494bbf13026ba36abcc4440ab25"
-                },
-                {
-                    "name": "cdx:composer:package:sourceReference",
-                    "value": "63767022c274b494bbf13026ba36abcc4440ab25"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -12823,14 +12765,6 @@
             ]
         },
         {
-            "ref": "lucasgiovanny/filament-multiselect-two-sides-2.1.2.0",
-            "dependsOn": [
-                "filament/filament-3.3.46.0",
-                "filament/forms-3.3.46.0",
-                "spatie/laravel-package-tools-1.92.7.0"
-            ]
-        },
-        {
             "ref": "masterminds/html5-2.10.0.0"
         },
         {
@@ -13558,7 +13492,6 @@
                 "laravel/tinker-2.11.0.0",
                 "league/flysystem-aws-s3-v3-3.30.1.0",
                 "leandrocfe/filament-apex-charts-3.2.1.0",
-                "lucasgiovanny/filament-multiselect-two-sides-2.1.2.0",
                 "outerweb/filament-settings-1.3.0.0",
                 "outerweb/settings-1.1.0.0",
                 "rmsramos/activitylog-2.0.0.0",
