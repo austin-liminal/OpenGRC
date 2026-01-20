@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use AmidEsfahani\FilamentTinyEditor\TinyEditor;
+use Filament\Forms\Components\RichEditor;
 use App\Enums\Applicability;
 use App\Enums\ControlCategory;
 use App\Enums\ControlEnforcementCategory;
@@ -131,17 +131,16 @@ class ControlResource extends Resource
                     ->maxLength(1024)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.title.tooltip'))
                     ->maxLength(1024),
-                TinyEditor::make('description')
+                RichEditor::make('description')
                     ->required()
                     ->maxLength(65535)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.description.tooltip'))
-                    ->extraInputAttributes(['class' => 'filament-forms-rich-editor-unfiltered'])
                     ->columnSpanFull(),
-                TinyEditor::make('discussion')
+                RichEditor::make('discussion')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.discussion.tooltip'))
                     ->maxLength(65535)
                     ->columnSpanFull(),
-                TinyEditor::make('test')
+                RichEditor::make('test')
                     ->label(__('control.form.test.label'))
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: __('control.form.test.tooltip'))
                     ->maxLength(65535)

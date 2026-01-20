@@ -176,7 +176,7 @@ class PdfHelper extends Controller
                 } else {
                     // Handle local storage paths
                     // Parse the source URL to extract the storage path
-                    // TinyEditor typically stores images with paths like:
+                    // RichEditor typically stores images with paths like:
                     // /app/priv-storage/ssp-uploads/filename.png
                     // or /storage/ssp-uploads/filename.png
 

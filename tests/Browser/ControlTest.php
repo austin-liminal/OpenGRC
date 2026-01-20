@@ -97,9 +97,9 @@ class ControlTest extends DuskTestCase
                 ->filamentSelect('control_owner_id', 'Admin User')
                 ->pause(300);
 
-            // Fill the description (TinyMCE editor)
+            // Fill the description (RichEditor)
             $browser->pause(1000);
-            $this->fillTinyMCE($browser, 'data.description', 'This is a test control description for Dusk testing.');
+            $this->fillRichEditor($browser, 'data.description', 'This is a test control description for Dusk testing.');
 
             // Submit
             $browser->scrollIntoView('button[type="submit"]')
@@ -280,56 +280,54 @@ class ControlTest extends DuskTestCase
     }
 
     /**
-     * Helper method to fill TinyMCE editor using its API.
+     * Helper method to fill Filament RichEditor using Trix.
      */
-    protected function fillTinyMCE(Browser $browser, string $fieldId, string $content): void
+    protected function fillRichEditor(Browser $browser, string $fieldId, string $content): void
     {
-        // TinyMCE editors have IDs that include the field name
-        // The Filament TinyEditor uses a format like: tiny-editor-{random}-{field}
+        // Filament RichEditor uses Trix editor under the hood
+        // The editor has a trix-editor element with a corresponding hidden input
         $browser->script("
             (function() {
-                if (typeof tinymce === 'undefined') {
-                    console.log('TinyMCE not found');
-                    return;
-                }
+                // Find the Trix editor element - look for one containing 'description' in related elements
+                const trixEditors = document.querySelectorAll('trix-editor');
 
-                // Get all editors and find one with 'description' in the ID
-                const allEditors = tinymce.get();
-                if (!allEditors || allEditors.length === 0) {
-                    console.log('No TinyMCE editors found');
+                if (trixEditors.length === 0) {
+                    console.log('No Trix editors found');
                     return;
                 }
 
                 let editor = null;
 
-                // allEditors might be a single editor or array
-                const editors = Array.isArray(allEditors) ? allEditors : [allEditors];
-
-                // Find editor containing 'description' in ID
-                for (const e of editors) {
-                    if (e && e.id && e.id.toLowerCase().includes('description')) {
-                        editor = e;
+                // Find editor by looking at the input element's name/id
+                for (const trix of trixEditors) {
+                    const inputId = trix.getAttribute('input');
+                    if (inputId && inputId.toLowerCase().includes('description')) {
+                        editor = trix;
+                        break;
+                    }
+                    // Also check aria-label or nearby labels
+                    const label = trix.closest('.fi-fo-field-wrp')?.querySelector('label');
+                    if (label && label.textContent.toLowerCase().includes('description')) {
+                        editor = trix;
                         break;
                     }
                 }
 
                 // Fallback to first editor
-                if (!editor && editors.length > 0) {
-                    editor = editors[0];
+                if (!editor && trixEditors.length > 0) {
+                    editor = trixEditors[0];
                 }
 
-                if (editor) {
-                    editor.setContent('<p>{$content}</p>');
-                    editor.fire('change');
-                    editor.fire('blur');
-                    // Also dispatch input on the hidden textarea
-                    const textarea = document.getElementById(editor.id);
-                    if (textarea) {
-                        textarea.value = '<p>{$content}</p>';
-                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                        textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                if (editor && editor.editor) {
+                    editor.editor.loadHTML('<p>{$content}</p>');
+                    // Trigger change events
+                    editor.dispatchEvent(new Event('trix-change', { bubbles: true }));
+                    const input = document.getElementById(editor.getAttribute('input'));
+                    if (input) {
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-                    console.log('Set content on editor:', editor.id);
+                    console.log('Set content on Trix editor');
                 }
             })();
         ");
@@ -337,42 +335,37 @@ class ControlTest extends DuskTestCase
     }
 
     /**
-     * Helper method to fill TinyMCE editor in a modal.
+     * Helper method to fill Filament RichEditor in a modal.
      */
-    protected function fillTinyMCEInModal(Browser $browser, string $fieldId, string $content): void
+    protected function fillRichEditorInModal(Browser $browser, string $fieldId, string $content): void
     {
-        // TinyMCE editor IDs use underscores instead of dots
-        $editorId = str_replace('.', '_', $fieldId);
-
         $browser->script("
-            // Try to use TinyMCE API first - find any editor in the modal
-            if (typeof tinymce !== 'undefined') {
-                const editors = tinymce.get();
-                for (const editor of (Array.isArray(editors) ? editors : [editors])) {
-                    if (editor && editor.id && editor.id.includes('{$editorId}')) {
-                        editor.setContent('{$content}');
-                        editor.fire('change');
-                        return;
-                    }
-                }
-                // Try direct ID match
-                const editor = tinymce.get('{$editorId}');
-                if (editor) {
-                    editor.setContent('{$content}');
-                    editor.fire('change');
+            (function() {
+                const modal = document.querySelector('.fi-modal');
+                if (!modal) {
+                    console.log('No modal found');
                     return;
                 }
-            }
 
-            // Fallback: Find the textarea in the modal
-            const modal = document.querySelector('.fi-modal');
-            if (modal) {
-                const textarea = modal.querySelector('textarea[id*=\"{$editorId}\"]');
-                if (textarea) {
-                    textarea.value = '{$content}';
-                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                const trixEditors = modal.querySelectorAll('trix-editor');
+                if (trixEditors.length === 0) {
+                    console.log('No Trix editors found in modal');
+                    return;
                 }
-            }
+
+                // Use the first Trix editor in the modal
+                const editor = trixEditors[0];
+                if (editor && editor.editor) {
+                    editor.editor.loadHTML('<p>{$content}</p>');
+                    editor.dispatchEvent(new Event('trix-change', { bubbles: true }));
+                    const input = document.getElementById(editor.getAttribute('input'));
+                    if (input) {
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    console.log('Set content on modal Trix editor');
+                }
+            })();
         ");
         $browser->pause(500);
     }
