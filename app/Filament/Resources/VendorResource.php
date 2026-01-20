@@ -8,6 +8,7 @@ use App\Enums\VendorRiskRating;
 use App\Enums\VendorStatus;
 use App\Filament\Resources\VendorResource\Pages;
 use App\Filament\Resources\VendorResource\RelationManagers\ApplicationsRelationManager;
+use App\Filament\Resources\VendorResource\RelationManagers\ImplementationsRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\SurveysRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\VendorDocumentsRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\VendorUsersRelationManager;
@@ -352,6 +353,7 @@ class VendorResource extends Resource
     {
         return [
             ApplicationsRelationManager::class,
+            ImplementationsRelationManager::class,
             SurveysRelationManager::class,
             VendorUsersRelationManager::class,
             VendorDocumentsRelationManager::class,
