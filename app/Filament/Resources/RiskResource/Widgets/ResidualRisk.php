@@ -2,22 +2,37 @@
 
 namespace App\Filament\Resources\RiskResource\Widgets;
 
+use App\Filament\Resources\RiskResource;
 use App\Models\Risk;
 use Filament\Widgets\Widget;
 
 class ResidualRisk extends Widget
 {
+    protected static bool $isLazy = false;
+
     protected static string $view = 'filament.widgets.risk-map';
 
-    public $grid;
+    public array $grid;
 
-    public $title;
+    public string $title;
+
+    public string $type = 'residual';
+
+    public string $filterUrl;
 
     protected static ?int $sort = 2;
 
-    public function mount($title = 'Residual Risk'): void
+    public function mount(string $title = 'Residual Risk'): void
     {
-        $this->grid = InherentRisk::generateGrid(Risk::all(), 'residual');
+        $risks = Risk::select(['id', 'name', 'residual_likelihood', 'residual_impact'])
+            ->where(function ($query) {
+                $query->where('is_active', true)
+                    ->orWhereNull('is_active');
+            })
+            ->get();
+        $this->grid = InherentRisk::generateGrid($risks, 'residual');
         $this->title = $title;
+        $this->type = 'residual';
+        $this->filterUrl = RiskResource::getUrl('index');
     }
 }

@@ -55,11 +55,7 @@ class ImplementationRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('New implementation')
-                    ->after(function ($record) {
-                        // Attach the newly created implementation to this control
-                        $this->getOwnerRecord()->implementations()->syncWithoutDetaching([$record->id]);
-                    }),
+                    ->label('New implementation'),
                 Tables\Actions\AttachAction::make()
                     ->label('Add Existing Implementation')
                     ->preloadRecordSelect()

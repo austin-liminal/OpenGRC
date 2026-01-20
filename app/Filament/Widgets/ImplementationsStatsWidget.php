@@ -8,6 +8,8 @@ use Filament\Widgets\ChartWidget;
 
 class ImplementationsStatsWidget extends ChartWidget
 {
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = null;
 
     protected static ?string $maxHeight = '250px';
@@ -23,10 +25,23 @@ class ImplementationsStatsWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $effective = Implementation::where('effectiveness', Effectiveness::EFFECTIVE)->count();
-        $partial = Implementation::where('effectiveness', Effectiveness::PARTIAL)->count();
-        $ineffective = Implementation::where('effectiveness', Effectiveness::INEFFECTIVE)->count();
-        $unknown = Implementation::where('effectiveness', Effectiveness::UNKNOWN)->count();
+        // Single query with conditional aggregation for all effectiveness counts
+        $counts = Implementation::selectRaw("
+            SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as effective,
+            SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as partial,
+            SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as ineffective,
+            SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as unknown
+        ", [
+            Effectiveness::EFFECTIVE->value,
+            Effectiveness::PARTIAL->value,
+            Effectiveness::INEFFECTIVE->value,
+            Effectiveness::UNKNOWN->value,
+        ])->first();
+
+        $effective = (int) ($counts->effective ?? 0);
+        $partial = (int) ($counts->partial ?? 0);
+        $ineffective = (int) ($counts->ineffective ?? 0);
+        $unknown = (int) ($counts->unknown ?? 0);
 
         return [
             'labels' => [

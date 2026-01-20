@@ -10,13 +10,15 @@ use Illuminate\Support\HtmlString;
 
 class AuditListWidget extends BaseWidget
 {
+    protected static bool $isLazy = false;
+    
     protected int|string|array $columnSpan = '2';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                Audit::query()->latest('updated_at')->take(5)
+                Audit::query()->with('manager')->latest('updated_at')->limit(5)
             )
             ->heading(trans('widgets.audit_list.heading'))
             ->emptyStateHeading(new HtmlString(trans('widgets.audit_list.empty_heading')))

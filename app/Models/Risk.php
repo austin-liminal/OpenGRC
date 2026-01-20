@@ -8,6 +8,7 @@ use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -15,15 +16,16 @@ class Risk extends Model
 {
     use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity;
 
+    protected $casts = [
+        'id' => 'integer',
+        'action' => MitigationType::class,
+        'is_active' => 'boolean',
+    ];
+
     protected $fillable = [
         'name',
         'likelihood',
         'impact',
-    ];
-
-    protected $casts = [
-        'id' => 'integer',
-        'action' => MitigationType::class,
     ];
 
     public function implementations(): BelongsToMany
@@ -40,6 +42,16 @@ class Risk extends Model
     public function programs(): BelongsToMany
     {
         return $this->belongsToMany(Program::class);
+    }
+
+    public function mitigations(): MorphMany
+    {
+        return $this->morphMany(Mitigation::class, 'mitigatable');
+    }
+
+    public function latestMitigation(): ?Mitigation
+    {
+        return $this->mitigations()->latest('date_implemented')->first();
     }
 
     /**
@@ -66,7 +78,19 @@ class Risk extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'likelihood', 'impact', 'action'])
+            ->logOnly([
+                'code',
+                'name',
+                'description',
+                'inherent_likelihood',
+                'inherent_impact',
+                'inherent_risk',
+                'residual_likelihood',
+                'residual_impact',
+                'residual_risk',
+                'status',
+                'is_active',
+            ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

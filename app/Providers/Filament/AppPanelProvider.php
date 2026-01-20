@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Blade;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 use Livewire\Livewire;
+use Rmsramos\Activitylog\ActivitylogPlugin;
 
 class AppPanelProvider extends PanelProvider
 {
@@ -129,6 +130,9 @@ class AppPanelProvider extends PanelProvider
                     ->enableSanctumTokens(),
                 FilamentSocialitePlugin::make()
                     ->setProviders($socialProviders),
+                ActivitylogPlugin::make()
+                    ->isResourceActionHidden(true)
+                    ->navigationItem(false),
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,

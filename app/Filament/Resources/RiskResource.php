@@ -6,6 +6,7 @@ use App\Enums\RiskStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Resources\RiskResource\Pages;
 use App\Filament\Resources\RiskResource\RelationManagers\ImplementationsRelationManager;
+use App\Filament\Resources\RiskResource\RelationManagers\MitigationsRelationManager;
 use App\Filament\Resources\RiskResource\RelationManagers\PoliciesRelationManager;
 use App\Models\Risk;
 use Filament\Forms;
@@ -15,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
+use Rmsramos\Activitylog\RelationManagers\ActivitylogRelationManager;
 
 class RiskResource extends Resource
 {
@@ -116,6 +118,10 @@ class RiskResource extends Resource
                     ->enum(RiskStatus::class)
                     ->options(RiskStatus::class)
                     ->required(),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true)
+                    ->helperText('Inactive risks are excluded from reports and dashboards'),
                 self::taxonomySelect('Department', 'department')
                     ->nullable()
                     ->columnSpan(1),
@@ -209,8 +215,57 @@ class RiskResource extends Resource
                         ->select('risks.*');
                     })
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('mitigation_status')
+                    ->label('Mitigation')
+                    ->getStateUsing(fn (Risk $record) => $record->mitigations()->exists() ? 'Applied' : 'None')
+                    ->badge()
+                    ->color(fn (string $state) => $state === 'Applied' ? 'success' : 'gray')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label('Status')
+                    ->getStateUsing(fn (Risk $record) => $record->is_active ? 'Active' : 'Inactive')
+                    ->badge()
+                    ->color(fn (string $state) => $state === 'Active' ? 'success' : 'gray')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('inherent_likelihood')
+                    ->label('Inherent Likelihood')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
+                Tables\Filters\SelectFilter::make('inherent_impact')
+                    ->label('Inherent Impact')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
+                Tables\Filters\SelectFilter::make('residual_likelihood')
+                    ->label('Residual Likelihood')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
+                Tables\Filters\SelectFilter::make('residual_impact')
+                    ->label('Residual Impact')
+                    ->options([
+                        '1' => 'Very Low',
+                        '2' => 'Low',
+                        '3' => 'Moderate',
+                        '4' => 'High',
+                        '5' => 'Very High',
+                    ]),
                 Tables\Filters\SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
@@ -257,6 +312,21 @@ class RiskResource extends Resource
                             $query->where('taxonomy_id', $data['value']);
                         });
                     }),
+                Tables\Filters\SelectFilter::make('is_active')
+                    ->label('Status')
+                    ->options([
+                        '1' => 'Active',
+                        '0' => 'Inactive',
+                    ])
+                    ->default('1'),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('reset_filters')
+                    ->label('Reset Filters')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('gray')
+                    ->alpineClickHandler("\$dispatch('reset-risk-filters')")
+                    ->visible(fn ($livewire) => $livewire->hasActiveRiskFilters ?? request()->has('tableFilters')),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
@@ -275,6 +345,8 @@ class RiskResource extends Resource
         return [
             'implementations' => ImplementationsRelationManager::class,
             'policies' => PoliciesRelationManager::class,
+            'mitigations' => MitigationsRelationManager::class,
+            'activities' => ActivitylogRelationManager::class,
         ];
     }
 

@@ -5,8 +5,13 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
 
+// Health check endpoint for load balancers and Docker health checks
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok'], 200);
+}); 
+
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('filament.app.auth.login');
 });
 
 // override default login route to point to Filament login

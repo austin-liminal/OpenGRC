@@ -58,9 +58,17 @@ class QueueController extends Controller
 
     /**
      * Ensure a queue worker is running, start one if needed
+     * Returns true if worker was already running, false if a new one was started, null if auto-start is disabled
      */
-    public function ensureQueueWorkerRunning(): bool
+    public function ensureQueueWorkerRunning(): ?bool
     {
+        // Check if auto-start is enabled in configuration
+        if (! config('queue.auto_start', true)) {
+            Log::info('Queue auto-start is disabled, skipping worker check');
+
+            return null; // Auto-start disabled
+        }
+
         if (! $this->isQueueWorkerRunning()) {
             $this->startQueueWorker();
 

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use AmidEsfahani\FilamentTinyEditor\TinyEditor;
+use Filament\Forms\Components\RichEditor;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Resources\ProgramResource\Pages;
 use App\Filament\Resources\ProgramResource\RelationManagers;
@@ -54,9 +54,8 @@ class ProgramResource extends Resource
                     ->columnSpanFull()
                     ->required()
                     ->maxLength(255),
-                TinyEditor::make('description')
+                RichEditor::make('description')
                     ->label(__('programs.form.description'))
-                    ->profile('default')
                     ->fileAttachmentsDisk(setting('storage.driver', 'private'))
                     ->fileAttachmentsVisibility('private')
                     ->fileAttachmentsDirectory('ssp-uploads')

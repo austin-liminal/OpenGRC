@@ -120,6 +120,15 @@ class Implementation extends Model
     }
 
     /**
+     * The vendors that belong to the implementation.
+     */
+    public function vendors(): BelongsToMany
+    {
+        return $this->belongsToMany(Vendor::class)
+            ->withTimestamps();
+    }
+
+    /**
      * Get the name of the index associated with the model.
      */
     public function searchableAs(): string
