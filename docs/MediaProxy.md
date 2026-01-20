@@ -8,7 +8,7 @@ OpenGRC implements a Laravel-based media proxy to serve private cloud storage fi
 
 ### The Challenge
 
-Modern rich text editors (TinyMCE, Tiptap, Quill) require JavaScript to load images in the browser for editing, preview, and feature functionality (dimension checks, resize handles, etc.). When storing files in private cloud storage:
+Modern rich text editors (Filament RichEditor, Tiptap, Quill) require JavaScript to load images in the browser for editing, preview, and feature functionality (dimension checks, resize handles, etc.). When storing files in private cloud storage:
 
 1. **Direct S3 URLs are blocked** - Private files return 403 Forbidden to browser requests
 2. **Signed URLs have limitations**:
@@ -41,7 +41,7 @@ Browser → Laravel (/media/path) → S3 (authenticated) → Browser
 
 * ✅ **No CORS Issues** - Same-origin requests (browser → your domain)
 * ✅ **Private Storage** - Files remain private in S3, no public bucket policies needed
-* ✅ **Works with Any Editor** - TinyEditor, RichEditor, Tiptap, Quill, etc.
+* ✅ **Works with Any Editor** - Filament RichEditor, Tiptap, Quill, etc.
 * ✅ **Works with Any Cloud** - S3, DigitalOcean Spaces, any S3-compatible storage
 * ✅ **Authentication** - Laravel middleware controls access
 * ✅ **Efficient** - Streams files directly, doesn't load into memory
@@ -182,9 +182,8 @@ Configure S3 and DigitalOcean disks to use the proxy URL:
 **File**: `app/Filament/Resources/ProgramResource.php`
 
 ```php
-TinyEditor::make('description')
+RichEditor::make('description')
     ->label(__('programs.form.description'))
-    ->profile('default')
     ->fileAttachmentsDisk(setting('storage.driver', 'private'))
     ->fileAttachmentsVisibility('private')
     ->fileAttachmentsDirectory('ssp-uploads')
@@ -193,7 +192,7 @@ TinyEditor::make('description')
 
 **No Special Configuration Needed**:
 - The editor uses Laravel's `Storage::url()` which automatically uses proxy URLs
-- Works with TinyEditor, Filament RichEditor, or any other editor
+- Works with Filament RichEditor or any other editor
 - Images upload to S3 (private) and display via proxy
 
 ## Request Flow
