@@ -11,6 +11,7 @@ use App\Models\Application;
 use App\Models\Control;
 use App\Models\Implementation;
 use App\Models\User;
+use App\Models\Vendor;
 use Exception;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -107,6 +108,18 @@ class ImplementationResource extends Resource
                     ->multiple()
                     ->placeholder('Select related applications')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select applications that support or relate to this implementation.'),
+                Forms\Components\Select::make('vendors')
+                    ->label('Related Vendors')
+                    ->relationship('vendors', 'name')
+                    ->options(
+                        Vendor::all()->mapWithKeys(function ($vendor) {
+                            return [$vendor->id => $vendor->name];
+                        })->toArray()
+                    )
+                    ->searchable()
+                    ->multiple()
+                    ->placeholder('Select related vendors')
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select vendors that support or relate to this implementation.'),
                 Forms\Components\TextInput::make('title')
                     ->maxLength(255)
                     ->required()
@@ -380,6 +393,7 @@ class ImplementationResource extends Resource
             RelationManagers\RisksRelationManager::class,
             RelationManagers\AssetsRelationManager::class,
             RelationManagers\ApplicationsRelationManager::class,
+            RelationManagers\VendorsRelationManager::class,
             RelationManagers\PoliciesRelationManager::class,
         ];
     }
