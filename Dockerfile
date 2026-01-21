@@ -172,30 +172,8 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=5 \
     CMD curl -f http://localhost/ || exit 1
 
-# Create entrypoint script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-# Run migrations if DATABASE_URL or DB_DATABASE is set\n\
-if [ -n "$DATABASE_URL" ] || [ -f "/var/www/html/database/database.sqlite" ]; then\n\
-    php artisan migrate --force || true\n\
-fi\n\
-\n\
-# Clear and cache config for production\n\
-php artisan config:cache\n\
-php artisan route:cache\n\
-php artisan view:cache\n\
-\n\
-# Start cron\n\
-service cron start\n\
-\n\
-# Start PHP-FPM\n\
-service php8.3-fpm start\n\
-\n\
-# Start Apache in foreground\n\
-exec apache2ctl -D FOREGROUND\n\
-' > /var/www/html/docker-entrypoint.sh \
-    && chmod +x /var/www/html/docker-entrypoint.sh
+# Copy and set up entrypoint script
+COPY docker-entrypoint.sh /var/www/html/docker-entrypoint.sh
+RUN chmod +x /var/www/html/docker-entrypoint.sh
 
-# Use entrypoint script
 ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
