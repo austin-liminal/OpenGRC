@@ -59,7 +59,7 @@
                 @class([
                     'fi-sidebar-item-icon h-6 w-6',
                     'text-gray-400 dark:text-gray-500' => ! $active,
-                    'text-primary-600 dark:text-primary-400' => $active,
+                    'text-white' => $active,
                 ])
             />
         @endif

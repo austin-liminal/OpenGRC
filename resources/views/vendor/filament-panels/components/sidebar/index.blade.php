@@ -96,10 +96,7 @@
         </header>
     </div>
 
-    <nav
-        class="fi-sidebar-nav flex-grow flex flex-col gap-y-7 overflow-y-auto overflow-x-hidden px-6 py-8"
-        style="scrollbar-gutter: stable"
-    >
+    <nav class="fi-sidebar-nav flex-grow flex flex-col gap-y-7 overflow-y-auto overflow-x-hidden px-6 py-8">
         {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::SIDEBAR_NAV_START) }}
 
         @if (filament()->hasTenancy() && filament()->hasTenantMenu())
