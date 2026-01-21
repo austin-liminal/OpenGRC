@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MCP\OAuthRegisterController;
+use App\Http\Middleware\McpEnabled;
 use App\Mcp\Servers\OpenGrcServer;
 use Illuminate\Support\Facades\Route;
 use Laravel\Mcp\Facades\Mcp;
@@ -27,7 +28,7 @@ use Laravel\Mcp\Facades\Mcp;
 
 // OAuth 2.1 discovery and registration endpoints
 // These are public routes for OAuth discovery, but MCP must be enabled
-Route::middleware(['mcp.enabled'])->group(function () {
+Route::middleware([McpEnabled::class])->group(function () {
     Mcp::oauthRoutes('oauth');
 
     // Override the default oauth/register route with Passport v12 compatible controller
@@ -53,7 +54,7 @@ Route::middleware(['mcp.enabled'])->group(function () {
 
 // HTTP MCP endpoint - requires OAuth token via Passport
 // Enable/disable via Settings > AI Settings > MCP Server
-Route::middleware(['mcp.enabled'])->group(function () {
+Route::middleware([McpEnabled::class])->group(function () {
     Mcp::web('/mcp/opengrc', OpenGrcServer::class)
         ->middleware(['auth:api', 'throttle:mcp']);
 });
