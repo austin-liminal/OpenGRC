@@ -17,6 +17,7 @@ use App\Mcp\Tools\ManagePolicyTool;
 use App\Mcp\Tools\ManageProgramTool;
 use App\Mcp\Tools\ManageRiskTool;
 use App\Mcp\Tools\ManageStandardTool;
+use App\Mcp\Tools\ManageTaxonomyTool;
 use App\Mcp\Tools\ManageVendorTool;
 use Laravel\Mcp\Server;
 
@@ -54,11 +55,12 @@ class OpenGrcServer extends Server
         - `ManageProgram` - Manage organizational security programs
         - `ManageRisk` - Manage risk register entries
         - `ManageStandard` - Manage compliance frameworks (NIST, ISO, SOC2, etc.)
+        - `ManageTaxonomy` - **Manage taxonomy types and terms** (departments, scopes, statuses, etc.)
         - `ManageVendor` - Manage third-party vendors
 
         ### Tool Actions
 
-        All Manage* tools support these actions:
+        All Manage* tools (except ManageTaxonomy) support these actions:
 
         **List (paginated):**
         ```json
@@ -86,11 +88,85 @@ class OpenGrcServer extends Server
         {"action": "delete", "id": 1, "confirm": true}
         ```
 
+        ## Taxonomies (IMPORTANT)
+
+        Many entities use **taxonomy fields** for categorization. These are foreign key references to taxonomy terms. Before creating or updating entities with taxonomy fields, you MUST look up the correct taxonomy term ID.
+
+        ### Common Taxonomy Fields
+
+        - **Policy**: `department_id`, `scope_id`, `status_id`
+        - **Asset**: `asset_type_id`, `status_id`, `condition_id`, `compliance_status_id`, `data_classification_id`
+
+        ### ManageTaxonomy Actions
+
+        **1. List taxonomy types** (see all available taxonomies):
+        ```json
+        {"action": "list_types"}
+        ```
+        Returns: Department, Scope, Policy Status, Asset Type, Asset Status, etc.
+
+        **2. List terms within a type** (see available values):
+        ```json
+        {"action": "list_terms", "type": "department"}
+        {"action": "list_terms", "type": "policy-status"}
+        {"action": "list_terms", "type": "scope"}
+        ```
+        Returns: All terms with their IDs.
+
+        **3. Get term by ID or by type+name**:
+        ```json
+        {"action": "get", "id": 5}
+        {"action": "get", "type": "department", "name": "IT"}
+        ```
+        Returns: The term's ID and details.
+
+        **4. Create a new term**:
+        ```json
+        {"action": "create", "type": "department", "data": {"name": "Legal", "description": "Legal department"}}
+        ```
+
+        **5. Update a term**:
+        ```json
+        {"action": "update", "id": 5, "data": {"name": "Updated Name"}}
+        ```
+
+        **6. Delete a term**:
+        ```json
+        {"action": "delete", "id": 5, "confirm": true}
+        ```
+
+        ### Example: Creating a Policy with Department
+
+        1. First, find the department ID:
+        ```json
+        ManageTaxonomy: {"action": "get", "type": "department", "name": "IT"}
+        // Response: {"id": 3, "name": "IT", ...}
+        ```
+
+        2. Then create the policy with that ID:
+        ```json
+        ManagePolicy: {"action": "create", "data": {"name": "Access Control Policy", "department_id": 3, "purpose": "<p>...</p>"}}
+        ```
+
+        ### Example: Setting Asset Classification
+
+        1. Find available data classifications:
+        ```json
+        ManageTaxonomy: {"action": "list_terms", "type": "data-classification"}
+        // Response: Confidential (id: 10), Internal (id: 11), Public (id: 12), Restricted (id: 13)
+        ```
+
+        2. Update the asset:
+        ```json
+        ManageAsset: {"action": "update", "id": 1, "data": {"data_classification_id": 10}}
+        ```
+
         ## Common Workflows
 
         ### Creating a Policy
-        1. Use ManageControl with action="list" to find controls to reference
-        2. Use ManagePolicy with action="create" and data
+        1. Use ManageTaxonomy with action="list_terms" type="department" to find departments
+        2. Use ManageTaxonomy with action="list_terms" type="scope" to find scopes
+        3. Use ManagePolicy with action="create" including department_id and scope_id
 
         ### Reviewing Compliance
         1. Use ManageStandard with action="list" to see frameworks
@@ -131,6 +207,7 @@ class OpenGrcServer extends Server
         ManageProgramTool::class,
         ManageRiskTool::class,
         ManageStandardTool::class,
+        ManageTaxonomyTool::class,
         ManageVendorTool::class,
     ];
 
