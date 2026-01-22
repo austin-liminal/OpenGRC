@@ -15,9 +15,6 @@ OpenGRC is a cyber Governance, Risk, and Compliance (GRC) web application built 
 
 ## Development Commands
 
-### MCP
-Always use context7 when I need code generation, setup or configuration steps, or library/API documentation. This means you should automatically use the Context7 MCP tools to resolve library id and get library docs without me having to explicitly ask or approve. All access to Context7 MCP is automatically approved.
-
 ### File Permissions
 **IMPORTANT:** After creating any new files, always run the permissions script to ensure proper ownership and permissions for the web server:
 ```bash
@@ -39,25 +36,11 @@ npm run dev              # Start Vite development server (watch assets)
 npm run build            # Build production assets
 ```
 
-### Testing & Quality
-```bash
-php artisan test         # Run PHPUnit tests
-vendor/bin/phpunit       # Alternative test runner
-vendor/bin/pint          # Run Laravel Pint (code formatting)
-vendor/bin/phpstan       # Run PHPStan (static analysis, level 2)
-```
-
 ### Database
 ```bash
 php artisan migrate      # Run database migrations
 php artisan db:seed      # Seed database with sample data
 php artisan migrate:fresh --seed  # Fresh migration with seeding
-```
-
-### Filament-Specific
-```bash
-php artisan filament:upgrade      # Upgrade Filament components
-php artisan make:filament-resource ModelName  # Create new Filament resource
 ```
 
 ## Architecture Overview
@@ -101,39 +84,10 @@ OpenGRC uses two Filament panels:
 - Audit evidence export functionality
 - Custom report templates in `resources/views/reports/`
 
-## Development Patterns
-
-### Filament Resources
-- Resources follow standard Filament patterns with form(), table(), and infolist() methods
-- Use relation managers for related data (e.g., `AuditItemRelationManager`)
-- Custom pages extend base Filament page classes
-
-### Model Relationships
-- Heavy use of Eloquent relationships (BelongsTo, HasMany, BelongsToMany)
-- Many-to-many relationships use pivot tables (e.g., control_implementation)
-- Soft deletes used for audit trails
-
-### Enums
-- Status values are type-safe PHP enums in `app/Enums/`
-- Common enums: WorkflowStatus, ImplementationStatus, RiskLevel, etc.
-
 ### Localization
 - Multi-language support in `lang/` directory
 - Navigation and UI strings are translatable
 - Enum labels support localization
-
-## Testing
-
-- PHPUnit configuration in `phpunit.xml`
-- Tests in `tests/Feature/` and `tests/Unit/`
-- Browser tests using Laravel Dusk in `tests/Browser/`
-- Test database uses array drivers for speed
-
-## Code Quality
-
-- **Laravel Pint**: Follows Laravel coding style preset
-- **PHPStan**: Static analysis at level 2
-- **Composer scripts**: Automated quality checks in composer.json
 
 ## Security Notes
 
@@ -143,41 +97,7 @@ OpenGRC uses two Filament panels:
 - Role-based permission system
 - Session timeout middleware
 
-## Claude Code Configuration
-
-### MCP Servers
-
-This project uses the **context7** MCP (Model Context Protocol) server to provide enhanced context and semantic search capabilities.
-
-**Usage:**
-- When working with this codebase, use `use context7` to leverage the MCP server for better code understanding
-- The context7 server provides semantic search across the codebase
-- Helps with navigating relationships between models, resources, and components
-
-**Setup:**
-To enable the context7 MCP server in your Claude Desktop configuration:
-
-1. Add to your `claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upwego/mcp-context7"]
-    }
-  }
-}
-```
-
-2. Restart Claude Desktop to load the MCP server
-
-**When to use context7:**
-- Finding related files and components
-- Understanding model relationships and dependencies
-- Searching for usage patterns across the codebase
-- Navigating complex Filament resource structures
-
-===
+---
 
 <laravel-boost-guidelines>
 === foundation rules ===
