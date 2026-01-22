@@ -231,7 +231,8 @@ class ControlResource extends Resource
                                 ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
                         })
                         ->orderBy('dept_taxonomies.name', $direction)
-                        ->select('controls.*');
+                        ->select('controls.*')
+                        ->distinct();
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('taxonomy_scope')
@@ -252,7 +253,8 @@ class ControlResource extends Resource
                                 ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
                         })
                         ->orderBy('scope_taxonomies.name', $direction)
-                        ->select('controls.*');
+                        ->select('controls.*')
+                        ->distinct();
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
