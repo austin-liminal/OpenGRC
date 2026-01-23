@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use Aliziodev\LaravelTaxonomy\Traits\HasTaxonomy;
+use App\Enums\DocumentType;
 use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +43,7 @@ class Policy extends Model
     protected $fillable = [
         'code',
         'name',
+        'document_type',
         'policy_scope',
         'purpose',
         'body',
@@ -63,6 +65,7 @@ class Policy extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'document_type' => DocumentType::class,
         'effective_date' => 'date',
         'retired_date' => 'date',
         'revision_history' => 'array',
