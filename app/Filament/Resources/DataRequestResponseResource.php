@@ -60,7 +60,7 @@ class DataRequestResponseResource extends Resource
                             });
 
                             // Fallback to single relationship
-                            if (!$hasControl && $record->dataRequest->auditItem) {
+                            if (! $hasControl && $record->dataRequest->auditItem) {
                                 $hasControl = $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class;
                             }
 
@@ -74,7 +74,7 @@ class DataRequestResponseResource extends Resource
                                     return $item->auditable_type === \App\Models\Control::class;
                                 });
 
-                                if (!$hasControl && $record->dataRequest->auditItem) {
+                                if (! $hasControl && $record->dataRequest->auditItem) {
                                     $hasControl = $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class;
                                 }
 
@@ -93,13 +93,13 @@ class DataRequestResponseResource extends Resource
 
                                                 $output = '';
                                                 if ($code) {
-                                                    $output .= '<strong>Code:</strong> ' . e($code) . '<br>';
+                                                    $output .= '<strong>Code:</strong> '.e($code).'<br>';
                                                 }
                                                 if ($title) {
-                                                    $output .= '<strong>Title:</strong> ' . e($title) . '<br>';
+                                                    $output .= '<strong>Title:</strong> '.e($title).'<br>';
                                                 }
                                                 if ($details) {
-                                                    $output .= '<strong>Details:</strong> ' . $details;
+                                                    $output .= '<strong>Details:</strong> '.$details;
                                                 }
 
                                                 return $output;
@@ -118,18 +118,79 @@ class DataRequestResponseResource extends Resource
 
                                             $output = '';
                                             if ($code) {
-                                                $output .= '<strong>Code:</strong> ' . e($code) . '<br>';
+                                                $output .= '<strong>Code:</strong> '.e($code).'<br>';
                                             }
                                             if ($title) {
-                                                $output .= '<strong>Title:</strong> ' . e($title) . '<br>';
+                                                $output .= '<strong>Title:</strong> '.e($title).'<br>';
                                             }
                                             if ($details) {
-                                                $output .= '<strong>Details:</strong> ' . $details;
+                                                $output .= '<strong>Details:</strong> '.$details;
                                             }
                                             $items = [$output];
                                         }
 
-                                        return new HtmlString(!empty($items) ? implode('<hr class="my-4">', $items) : 'No details available');
+                                        return new HtmlString(! empty($items) ? implode('<hr class="my-4">', $items) : 'No details available');
+                                    })
+                                    ->label('')
+                                    ->columnSpanFull(),
+                            ]),
+                        Section::make('Current Implementations')
+                            ->columnSpanFull()
+                            ->collapsible()
+                            ->visible(function ($record) {
+                                // Check if any audit items are Controls with implementations
+                                foreach ($record->dataRequest->auditItems as $item) {
+                                    if ($item->auditable_type === \App\Models\Control::class && $item->auditable?->implementations->isNotEmpty()) {
+                                        return true;
+                                    }
+                                }
+
+                                // Fallback to single relationship
+                                if ($record->dataRequest->auditItem) {
+                                    $auditItem = $record->dataRequest->auditItem;
+                                    if ($auditItem->auditable_type === \App\Models\Control::class && $auditItem->auditable?->implementations->isNotEmpty()) {
+                                        return true;
+                                    }
+                                }
+
+                                return false;
+                            })
+                            ->schema([
+                                Placeholder::make('implementations')
+                                    ->content(function ($record) {
+                                        $implementations = collect();
+
+                                        // Gather implementations from all Control audit items
+                                        foreach ($record->dataRequest->auditItems as $item) {
+                                            if ($item->auditable_type === \App\Models\Control::class && $item->auditable) {
+                                                $implementations = $implementations->merge($item->auditable->implementations);
+                                            }
+                                        }
+
+                                        // Fallback to single relationship
+                                        if ($implementations->isEmpty() && $record->dataRequest->auditItem) {
+                                            $auditItem = $record->dataRequest->auditItem;
+                                            if ($auditItem->auditable_type === \App\Models\Control::class && $auditItem->auditable) {
+                                                $implementations = $auditItem->auditable->implementations;
+                                            }
+                                        }
+
+                                        $items = $implementations->unique('id')->map(function ($impl) {
+                                            $output = '';
+                                            if ($impl->code) {
+                                                $output .= '<strong>Code:</strong> '.e($impl->code).'<br>';
+                                            }
+                                            if ($impl->title) {
+                                                $output .= '<strong>Title:</strong> '.e($impl->title).'<br>';
+                                            }
+                                            if ($impl->details) {
+                                                $output .= '<strong>Details:</strong> '.$impl->details;
+                                            }
+
+                                            return $output;
+                                        })->filter()->all();
+
+                                        return new HtmlString(! empty($items) ? implode('<hr class="my-4">', $items) : 'No implementations available');
                                     })
                                     ->label('')
                                     ->columnSpanFull(),
@@ -204,7 +265,7 @@ class DataRequestResponseResource extends Resource
                         ViewField::make('comments')
                             ->view('filament.forms.components.inline-comments')
                             ->dehydrated(false),
-                    ]),                               
+                    ]),
             ]);
     }
 

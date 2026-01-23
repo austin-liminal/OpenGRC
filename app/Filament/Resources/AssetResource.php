@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
+use App\Filament\Exports\AssetExporter;
 use App\Filament\Resources\AssetResource\Pages;
 use App\Filament\Resources\AssetResource\RelationManagers;
 use App\Models\Asset;
@@ -14,6 +15,8 @@ use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -719,33 +722,30 @@ class AssetResource extends Resource
                     ->form([
                         Forms\Components\TextInput::make('manufacturer'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder =>
-                        $query->when(
-                            $data['manufacturer'],
-                            fn (Builder $query, $manufacturer): Builder => $query->where('manufacturer', 'like', "%{$manufacturer}%")
-                        )
+                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                        $data['manufacturer'],
+                        fn (Builder $query, $manufacturer): Builder => $query->where('manufacturer', 'like', "%{$manufacturer}%")
+                    )
                     ),
 
                 Tables\Filters\Filter::make('model')
                     ->form([
                         Forms\Components\TextInput::make('model'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder =>
-                        $query->when(
-                            $data['model'],
-                            fn (Builder $query, $model): Builder => $query->where('model', 'like', "%{$model}%")
-                        )
+                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                        $data['model'],
+                        fn (Builder $query, $model): Builder => $query->where('model', 'like', "%{$model}%")
+                    )
                     ),
 
                 Tables\Filters\Filter::make('serial_number')
                     ->form([
                         Forms\Components\TextInput::make('serial_number'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder =>
-                        $query->when(
-                            $data['serial_number'],
-                            fn (Builder $query, $serial): Builder => $query->where('serial_number', 'like', "%{$serial}%")
-                        )
+                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                        $data['serial_number'],
+                        fn (Builder $query, $serial): Builder => $query->where('serial_number', 'like', "%{$serial}%")
+                    )
                     ),
 
                 Tables\Filters\Filter::make('purchase_date')
@@ -755,16 +755,15 @@ class AssetResource extends Resource
                         Forms\Components\DatePicker::make('purchased_until')
                             ->label('Purchased Until'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder =>
-                        $query
-                            ->when(
-                                $data['purchased_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('purchase_date', '>=', $date),
-                            )
-                            ->when(
-                                $data['purchased_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('purchase_date', '<=', $date),
-                            )
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(
+                            $data['purchased_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('purchase_date', '>=', $date),
+                        )
+                        ->when(
+                            $data['purchased_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('purchase_date', '<=', $date),
+                        )
                     ),
 
                 Tables\Filters\SelectFilter::make('condition_id')
@@ -801,16 +800,15 @@ class AssetResource extends Resource
                         Forms\Components\DatePicker::make('warranty_until')
                             ->label('Warranty Ends Until'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder =>
-                        $query
-                            ->when(
-                                $data['warranty_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('warranty_end_date', '>=', $date),
-                            )
-                            ->when(
-                                $data['warranty_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('warranty_end_date', '<=', $date),
-                            )
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(
+                            $data['warranty_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('warranty_end_date', '>=', $date),
+                        )
+                        ->when(
+                            $data['warranty_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('warranty_end_date', '<=', $date),
+                        )
                     ),
 
                 Tables\Filters\Filter::make('next_audit_date')
@@ -820,16 +818,15 @@ class AssetResource extends Resource
                         Forms\Components\DatePicker::make('audit_until')
                             ->label('Next Audit Until'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder =>
-                        $query
-                            ->when(
-                                $data['audit_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('next_audit_date', '>=', $date),
-                            )
-                            ->when(
-                                $data['audit_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('next_audit_date', '<=', $date),
-                            )
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(
+                            $data['audit_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('next_audit_date', '>=', $date),
+                        )
+                        ->when(
+                            $data['audit_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('next_audit_date', '<=', $date),
+                        )
                     ),
 
                 Tables\Filters\SelectFilter::make('parent_asset_id')
@@ -839,6 +836,11 @@ class AssetResource extends Resource
 
                 Tables\Filters\TrashedFilter::make(),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(AssetExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -846,6 +848,10 @@ class AssetResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(AssetExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
@@ -901,7 +907,7 @@ class AssetResource extends Resource
                                     ->label('')
                                     ->height(150)
                                     ->grow(false)
-                                    ->visible(fn ($state) => !empty($state)),
+                                    ->visible(fn ($state) => ! empty($state)),
 
                                 Infolists\Components\IconEntry::make('assetType.name')
                                     ->label('')
@@ -1299,7 +1305,7 @@ class AssetResource extends Resource
 
     public static function getGlobalSearchResultTitle($record): string
     {
-        return $record->name . ' (' . $record->asset_tag . ')';
+        return $record->name.' ('.$record->asset_tag.')';
     }
 
     public static function getGloballySearchableAttributes(): array

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\StandardStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
+use App\Filament\Exports\StandardExporter;
 use App\Filament\Resources\StandardResource\Pages;
 use App\Filament\Resources\StandardResource\RelationManagers;
 use App\Models\Standard;
@@ -17,6 +18,8 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
@@ -124,15 +127,6 @@ class StandardResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(new class implements \Illuminate\Contracts\Support\Htmlable
-            {
-                public function toHtml()
-                {
-                    return "<div class='fi-section-content p-6'>".
-                        __('standard.table.description').
-                        '</div>';
-                }
-            })
             ->columns([
                 Tables\Columns\TextColumn::make('code')
                     ->label(__('standard.table.columns.code'))
@@ -169,6 +163,11 @@ class StandardResource extends Resource
                     ->label(__('standard.table.filters.authority')),
                 Tables\Filters\TrashedFilter::make(),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(StandardExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make()->hiddenLabel(),
                 Tables\Actions\ActionGroup::make([
@@ -199,6 +198,10 @@ class StandardResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(StandardExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),

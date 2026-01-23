@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
+use App\Enums\DocumentType;
+use App\Filament\Exports\PolicyExporter;
 use App\Filament\Resources\PolicyResource\Pages;
 use App\Filament\Resources\PolicyResource\RelationManagers;
 use App\Models\Policy;
@@ -12,6 +14,8 @@ use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -33,7 +37,8 @@ class PolicyResource extends Resource
         return $form
             ->schema([
                 // Core Information Section
-                Forms\Components\Section::make('Core Information')
+                Forms\Components\Section::make('Document Information')
+                    ->columns(4)
                     ->schema([
                         Forms\Components\TextInput::make('code')
                             ->required()
@@ -48,7 +53,14 @@ class PolicyResource extends Resource
                             ->maxLength(255)
                             ->label('Policy Name')
                             ->placeholder('e.g., Information Security Policy')
-                            ->columnSpanFull(),
+                            ->columnSpan(3),
+
+                        Forms\Components\Select::make('document_type')
+                            ->label('Document Type')
+                            ->options(DocumentType::class)
+                            ->default(DocumentType::Policy)
+                            ->required()
+                            ->helperText('Type of document (Policy, Procedure, Standard, etc.)'),
 
                         Forms\Components\Select::make('status_id')
                             ->label('Status')
@@ -58,7 +70,7 @@ class PolicyResource extends Resource
                             ->helperText('Current status of the policy'),
 
                         Forms\Components\Select::make('scope_id')
-                            ->label('Taxonomy Scope')
+                            ->label('Scope')
                             ->options(fn () => Taxonomy::where('slug', 'policy-scope')->first()?->children()->pluck('name', 'id') ?? collect())
                             ->searchable()
                             ->helperText('Organizational scope of this policy'),
@@ -83,8 +95,7 @@ class PolicyResource extends Resource
                         Forms\Components\DatePicker::make('retired_date')
                             ->label('Retired Date')
                             ->helperText('Date when this policy was retired (only for retired/superseded policies)'),
-                    ])
-                    ->columns(2),
+                    ]),
 
                 // Policy Content Section
                 Forms\Components\Section::make('Policy Content')
@@ -169,18 +180,29 @@ class PolicyResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Code')
-                    ->badge()
+                    ->toggleable()
                     ->color('primary'),
 
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
+                    ->toggleable()
                     ->limit(50)
                     ->wrap(),
+
+                Tables\Columns\TextColumn::make('document_type')
+                    ->label('Type')
+                    ->badge()
+                    ->toggleable()
+                    ->formatStateUsing(fn ($state) => $state?->getLabel() ?? DocumentType::Other->getLabel())
+                    ->color(fn ($state) => $state?->getColor() ?? DocumentType::Other->getColor())
+                    ->icon(fn ($state) => $state?->getIcon() ?? DocumentType::Other->getIcon())
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('status.name')
                     ->label('Status')
                     ->badge()
+                    ->toggleable()
                     ->color(fn (string $state): string => match ($state) {
                         'Draft' => 'gray',
                         'In Review' => 'info',
@@ -194,7 +216,7 @@ class PolicyResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('scope.name')
-                    ->label('Taxonomy Scope')
+                    ->label('Scope')
                     ->badge()
                     ->color('info')
                     ->sortable()
@@ -202,6 +224,7 @@ class PolicyResource extends Resource
 
                 Tables\Columns\TextColumn::make('department.name')
                     ->label('Department')
+                    ->badge()
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
@@ -232,13 +255,17 @@ class PolicyResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('document_type')
+                    ->label('Document Type')
+                    ->options(DocumentType::class),
+
                 Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
                     ->options(fn () => Taxonomy::where('slug', 'policy-status')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
                 Tables\Filters\SelectFilter::make('scope_id')
-                    ->label('Taxonomy Scope')
+                    ->label('Scope')
                     ->options(fn () => Taxonomy::where('slug', 'policy-scope')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
@@ -247,11 +274,17 @@ class PolicyResource extends Resource
                     ->options(fn () => Taxonomy::where('slug', 'department')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
-                Tables\Filters\Filter::make('has_document')
-                    ->label('Has Document')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('document_path')),
+                Tables\Filters\SelectFilter::make('owner_id')
+                    ->label('Policy Owner')
+                    ->relationship('owner', 'name')
+                    ->searchable(),
 
                 Tables\Filters\TrashedFilter::make(),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(PolicyExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -260,10 +293,88 @@ class PolicyResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('updateDocumentType')
+                        ->label('Update Document Type')
+                        ->icon('heroicon-o-document-text')
+                        ->form([
+                            Forms\Components\Select::make('document_type')
+                                ->label('Document Type')
+                                ->options(DocumentType::class)
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $records->each->update(['document_type' => $data['document_type']]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('updateStatus')
+                        ->label('Update Status')
+                        ->icon('heroicon-o-flag')
+                        ->form([
+                            Forms\Components\Select::make('status_id')
+                                ->label('Status')
+                                ->options(fn () => Taxonomy::where('slug', 'policy-status')->first()?->children()->pluck('name', 'id') ?? collect())
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $records->each->update(['status_id' => $data['status_id']]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('updateDepartment')
+                        ->label('Update Department')
+                        ->icon('heroicon-o-building-office')
+                        ->form([
+                            Forms\Components\Select::make('department_id')
+                                ->label('Department')
+                                ->options(fn () => Taxonomy::where('slug', 'department')->first()?->children()->pluck('name', 'id') ?? collect())
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $records->each->update(['department_id' => $data['department_id']]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('updateOwner')
+                        ->label('Update Owner')
+                        ->icon('heroicon-o-user')
+                        ->form([
+                            Forms\Components\Select::make('owner_id')
+                                ->label('Policy Owner')
+                                ->relationship('owner', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $records->each->update(['owner_id' => $data['owner_id']]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    Tables\Actions\BulkAction::make('updateScope')
+                        ->label('Update Scope')
+                        ->icon('heroicon-o-globe-alt')
+                        ->form([
+                            Forms\Components\Select::make('scope_id')
+                                ->label('Scope')
+                                ->options(fn () => Taxonomy::where('slug', 'policy-scope')->first()?->children()->pluck('name', 'id') ?? collect())
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $records->each->update(['scope_id' => $data['scope_id']]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    ExportBulkAction::make()
+                        ->exporter(PolicyExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
+
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -289,6 +400,13 @@ class PolicyResource extends Resource
                                             ->label('Policy Name')
                                             ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
                                             ->weight('bold'),
+
+                                        Infolists\Components\TextEntry::make('document_type')
+                                            ->label('Document Type')
+                                            ->badge()
+                                            ->formatStateUsing(fn ($state) => $state?->getLabel() ?? DocumentType::Other->getLabel())
+                                            ->color(fn ($state) => $state?->getColor() ?? DocumentType::Other->getColor())
+                                            ->icon(fn ($state) => $state?->getIcon() ?? DocumentType::Other->getIcon()),
                                     ]),
 
                                     Infolists\Components\Group::make([
@@ -307,7 +425,7 @@ class PolicyResource extends Resource
                                             }),
 
                                         Infolists\Components\TextEntry::make('scope.name')
-                                            ->label('Taxonomy Scope')
+                                            ->label('Scope')
                                             ->badge()
                                             ->color('info')
                                             ->placeholder('Not specified'),
@@ -439,7 +557,7 @@ class PolicyResource extends Resource
 
     public static function getGlobalSearchResultTitle($record): string
     {
-        return $record->name . ' (' . $record->code . ')';
+        return $record->name.' ('.$record->code.')';
     }
 
     public static function getGloballySearchableAttributes(): array

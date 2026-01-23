@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\FileAttachmentExporter;
 use App\Filament\Resources\FileAttachmentResource\Pages;
 use App\Models\FileAttachment;
 use Carbon\Carbon;
@@ -10,6 +11,8 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
@@ -77,11 +80,20 @@ class FileAttachmentResource extends Resource
             ->filters([
                 //
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(FileAttachmentExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(FileAttachmentExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

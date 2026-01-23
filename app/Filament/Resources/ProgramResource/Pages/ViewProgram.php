@@ -9,6 +9,20 @@ class ViewProgram extends ViewRecord
 {
     protected static string $resource = ProgramResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Program Details ('.$this->getRecord()->name.')';
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            ProgramResource::getUrl() => 'Programs',
+            $this->getRecord()->name,
+            'View',
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -16,5 +30,4 @@ class ViewProgram extends ViewRecord
             \Filament\Pages\Actions\DeleteAction::make(),
         ];
     }
-
 }

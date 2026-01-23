@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\ResponseStatus;
+use App\Filament\Exports\DataRequestExporter;
 use App\Filament\Resources\DataRequestResource\Pages;
 use App\Mail\EvidenceRequestMail;
 use App\Models\Audit;
@@ -17,6 +18,8 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
@@ -112,6 +115,11 @@ class DataRequestResource extends Resource
             ->filters([
                 //
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(DataRequestExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->modalFooterActions(fn ($record) => static::getModalFooterActions($record))
@@ -120,6 +128,10 @@ class DataRequestResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(DataRequestExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

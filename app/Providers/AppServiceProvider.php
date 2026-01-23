@@ -7,11 +7,8 @@ use App\Models\User;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Support\Facades\FilamentColor;
-use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Table;
-use Filament\View\PanelsRenderHook;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Gate;
@@ -198,20 +195,6 @@ class AppServiceProvider extends ServiceProvider
             ],
         ]);
 
-        // Register Livewire component for notifications
-        Livewire::component('database-notifications', \App\Livewire\DatabaseNotifications::class);
-
-        // Register notifications in topbar (before the user menu)
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::USER_MENU_BEFORE,
-            fn (): string => Blade::render('@livewire(\'database-notifications\')'),
-        );
-
-        // Alternative: Also try TOPBAR_END if USER_MENU_BEFORE doesn't work
-        // FilamentView::registerRenderHook(
-        //     PanelsRenderHook::TOPBAR_END,
-        //     fn (): string => Blade::render('@livewire(\'database-notifications\')'),
-        // );
     }
 
     /**

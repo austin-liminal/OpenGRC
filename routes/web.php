@@ -8,7 +8,7 @@ use Laravel\Socialite\Facades\Socialite;
 // Health check endpoint for load balancers and Docker health checks
 Route::get('/health', function () {
     return response()->json(['status' => 'ok'], 200);
-}); 
+});
 
 Route::get('/', function () {
     return redirect()->route('filament.app.auth.login');
