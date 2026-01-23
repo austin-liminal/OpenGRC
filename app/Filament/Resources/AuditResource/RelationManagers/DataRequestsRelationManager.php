@@ -305,12 +305,6 @@ class DataRequestsRelationManager extends RelationManager
                             ->body($body)
                             ->success()
                             ->send();
-                        auth()->user()->notify(new DropdownNotification(
-                            title: 'Evidence Export Started',
-                            body: 'Your evidence export is in-progress. This will take several minutes depending on the amount of evidence you collected.',
-                            icon: 'heroicon-o-bell',
-                            color: 'success'
-                        ));
 
                         // Use JavaScript to refresh the page
                         $this->js('window.location.reload()');
