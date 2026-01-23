@@ -177,15 +177,6 @@ class ImplementationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(new class implements \Illuminate\Contracts\Support\Htmlable
-            {
-                public function toHtml()
-                {
-                    return "<div class='fi-section-content p-6'>".
-                        __('implementation.table.description').
-                        '</div>';
-                }
-            })
             ->emptyStateHeading(__('implementation.table.empty_state.heading'))
             ->emptyStateDescription(__('implementation.table.empty_state.description'))
             ->columns([
@@ -351,12 +342,13 @@ class ImplementationResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(ImplementationExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
-                    ExportBulkAction::make()
-                        ->exporter(ImplementationExporter::class)
-                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ]);
     }

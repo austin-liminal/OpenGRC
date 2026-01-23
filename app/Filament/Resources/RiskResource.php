@@ -347,7 +347,9 @@ class RiskResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(RiskExporter::class)
+                        ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

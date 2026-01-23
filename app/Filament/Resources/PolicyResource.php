@@ -216,7 +216,7 @@ class PolicyResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('scope.name')
-                    ->label('Taxonomy Scope')
+                    ->label('Scope')
                     ->badge()
                     ->color('info')
                     ->sortable()
@@ -265,7 +265,7 @@ class PolicyResource extends Resource
                     ->searchable(),
 
                 Tables\Filters\SelectFilter::make('scope_id')
-                    ->label('Taxonomy Scope')
+                    ->label('Scope')
                     ->options(fn () => Taxonomy::where('slug', 'policy-scope')->first()?->children()->pluck('name', 'id') ?? collect())
                     ->searchable(),
 
@@ -364,15 +364,17 @@ class PolicyResource extends Resource
                             $records->each->update(['scope_id' => $data['scope_id']]);
                         })
                         ->deselectRecordsAfterCompletion(),
-                ]),
-                Tables\Actions\BulkActionGroup::make([
+
+                    ExportBulkAction::make()
+                        ->exporter(PolicyExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
+
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
-                ExportBulkAction::make()
-                    ->exporter(PolicyExporter::class)
-                    ->icon('heroicon-o-arrow-down-tray'),
+
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -423,7 +425,7 @@ class PolicyResource extends Resource
                                             }),
 
                                         Infolists\Components\TextEntry::make('scope.name')
-                                            ->label('Taxonomy Scope')
+                                            ->label('Scope')
                                             ->badge()
                                             ->color('info')
                                             ->placeholder('Not specified'),

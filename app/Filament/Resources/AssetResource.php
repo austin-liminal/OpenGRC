@@ -848,12 +848,13 @@ class AssetResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(AssetExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
-                    ExportBulkAction::make()
-                        ->exporter(AssetExporter::class)
-                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

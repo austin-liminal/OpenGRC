@@ -89,13 +89,6 @@ class ProgramResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(new class implements \Illuminate\Contracts\Support\Htmlable
-            {
-                public function toHtml()
-                {
-                    return "<div class='fi-section-content p-6'>".__('programs.description').'</div>';
-                }
-            })
             ->recordUrl(fn (Program $record): string => Pages\ProgramPage::getUrl(['record' => $record]))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
@@ -228,10 +221,11 @@ class ProgramResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()
                         ->exporter(ProgramExporter::class)
+                        ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

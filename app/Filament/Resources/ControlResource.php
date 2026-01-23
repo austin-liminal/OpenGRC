@@ -157,15 +157,6 @@ class ControlResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(new class implements \Illuminate\Contracts\Support\Htmlable
-            {
-                public function toHtml()
-                {
-                    return "<div class='fi-section-content p-6'>".
-                        __('control.table.description').
-                        '</div>';
-                }
-            })
             ->emptyStateHeading(__('control.table.empty_state.heading'))
             ->emptyStateDescription(new HtmlString(__('control.table.empty_state.description', [
                 'url' => route('filament.app.resources.controls.index'),
@@ -349,12 +340,13 @@ class ControlResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(ControlExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
-                    ExportBulkAction::make()
-                        ->exporter(ControlExporter::class)
-                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ]);
     }

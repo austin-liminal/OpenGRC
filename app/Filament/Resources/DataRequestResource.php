@@ -128,10 +128,11 @@ class DataRequestResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()
                         ->exporter(DataRequestExporter::class)
+                        ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

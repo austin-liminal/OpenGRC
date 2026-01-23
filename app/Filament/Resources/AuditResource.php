@@ -193,11 +193,12 @@ class AuditResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
                     ExportBulkAction::make()
                         ->exporter(AuditExporter::class)
+                        ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
