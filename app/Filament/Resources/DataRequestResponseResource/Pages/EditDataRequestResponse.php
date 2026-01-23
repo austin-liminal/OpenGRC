@@ -13,6 +13,8 @@ class EditDataRequestResponse extends EditRecord
 {
     protected static string $resource = DataRequestResponseResource::class;
 
+    protected static ?string $title = 'Evidence Response';
+
     protected bool $shouldSubmit = false;
 
     protected function getHeaderActions(): array

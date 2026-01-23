@@ -24,6 +24,15 @@ class ProgramPage extends ViewRecord
         return $this->record->name;
     }
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            ProgramResource::getUrl() => 'Programs',
+            $this->record->name,
+            'View',
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
