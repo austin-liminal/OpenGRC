@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\Effectiveness;
 use App\Enums\WorkflowStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
+use App\Filament\Exports\AuditExporter;
 use App\Filament\Resources\AuditResource\Pages;
 use App\Filament\Resources\AuditResource\RelationManagers;
 use App\Filament\Resources\AuditResource\Widgets\AuditStatsWidget;
@@ -18,6 +19,8 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\CreateRecord\Concerns\HasWizard;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -183,10 +186,18 @@ class AuditResource extends Resource
                         });
                     }),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(AuditExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
+                    ExportBulkAction::make()
+                        ->exporter(AuditExporter::class)
+                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ]);
     }
@@ -298,7 +309,7 @@ class AuditResource extends Resource
             }
 
             $auditItem->auditable->update($updateData);
-            
+
         }
 
         // Save the final audit report

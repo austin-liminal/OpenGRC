@@ -6,6 +6,7 @@ use App\Enums\SurveyStatus;
 use App\Enums\SurveyTemplateStatus;
 use App\Enums\VendorRiskRating;
 use App\Enums\VendorStatus;
+use App\Filament\Exports\VendorExporter;
 use App\Filament\Resources\VendorResource\Pages;
 use App\Filament\Resources\VendorResource\RelationManagers\ApplicationsRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\ImplementationsRelationManager;
@@ -25,6 +26,8 @@ use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Mail;
 
@@ -288,6 +291,11 @@ class VendorResource extends Resource
                     ->label(__('Vendor Manager'))
                     ->options(User::all()->pluck('name', 'id')),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(VendorExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\Action::make('send_survey')
                     ->label(__('Send Survey'))
@@ -345,6 +353,9 @@ class VendorResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make()
+                        ->exporter(VendorExporter::class)
+                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ]);
     }

@@ -91,6 +91,28 @@
                                 </a>
                             @endif
 
+                            <!-- Multiple Actions (e.g., Export downloads) -->
+                            @if(isset($notification->data['actions']) && is_array($notification->data['actions']))
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    @foreach($notification->data['actions'] as $action)
+                                        @if(isset($action['url']))
+                                            <a
+                                                href="{{ $action['url'] }}"
+                                                target="{{ ($action['shouldOpenUrlInNewTab'] ?? false) ? '_blank' : '_self' }}"
+                                                wire:click="markAsRead('{{ $notification->id }}')"
+                                                class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/50 dark:text-primary-300 dark:hover:bg-primary-900"
+                                            >
+                                                <x-filament::icon
+                                                    icon="heroicon-o-arrow-down-tray"
+                                                    class="w-3 h-3"
+                                                />
+                                                {{ $action['label'] ?? 'Download' }}
+                                            </a>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+
                             <!-- Timestamp -->
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
                                 {{ $notification->created_at->diffForHumans() }}

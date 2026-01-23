@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Enums\DocumentType;
+use App\Filament\Exports\PolicyExporter;
 use App\Filament\Resources\PolicyResource\Pages;
 use App\Filament\Resources\PolicyResource\RelationManagers;
 use App\Models\Policy;
@@ -13,6 +14,8 @@ use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -278,6 +281,11 @@ class PolicyResource extends Resource
 
                 Tables\Filters\TrashedFilter::make(),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(PolicyExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -362,6 +370,9 @@ class PolicyResource extends Resource
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
+                ExportBulkAction::make()
+                    ->exporter(PolicyExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
             ])
             ->defaultSort('created_at', 'desc');
     }

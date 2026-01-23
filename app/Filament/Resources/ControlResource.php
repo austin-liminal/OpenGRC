@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms\Components\RichEditor;
 use App\Enums\Applicability;
 use App\Enums\ControlCategory;
 use App\Enums\ControlEnforcementCategory;
 use App\Enums\ControlType;
 use App\Enums\Effectiveness;
 use App\Filament\Concerns\HasTaxonomyFields;
+use App\Filament\Exports\ControlExporter;
 use App\Filament\Resources\ControlResource\Pages;
 use App\Filament\Resources\ControlResource\RelationManagers;
 use App\Models\Control;
@@ -16,12 +16,15 @@ use App\Models\Standard;
 use App\Models\User;
 use Exception;
 use Filament\Forms;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
@@ -219,18 +222,20 @@ class ControlResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
-                        if (!$departmentParent) return;
+                        if (! $departmentParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
                             $join->on('controls.id', '=', 'dept_taxonomables.taxonomable_id')
                                 ->where('dept_taxonomables.taxonomable_type', '=', 'App\\Models\\Control');
                         })
-                        ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
-                            $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
-                                ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
-                        })
-                        ->orderBy('dept_taxonomies.name', $direction)
-                        ->select('controls.*');
+                            ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
+                                $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
+                                    ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
+                            })
+                            ->orderBy('dept_taxonomies.name', $direction)
+                            ->select('controls.*');
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('taxonomy_scope')
@@ -240,18 +245,20 @@ class ControlResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
-                        if (!$scopeParent) return;
+                        if (! $scopeParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
                             $join->on('controls.id', '=', 'scope_taxonomables.taxonomable_id')
                                 ->where('scope_taxonomables.taxonomable_type', '=', 'App\\Models\\Control');
                         })
-                        ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
-                            $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
-                                ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
-                        })
-                        ->orderBy('scope_taxonomies.name', $direction)
-                        ->select('controls.*');
+                            ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
+                                $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
+                                    ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
+                            })
+                            ->orderBy('scope_taxonomies.name', $direction)
+                            ->select('controls.*');
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -335,11 +342,19 @@ class ControlResource extends Resource
                         });
                     }),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(ControlExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
+                    ExportBulkAction::make()
+                        ->exporter(ControlExporter::class)
+                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ]);
     }

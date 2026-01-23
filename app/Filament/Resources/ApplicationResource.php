@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ApplicationStatus;
 use App\Enums\ApplicationType;
+use App\Filament\Exports\ApplicationExporter;
 use App\Filament\Resources\ApplicationResource\Pages;
 use App\Filament\Resources\ApplicationResource\RelationManagers;
 use App\Models\Application;
@@ -13,6 +14,8 @@ use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 
 class ApplicationResource extends Resource
@@ -146,6 +149,11 @@ class ApplicationResource extends Resource
             ->filters([
 
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(ApplicationExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -154,6 +162,9 @@ class ApplicationResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make()
+                        ->exporter(ApplicationExporter::class)
+                        ->icon('heroicon-o-arrow-down-tray'),
                 ]),
             ]);
     }
