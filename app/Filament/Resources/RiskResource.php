@@ -196,7 +196,8 @@ class RiskResource extends Resource
                                     ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
                             })
                             ->orderBy('dept_taxonomies.name', $direction)
-                            ->select('risks.*');
+                            ->select('risks.*')
+                            ->distinct();
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('taxonomy_scope')
@@ -219,7 +220,8 @@ class RiskResource extends Resource
                                     ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
                             })
                             ->orderBy('scope_taxonomies.name', $direction)
-                            ->select('risks.*');
+                            ->select('risks.*')
+                            ->distinct();
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('mitigation_status')
