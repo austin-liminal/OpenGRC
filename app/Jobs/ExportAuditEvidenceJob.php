@@ -60,6 +60,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
         $audit = Audit::with([
             'auditItems',
             'auditItems.dataRequests.responses.attachments',
+            'auditItems.dataRequests.responses.policyAttachments.policy',
             'auditItems.auditable',
         ])->findOrFail($this->auditId);
 
@@ -76,7 +77,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
         // Get all data requests for this audit (supports both old and new relationships)
         $dataRequests = \App\Models\DataRequest::where('audit_id', $this->auditId)
-            ->with(['responses.attachments', 'auditItems.auditable', 'auditItem.auditable'])
+            ->with(['responses.attachments', 'responses.policyAttachments.policy', 'auditItems.auditable', 'auditItem.auditable'])
             ->get();
 
         \Log::info("Found {$dataRequests->count()} data requests to export");
@@ -92,7 +93,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
         foreach ($dataRequests as $dataRequest) {
             \Log::info("Processing data request {$dataRequest->id}");
-            $dataRequest->loadMissing(['responses.attachments', 'auditItems.auditable']);
+            $dataRequest->loadMissing(['responses.attachments', 'responses.policyAttachments.policy', 'auditItems.auditable']);
 
             // Collect all attachments for processing
             $attachments = [];
