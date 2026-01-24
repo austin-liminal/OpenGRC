@@ -31,23 +31,47 @@ class ExportAuditEvidenceJob implements ShouldQueue
     protected $userId;
 
     /**
+     * Optional array of data request IDs to export. If null, exports all data requests.
+     *
+     * @var array<int>|null
+     */
+    protected $dataRequestIds;
+
+    /**
      * Get the middleware the job should pass through.
      */
     public function middleware(): array
     {
         // Release lock after 10 min to prevent permanent deadlocks
-        // The cache flag is cleared manually on completion/failure
-        return [(new WithoutOverlapping($this->auditId))->releaseAfter(600)];
+        // Use different keys for full vs partial exports to allow them to run independently
+        $key = $this->isPartialExport()
+            ? $this->auditId.'_partial'
+            : $this->auditId;
+
+        return [(new WithoutOverlapping($key))->releaseAfter(600)];
     }
 
     /**
      * Create a new job instance.
+     *
+     * @param  array<int>|null  $dataRequestIds  Optional array of data request IDs. If null, exports all.
      */
-    public function __construct($auditId, $userId)
+    public function __construct(int $auditId, int $userId, ?array $dataRequestIds = null)
     {
         $this->auditId = $auditId;
         $this->userId = $userId;
-        \Log::info("ExportAuditEvidenceJob constructed for audit {$auditId}, user {$userId}");
+        $this->dataRequestIds = $dataRequestIds;
+
+        $itemCount = $dataRequestIds ? count($dataRequestIds) : 'all';
+        \Log::info("ExportAuditEvidenceJob constructed for audit {$auditId}, user {$userId}, data requests: {$itemCount}");
+    }
+
+    /**
+     * Check if this is a partial export (specific data requests selected).
+     */
+    protected function isPartialExport(): bool
+    {
+        return $this->dataRequestIds !== null && count($this->dataRequestIds) > 0;
     }
 
     /**
@@ -55,11 +79,13 @@ class ExportAuditEvidenceJob implements ShouldQueue
      */
     public function handle()
     {
-        \Log::info("ExportAuditEvidenceJob started for audit {$this->auditId}");
+        $exportType = $this->isPartialExport() ? 'partial' : 'full';
+        \Log::info("ExportAuditEvidenceJob started for audit {$this->auditId} ({$exportType} export)");
 
         $audit = Audit::with([
             'auditItems',
             'auditItems.dataRequests.responses.attachments',
+            'auditItems.dataRequests.responses.policyAttachments.policy',
             'auditItems.auditable',
         ])->findOrFail($this->auditId);
 
@@ -74,10 +100,16 @@ class ExportAuditEvidenceJob implements ShouldQueue
         }
         $allFiles = [];
 
-        // Get all data requests for this audit (supports both old and new relationships)
-        $dataRequests = \App\Models\DataRequest::where('audit_id', $this->auditId)
-            ->with(['responses.attachments', 'auditItems.auditable', 'auditItem.auditable'])
-            ->get();
+        // Build data requests query
+        $dataRequestsQuery = \App\Models\DataRequest::where('audit_id', $this->auditId)
+            ->with(['responses.attachments', 'responses.policyAttachments.policy', 'auditItems.auditable', 'auditItem.auditable']);
+
+        // Filter by data request IDs if this is a partial export
+        if ($this->isPartialExport()) {
+            $dataRequestsQuery->whereIn('id', $this->dataRequestIds);
+        }
+
+        $dataRequests = $dataRequestsQuery->get();
 
         \Log::info("Found {$dataRequests->count()} data requests to export");
 
@@ -92,7 +124,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
         foreach ($dataRequests as $dataRequest) {
             \Log::info("Processing data request {$dataRequest->id}");
-            $dataRequest->loadMissing(['responses.attachments', 'auditItems.auditable']);
+            $dataRequest->loadMissing(['responses.attachments', 'responses.policyAttachments.policy', 'auditItems.auditable']);
 
             // Collect all attachments for processing
             $attachments = [];
@@ -182,7 +214,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
         \Log::info('Total files to include in zip: '.count($allFiles));
 
-        // Create a hasfile for all files
+        // Create a hashfile for all files
         foreach ($allFiles as $file) {
             $hashFileContents = '';
 
@@ -191,12 +223,20 @@ class ExportAuditEvidenceJob implements ShouldQueue
                 file_put_contents($tmpDir.'/hashes.txt', $hashFileContents, FILE_APPEND);
                 $allFiles[] = $tmpDir.'/hashes.txt';
             }
-
         }
+
+        // Determine file naming and description based on export type
+        $isPartial = $this->isPartialExport();
+        $zipFilename = $isPartial
+            ? "audit_{$this->auditId}_partial_data_requests.zip"
+            : "audit_{$this->auditId}_data_requests.zip";
+        $description = $isPartial
+            ? 'Partial audit evidence export ZIP'
+            : 'Exported audit evidence ZIP';
 
         if ($disk === 's3' || $disk === 'digitalocean') {
             // Create ZIP locally
-            $zipLocalPath = $tmpDir."/audit_{$this->auditId}_data_requests.zip";
+            $zipLocalPath = $tmpDir.'/'.$zipFilename;
             $zip = new ZipArchive;
             if ($zip->open($zipLocalPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
                 foreach ($allFiles as $file) {
@@ -208,7 +248,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             // Only upload and create FileAttachment if zip file was successfully created
             if (file_exists($zipLocalPath)) {
                 // Upload ZIP to S3
-                $zipS3Path = $exportDir."audit_{$this->auditId}_data_requests.zip";
+                $zipS3Path = $exportDir.$zipFilename;
                 \Storage::disk($disk)->put($zipS3Path, file_get_contents($zipLocalPath));
 
                 // Create or update FileAttachment for the ZIP
@@ -216,13 +256,13 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     [
                         'audit_id' => $this->auditId,
                         'data_request_response_id' => null,
-                        'file_name' => "audit_{$this->auditId}_data_requests.zip",
+                        'file_name' => $zipFilename,
                     ],
                     [
                         'file_path' => $zipS3Path,
                         'file_size' => filesize($zipLocalPath),
                         'uploaded_by' => $this->userId,
-                        'description' => 'Exported audit evidence ZIP',
+                        'description' => $description,
                     ]
                 );
             }
@@ -241,7 +281,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             if (! is_dir($exportPath)) {
                 mkdir($exportPath, 0777, true);
             }
-            $zipPath = $exportPath."audit_{$this->auditId}_data_requests.zip";
+            $zipPath = $exportPath.$zipFilename;
             $zip = new \ZipArchive;
             if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
                 foreach ($allFiles as $file) {
@@ -257,13 +297,13 @@ class ExportAuditEvidenceJob implements ShouldQueue
                     [
                         'audit_id' => $this->auditId,
                         'data_request_response_id' => null,
-                        'file_name' => "audit_{$this->auditId}_data_requests.zip",
+                        'file_name' => $zipFilename,
                     ],
                     [
-                        'file_path' => $exportDir."audit_{$this->auditId}_data_requests.zip",
+                        'file_path' => $exportDir.$zipFilename,
                         'file_size' => filesize($zipPath),
                         'uploaded_by' => $this->userId,
-                        'description' => 'Exported audit evidence ZIP',
+                        'description' => $description,
                     ]
                 );
             }
@@ -278,7 +318,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             rmdir($tmpDir);
         }
 
-        \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId}");
+        \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId} ({$exportType} export)");
 
         // Notify the user who initiated the export
         \Log::info('Attempting to notify user. User ID: '.($this->userId ?? 'null'));
@@ -295,9 +335,14 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
                     \Log::info("Generated audit URL: {$auditUrl}");
 
+                    $notificationTitle = $isPartial ? 'Partial Evidence Export Completed' : 'Evidence Export Completed';
+                    $notificationBody = $isPartial
+                        ? 'Your partial evidence export is ready for download.'
+                        : 'Your evidence export is ready for download.';
+
                     $user->notify(new \App\Notifications\DropdownNotification(
-                        title: 'Evidence Export Completed',
-                        body: 'Your evidence export is ready for download.',
+                        title: $notificationTitle,
+                        body: $notificationBody,
                         icon: 'heroicon-o-check-circle',
                         color: 'success',
                         actionUrl: $auditUrl,

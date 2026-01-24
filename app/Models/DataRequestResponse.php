@@ -50,6 +50,11 @@ class DataRequestResponse extends Model implements Commentable
         return $this->hasMany(FileAttachment::class, 'data_request_response_id');
     }
 
+    public function policyAttachments(): HasMany
+    {
+        return $this->hasMany(DataRequestResponsePolicy::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

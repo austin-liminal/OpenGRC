@@ -62,8 +62,12 @@ class AttachmentsRelationManager extends RelationManager
     {
         return $table
             ->modifyQueryUsing(function ($query) {
-                // Always show "Exported audit evidence ZIP" files first
-                return $query->orderByRaw("CASE WHEN description = 'Exported audit evidence ZIP' THEN 0 ELSE 1 END")
+                // Always show "Exported audit evidence ZIP" files first, then "Partial audit evidence export ZIP", then others
+                return $query->orderByRaw("CASE
+                    WHEN description = 'Exported audit evidence ZIP' THEN 0
+                    WHEN description = 'Partial audit evidence export ZIP' THEN 1
+                    ELSE 2
+                END")
                     ->orderBy('updated_at', 'desc');
             })
             ->columns([
@@ -81,7 +85,7 @@ class AttachmentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('uploaded_by')
                     ->label('Uploaded By')
                     ->getStateUsing(function ($record) {
-                        if ($record->description === 'Exported audit evidence ZIP') {
+                        if (in_array($record->description, ['Exported audit evidence ZIP', 'Partial audit evidence export ZIP'])) {
                             return 'System';
                         }
                         $user = User::find($record->uploaded_by);
@@ -89,7 +93,11 @@ class AttachmentsRelationManager extends RelationManager
                         return $user ? $user->name : 'System';
                     }),
             ])
-            ->recordClasses(fn ($record) => $record->description === 'Exported audit evidence ZIP' ? 'bg-blue-50' : null)
+            ->recordClasses(fn ($record) => match ($record->description) {
+                'Exported audit evidence ZIP' => 'bg-blue-50 dark:bg-blue-900/20',
+                'Partial audit evidence export ZIP' => 'bg-green-50 dark:bg-green-900/20',
+                default => null,
+            })
             ->filters([])
             ->headerActions([
                 Tables\Actions\ActionGroup::make([

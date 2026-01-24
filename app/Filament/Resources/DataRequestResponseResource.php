@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\ResponseStatus;
 use App\Filament\Resources\DataRequestResponseResource\Pages;
 use App\Models\DataRequestResponse;
+use App\Models\Policy;
 use Exception;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -12,6 +13,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
@@ -256,6 +258,31 @@ class DataRequestResponseResource extends Resource
                                         return $drr->dataRequest->audit_id;
                                     }),
                             ]),
+
+                        Repeater::make('policyAttachments')
+                            ->relationship('policyAttachments')
+                            ->label('Policy Evidence')
+                            ->columnSpanFull()
+                            ->columns()
+                            ->schema([
+                                Select::make('policy_id')
+                                    ->label('Policy')
+                                    ->options(fn () => Policy::query()
+                                        ->select(['id', 'code', 'name'])
+                                        ->get()
+                                        ->mapWithKeys(fn ($p) => [$p->id => "({$p->code}) {$p->name}"]))
+                                    ->searchable()
+                                    ->required()
+                                    ->preload(),
+                                Textarea::make('description')
+                                    ->label('Relevance Description')
+                                    ->helperText('Explain how this policy serves as evidence')
+                                    ->maxLength(1024)
+                                    ->required(),
+                            ])
+                            ->addActionLabel('Attach Policy')
+                            ->defaultItems(0)
+                            ->reorderable(false),
 
                     ]),
                 Section::make('Comments')

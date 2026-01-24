@@ -8,7 +8,6 @@ use App\Filament\Resources\DataRequestResource;
 use App\Http\Controllers\QueueController;
 use App\Models\DataRequest;
 use App\Models\User;
-use App\Notifications\DropdownNotification;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -26,12 +25,6 @@ class DataRequestsRelationManager extends RelationManager
     protected static string $relationship = 'DataRequest';
 
     protected $listeners = ['refreshComponent' => '$refresh'];
-
-    public function getTablePollInterval(): ?string
-    {
-        // Poll every 5 seconds to update button state
-        return '5s';
-    }
 
     /**
      * Check if an export job is pending or running in the queue for the given audit.
@@ -60,6 +53,7 @@ class DataRequestsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->poll('5s')
             ->columns([
                 TextColumn::make('id')
                     ->toggleable()
@@ -305,9 +299,6 @@ class DataRequestsRelationManager extends RelationManager
                             ->body($body)
                             ->success()
                             ->send();
-
-                        // Use JavaScript to refresh the page
-                        $this->js('window.location.reload()');
                     }),
             ])
 
@@ -459,6 +450,40 @@ class DataRequestsRelationManager extends RelationManager
                         })
                         ->disabled(function () {
                             return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
+                        }),
+                    Tables\Actions\BulkAction::make('export_selected_evidence')
+                        ->label('Export Selected Evidence')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('primary')
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Export Selected Evidence')
+                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                            $count = $records->count();
+
+                            return "This will generate a PDF for each of the {$count} selected data request(s) and zip them for download. You will be notified when the export is ready.";
+                        })
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records): void {
+                            $audit = $this->getOwnerRecord();
+                            $dataRequestIds = $records->pluck('id')->toArray();
+
+                            \App\Jobs\ExportAuditEvidenceJob::dispatch(
+                                $audit->id,
+                                auth()->id(),
+                                $dataRequestIds
+                            );
+
+                            // Ensure queue worker is running
+                            if (env('QUEUE_AUTO_START') == true) {
+                                $queueController = new QueueController;
+                                $queueController->ensureQueueWorkerRunning();
+                            }
+
+                            Notification::make()
+                                ->title('Export Started')
+                                ->body('Your partial evidence export has started and is being processed in the background.')
+                                ->success()
+                                ->send();
                         }),
                 ]),
             ]);

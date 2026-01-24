@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -167,6 +168,14 @@ class Policy extends Model
     {
         return $this->belongsToMany(Risk::class, 'policy_risk')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the exceptions for this policy.
+     */
+    public function exceptions(): HasMany
+    {
+        return $this->hasMany(PolicyException::class);
     }
 
     /**

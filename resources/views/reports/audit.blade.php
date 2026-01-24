@@ -152,6 +152,39 @@
 
                     </td>
                 </tr>
+                @php
+                    $policies = collect();
+
+                    // Get policies from data requests linked to this audit item
+                    // Check many-to-many relationship first
+                    $dataRequests = \App\Models\DataRequest::whereHas('auditItems', function($q) use ($item) {
+                        $q->where('audit_items.id', $item->id);
+                    })->orWhere('audit_item_id', $item->id)->with('responses.policyAttachments.policy')->get();
+
+                    foreach ($dataRequests as $dr) {
+                        foreach ($dr->responses as $response) {
+                            foreach ($response->policyAttachments as $pa) {
+                                if ($pa->policy) {
+                                    $policies->push($pa->policy);
+                                }
+                            }
+                        }
+                    }
+
+                    $policies = $policies->unique('id');
+                @endphp
+                @if($policies->count() > 0)
+                <tr>
+                    <td>Relevant Policies</td>
+                    <td colspan="3">
+                        <ul style="margin: 0; padding-left: 20px;">
+                            @foreach($policies as $policy)
+                                <li><strong>{{ $policy->code }}</strong> - {{ $policy->name }}</li>
+                            @endforeach
+                        </ul>
+                    </td>
+                </tr>
+                @endif
             </table>
             <br><br>
         @endforeach
