@@ -533,6 +533,7 @@ class PolicyResource extends Resource
             RelationManagers\ControlsRelationManager::class,
             RelationManagers\ImplementationsRelationManager::class,
             RelationManagers\RisksRelationManager::class,
+            RelationManagers\ExceptionsRelationManager::class,
         ];
     }
 
