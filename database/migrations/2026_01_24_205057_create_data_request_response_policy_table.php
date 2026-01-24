@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->timestamps();
 
-            $table->unique(['data_request_response_id', 'policy_id']);
+            $table->unique(['data_request_response_id', 'policy_id'], 'drr_policy_unique');
         });
     }
 
