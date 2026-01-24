@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class PolicyExceptionPermissionSeeder extends Seeder
 {
@@ -16,43 +17,53 @@ class PolicyExceptionPermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        // Reset cached permissions before starting
+        app()->make(PermissionRegistrar::class)->forgetCachedPermissions();
+
         // Create permissions for PolicyExceptions
         $actions = ['List', 'Create', 'Read', 'Update', 'Delete'];
+        $permissions = [];
 
         foreach ($actions as $action) {
-            Permission::firstOrCreate([
-                'name' => "{$action} PolicyExceptions",
-                'category' => 'PolicyExceptions',
-            ]);
+            $permissions[$action] = Permission::firstOrCreate(
+                ['name' => "{$action} PolicyExceptions", 'guard_name' => 'web'],
+                ['category' => 'PolicyExceptions']
+            );
         }
 
-        // Reset cached permissions so newly created ones are recognized
-        app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-
         // Get existing roles
-        $superAdmin = Role::where('name', 'Super Admin')->first();
-        $securityAdmin = Role::where('name', 'Security Admin')->first();
-        $regular = Role::where('name', 'Regular User')->first();
+        $superAdmin = Role::where('name', 'Super Admin')->where('guard_name', 'web')->first();
+        $securityAdmin = Role::where('name', 'Security Admin')->where('guard_name', 'web')->first();
+        $regular = Role::where('name', 'Regular User')->where('guard_name', 'web')->first();
 
         // Assign all permissions to Super Admin
         if ($superAdmin) {
-            foreach ($actions as $action) {
-                $superAdmin->givePermissionTo("{$action} PolicyExceptions");
+            foreach ($permissions as $permission) {
+                if (! $superAdmin->hasPermissionTo($permission)) {
+                    $superAdmin->givePermissionTo($permission);
+                }
             }
         }
 
         // Assign List, Create, Read, Update to Security Admin (same as other entities)
         if ($securityAdmin) {
             foreach (['List', 'Create', 'Read', 'Update'] as $action) {
-                $securityAdmin->givePermissionTo("{$action} PolicyExceptions");
+                if (! $securityAdmin->hasPermissionTo($permissions[$action])) {
+                    $securityAdmin->givePermissionTo($permissions[$action]);
+                }
             }
         }
 
         // Assign List, Read to Regular User (same as other entities)
         if ($regular) {
             foreach (['List', 'Read'] as $action) {
-                $regular->givePermissionTo("{$action} PolicyExceptions");
+                if (! $regular->hasPermissionTo($permissions[$action])) {
+                    $regular->givePermissionTo($permissions[$action]);
+                }
             }
         }
+
+        // Clear cache after assigning
+        app()->make(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }
