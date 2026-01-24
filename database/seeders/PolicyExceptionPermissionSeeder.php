@@ -26,6 +26,9 @@ class PolicyExceptionPermissionSeeder extends Seeder
             ]);
         }
 
+        // Reset cached permissions so newly created ones are recognized
+        app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
         // Get existing roles
         $superAdmin = Role::where('name', 'Super Admin')->first();
         $securityAdmin = Role::where('name', 'Security Admin')->first();
