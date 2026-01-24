@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Aliziodev\LaravelTaxonomy\Traits\HasTaxonomy;
 use App\Enums\MitigationType;
+use App\Enums\RiskStatus;
+use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -13,11 +15,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Risk extends Model
 {
-    use HasFactory, HasTaxonomy, LogsActivity;
+    use HasFactory, HasMcpSupport, HasTaxonomy, LogsActivity;
 
     protected $casts = [
         'id' => 'integer',
         'action' => MitigationType::class,
+        'status' => RiskStatus::class,
         'is_active' => 'boolean',
     ];
 

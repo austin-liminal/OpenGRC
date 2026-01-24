@@ -44,7 +44,7 @@ class AuditsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Create a New Audit')
+                    ->label('Create New Audit')
                     ->url(fn (): string =>
                         \App\Filament\Resources\AuditResource::getUrl('create', ['default_program_id' => $this->ownerRecord->id])
                 ),

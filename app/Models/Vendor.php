@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Enums\VendorRiskRating;
 use App\Enums\VendorStatus;
+use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -14,7 +16,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Vendor extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMcpSupport, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -64,6 +66,12 @@ class Vendor extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(VendorDocument::class);
+    }
+
+    public function implementations(): BelongsToMany
+    {
+        return $this->belongsToMany(Implementation::class)
+            ->withTimestamps();
     }
 
     public function getActivitylogOptions(): LogOptions

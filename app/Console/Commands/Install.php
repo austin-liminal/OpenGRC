@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
@@ -144,6 +145,9 @@ class Install extends Command
             }
             touch($db_database);
         }
+
+        // Purge any existing database connections to ensure fresh connection to new file
+        DB::purge();
 
         // Clear the config cache to pick up new .env settings.
         $this->call('config:clear');

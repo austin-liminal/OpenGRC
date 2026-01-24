@@ -13,6 +13,20 @@ class ViewControl extends ViewRecord
 
     public ?string $aiSuggestion = null;
 
+    public function getTitle(): string
+    {
+        return 'Control Details ('.$this->getRecord()->code.')';
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            ControlResource::getUrl() => 'Controls',
+            $this->getRecord()->code,
+            'View',
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -40,10 +54,5 @@ class ViewControl extends ViewRecord
                 ->modalSubmitAction(false)
                 ->closeModalByEscaping(true),
         ];
-    }
-
-    public function getTitle(): string
-    {
-        return 'Control';
     }
 }

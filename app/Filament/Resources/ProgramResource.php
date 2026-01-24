@@ -2,15 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use AmidEsfahani\FilamentTinyEditor\TinyEditor;
 use App\Filament\Concerns\HasTaxonomyFields;
+use App\Filament\Exports\ProgramExporter;
 use App\Filament\Resources\ProgramResource\Pages;
 use App\Filament\Resources\ProgramResource\RelationManagers;
 use App\Models\Program;
 use Filament\Forms;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 
 class ProgramResource extends Resource
@@ -54,9 +57,8 @@ class ProgramResource extends Resource
                     ->columnSpanFull()
                     ->required()
                     ->maxLength(255),
-                TinyEditor::make('description')
+                RichEditor::make('description')
                     ->label(__('programs.form.description'))
-                    ->profile('default')
                     ->fileAttachmentsDisk(setting('storage.driver', 'private'))
                     ->fileAttachmentsVisibility('private')
                     ->fileAttachmentsDirectory('ssp-uploads')
@@ -87,13 +89,6 @@ class ProgramResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(new class implements \Illuminate\Contracts\Support\Htmlable
-            {
-                public function toHtml()
-                {
-                    return "<div class='fi-section-content p-6'>".__('programs.description').'</div>';
-                }
-            })
             ->recordUrl(fn (Program $record): string => Pages\ProgramPage::getUrl(['record' => $record]))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
@@ -116,18 +111,20 @@ class ProgramResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
-                        if (!$departmentParent) return;
+                        if (! $departmentParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
                             $join->on('programs.id', '=', 'dept_taxonomables.taxonomable_id')
                                 ->where('dept_taxonomables.taxonomable_type', '=', 'App\\Models\\Program');
                         })
-                        ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
-                            $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
-                                ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
-                        })
-                        ->orderBy('dept_taxonomies.name', $direction)
-                        ->select('programs.*');
+                            ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
+                                $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
+                                    ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
+                            })
+                            ->orderBy('dept_taxonomies.name', $direction)
+                            ->select('programs.*');
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('taxonomy_scope')
@@ -137,18 +134,20 @@ class ProgramResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
-                        if (!$scopeParent) return;
+                        if (! $scopeParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
                             $join->on('programs.id', '=', 'scope_taxonomables.taxonomable_id')
                                 ->where('scope_taxonomables.taxonomable_type', '=', 'App\\Models\\Program');
                         })
-                        ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
-                            $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
-                                ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
-                        })
-                        ->orderBy('scope_taxonomies.name', $direction)
-                        ->select('programs.*');
+                            ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
+                                $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
+                                    ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
+                            })
+                            ->orderBy('scope_taxonomies.name', $direction)
+                            ->select('programs.*');
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -210,6 +209,11 @@ class ProgramResource extends Resource
                         });
                     }),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(ProgramExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
@@ -217,6 +221,10 @@ class ProgramResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(ProgramExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

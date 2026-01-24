@@ -5,12 +5,14 @@ namespace App\Filament\Resources;
 use App\Enums\Effectiveness;
 use App\Enums\ImplementationStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
+use App\Filament\Exports\ImplementationExporter;
 use App\Filament\Resources\ImplementationResource\Pages;
 use App\Filament\Resources\ImplementationResource\RelationManagers;
 use App\Models\Application;
 use App\Models\Control;
 use App\Models\Implementation;
 use App\Models\User;
+use App\Models\Vendor;
 use Exception;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -19,6 +21,8 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
@@ -107,6 +111,18 @@ class ImplementationResource extends Resource
                     ->multiple()
                     ->placeholder('Select related applications')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select applications that support or relate to this implementation.'),
+                Forms\Components\Select::make('vendors')
+                    ->label('Related Vendors')
+                    ->relationship('vendors', 'name')
+                    ->options(
+                        Vendor::all()->mapWithKeys(function ($vendor) {
+                            return [$vendor->id => $vendor->name];
+                        })->toArray()
+                    )
+                    ->searchable()
+                    ->multiple()
+                    ->placeholder('Select related vendors')
+                    ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select vendors that support or relate to this implementation.'),
                 Forms\Components\TextInput::make('title')
                     ->maxLength(255)
                     ->required()
@@ -161,15 +177,6 @@ class ImplementationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->description(new class implements \Illuminate\Contracts\Support\Htmlable
-            {
-                public function toHtml()
-                {
-                    return "<div class='fi-section-content p-6'>".
-                        __('implementation.table.description').
-                        '</div>';
-                }
-            })
             ->emptyStateHeading(__('implementation.table.empty_state.heading'))
             ->emptyStateDescription(__('implementation.table.empty_state.description'))
             ->columns([
@@ -211,18 +218,20 @@ class ImplementationResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
-                        if (!$departmentParent) return;
+                        if (! $departmentParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
                             $join->on('implementations.id', '=', 'dept_taxonomables.taxonomable_id')
                                 ->where('dept_taxonomables.taxonomable_type', '=', 'App\\Models\\Implementation');
                         })
-                        ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
-                            $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
-                                ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
-                        })
-                        ->orderBy('dept_taxonomies.name', $direction)
-                        ->select('implementations.*');
+                            ->leftJoin('taxonomies as dept_taxonomies', function ($join) use ($departmentParent) {
+                                $join->on('dept_taxonomables.taxonomy_id', '=', 'dept_taxonomies.id')
+                                    ->where('dept_taxonomies.parent_id', '=', $departmentParent->id);
+                            })
+                            ->orderBy('dept_taxonomies.name', $direction)
+                            ->select('implementations.*');
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('taxonomy_scope')
@@ -232,18 +241,20 @@ class ImplementationResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
-                        if (!$scopeParent) return;
+                        if (! $scopeParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
                             $join->on('implementations.id', '=', 'scope_taxonomables.taxonomable_id')
                                 ->where('scope_taxonomables.taxonomable_type', '=', 'App\\Models\\Implementation');
                         })
-                        ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
-                            $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
-                                ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
-                        })
-                        ->orderBy('scope_taxonomies.name', $direction)
-                        ->select('implementations.*');
+                            ->leftJoin('taxonomies as scope_taxonomies', function ($join) use ($scopeParent) {
+                                $join->on('scope_taxonomables.taxonomy_id', '=', 'scope_taxonomies.id')
+                                    ->where('scope_taxonomies.parent_id', '=', $scopeParent->id);
+                            })
+                            ->orderBy('scope_taxonomies.name', $direction)
+                            ->select('implementations.*');
                     })
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -320,12 +331,21 @@ class ImplementationResource extends Resource
                         });
                     }),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(ImplementationExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 //                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(ImplementationExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
@@ -380,6 +400,7 @@ class ImplementationResource extends Resource
             RelationManagers\RisksRelationManager::class,
             RelationManagers\AssetsRelationManager::class,
             RelationManagers\ApplicationsRelationManager::class,
+            RelationManagers\VendorsRelationManager::class,
             RelationManagers\PoliciesRelationManager::class,
         ];
     }

@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -29,15 +31,32 @@ class DropdownNotification extends Notification
     /**
      * Get the array representation of the notification.
      */
-    public function toArray(object $notifiable): array
+    public function toDatabase(object $notifiable): array
     {
-        return [
-            'title' => $this->title,
-            'body' => $this->body,
-            'icon' => $this->icon ?? 'heroicon-o-information-circle',
-            'color' => $this->color ?? 'primary',
-            'action_url' => $this->actionUrl,
-            'action_label' => $this->actionLabel ?? 'View',
-        ];
+        $notification = FilamentNotification::make()
+            ->title($this->title)
+            ->body($this->body)
+            ->icon($this->icon ?? 'heroicon-o-information-circle');
+
+        // Set color/status
+        if ($this->color === 'success') {
+            $notification->success();
+        } elseif ($this->color === 'danger') {
+            $notification->danger();
+        } elseif ($this->color === 'warning') {
+            $notification->warning();
+        }
+
+        // Add action if URL provided
+        if ($this->actionUrl) {
+            $notification->actions([
+                Action::make('view')
+                    ->label($this->actionLabel ?? 'View')
+                    ->url($this->actionUrl)
+                    ->markAsRead(),
+            ]);
+        }
+
+        return $notification->getDatabaseMessage();
     }
 }

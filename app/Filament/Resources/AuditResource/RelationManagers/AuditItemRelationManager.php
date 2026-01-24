@@ -14,6 +14,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -324,6 +325,86 @@ class AuditItemRelationManager extends RelationManager
                             $records->each(function (AuditItem $record) use ($data) {
                                 $record->update(['effectiveness' => $data['effectiveness']]);
                             });
+                        }),
+                    Tables\Actions\BulkAction::make('bulk_delete')
+                        ->label('Delete')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->deselectRecordsAfterCompletion()
+                        ->modalHeading(function (Collection $records): string {
+                            $itemsWithRequests = $records->filter(fn (AuditItem $item) => $item->dataRequests()->exists());
+
+                            if ($itemsWithRequests->isNotEmpty()) {
+                                return 'Cannot Delete - Associated Data Requests Found';
+                            }
+
+                            return 'Delete Audit Items';
+                        })
+                        ->modalDescription(function (Collection $records): HtmlString {
+                            $itemsWithRequests = $records->filter(fn (AuditItem $item) => $item->dataRequests()->exists());
+
+                            if ($itemsWithRequests->isEmpty()) {
+                                $count = $records->count();
+
+                                return new HtmlString("Are you sure you want to delete {$count} audit item(s)? This action cannot be undone.");
+                            }
+
+                            $html = '<div class="text-sm">';
+                            $html .= '<p class="text-danger-600 dark:text-danger-400 font-medium mb-3">The following audit items have associated data requests that must be handled:</p>';
+                            $html .= '<div class="space-y-3 max-h-64 overflow-y-auto">';
+
+                            foreach ($itemsWithRequests as $item) {
+                                $dataRequests = $item->dataRequests;
+                                $responseCount = $dataRequests->sum(fn ($dr) => $dr->responses()->count());
+
+                                $html .= '<div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">';
+                                $html .= '<p class="font-medium">'.e($item->auditable->code ?? 'N/A').' - '.e($item->auditable->title ?? 'Untitled').'</p>';
+                                $html .= '<p class="text-gray-600 dark:text-gray-400">';
+                                $html .= $dataRequests->count().' data request(s)';
+                                if ($responseCount > 0) {
+                                    $html .= ', '.$responseCount.' response(s)';
+                                }
+                                $html .= '</p>';
+                                $html .= '</div>';
+                            }
+
+                            $html .= '</div>';
+                            $html .= '<p class="mt-4 text-gray-600 dark:text-gray-400">Choose an action below to proceed.</p>';
+                            $html .= '</div>';
+
+                            return new HtmlString($html);
+                        })
+                        ->modalSubmitActionLabel(function (Collection $records): string {
+                            $itemsWithRequests = $records->filter(fn (AuditItem $item) => $item->dataRequests()->exists());
+
+                            if ($itemsWithRequests->isNotEmpty()) {
+                                return 'Delete Items and All Associated Requests';
+                            }
+
+                            return 'Delete';
+                        })
+                        ->action(function (Collection $records): void {
+                            $deletedCount = 0;
+
+                            foreach ($records as $record) {
+                                // Delete associated data request responses and their attachments first
+                                foreach ($record->dataRequests as $dataRequest) {
+                                    foreach ($dataRequest->responses as $response) {
+                                        $response->attachments()->delete();
+                                        $response->delete();
+                                    }
+                                    $dataRequest->delete();
+                                }
+
+                                $record->delete();
+                                $deletedCount++;
+                            }
+
+                            Notification::make()
+                                ->title('Audit items deleted')
+                                ->body("{$deletedCount} audit item(s) and their associated data have been deleted.")
+                                ->success()
+                                ->send();
                         }),
                 ]),
             ]);

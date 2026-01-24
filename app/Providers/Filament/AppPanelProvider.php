@@ -104,6 +104,8 @@ class AppPanelProvider extends PanelProvider
             ->brandName('OpenGRC')
             ->brandLogo(fn () => view('filament.admin.logo'))
             ->globalSearch(true)
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
             ->viteTheme('resources/css/filament/app/theme.css')
             ->sidebarCollapsibleOnDesktop()

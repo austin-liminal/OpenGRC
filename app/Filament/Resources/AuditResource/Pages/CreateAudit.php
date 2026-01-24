@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AuditResource\Pages;
 
 use App\Enums\WorkflowStatus;
+use App\Filament\Forms\Components\ActionableMultiselectTwoSides;
 use App\Filament\Resources\AuditResource;
 use App\Models\Control;
 use App\Models\Implementation;
@@ -21,7 +22,6 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Get;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\HtmlString;
-use LucasGiovanny\FilamentMultiselectTwoSides\Forms\Components\Fields\MultiselectTwoSides;
 
 class CreateAudit extends CreateRecord
 {
@@ -136,27 +136,60 @@ class CreateAudit extends CreateRecord
                                 $implementation_ids = $get('implementation_ids');
                                 $allDefaults = [];
 
+                                $metadata = [];
+
                                 if ($audit_type == 'standards') {
-                                    $controls = Control::where('standard_id', '=', $standard_id)
-                                        ->get()
-                                        ->mapWithKeys(function ($control) {
-                                            return [$control->id => $control->code.' - '.$control->title];
-                                        });
+                                    $controlModels = Control::where('standard_id', '=', $standard_id)->get();
+                                    $controls = $controlModels->mapWithKeys(function ($control) {
+                                        return [$control->id => $control->code.' - '.$control->title];
+                                    });
+                                    $metadata = $controlModels->mapWithKeys(function ($control) {
+                                        $latestAudit = $control->latestCompletedAuditItem();
+
+                                        return [$control->id => [
+                                            'effectiveness' => $control->effectiveness,
+                                            'applicability' => $control->applicability,
+                                            'control_owner_id' => $control->control_owner_id,
+                                            'standard_id' => $control->standard_id,
+                                            'last_assessed_at' => $latestAudit?->updated_at?->toDateTimeString(),
+                                        ]];
+                                    })->toArray();
                                 } elseif ($audit_type == 'implementations') {
-                                    $controls = Implementation::query()
-                                        ->get()
-                                        ->mapWithKeys(function ($implementation) {
-                                            return [$implementation->id => $implementation->code.' - '.$implementation->title];
-                                        })
-                                        ->toArray();
+                                    $implementationModels = Implementation::query()->get();
+                                    $controls = $implementationModels->mapWithKeys(function ($implementation) {
+                                        return [$implementation->id => $implementation->code.' - '.$implementation->title];
+                                    })->toArray();
+                                    $metadata = $implementationModels->mapWithKeys(function ($implementation) {
+                                        $latestAudit = $implementation->completedAuditItems()
+                                            ->latest('updated_at')
+                                            ->first();
+
+                                        return [$implementation->id => [
+                                            'effectiveness' => $implementation->effectiveness,
+                                            'status' => $implementation->status,
+                                            'implementation_owner_id' => $implementation->implementation_owner_id,
+                                            'last_assessed_at' => $latestAudit?->updated_at?->toDateTimeString(),
+                                        ]];
+                                    })->toArray();
                                 } elseif ($audit_type == 'program') {
                                     $program_id = $get('program_id');
                                     if ($program_id) {
                                         $program = Program::find($program_id);
-                                        $controls = $program->getAllControls()
-                                            ->mapWithKeys(function ($control) {
-                                                return [$control->id => $control->code.' - '.$control->title];
-                                            });
+                                        $controlModels = $program->getAllControls();
+                                        $controls = $controlModels->mapWithKeys(function ($control) {
+                                            return [$control->id => $control->code.' - '.$control->title];
+                                        });
+                                        $metadata = $controlModels->mapWithKeys(function ($control) {
+                                            $latestAudit = $control->latestCompletedAuditItem();
+
+                                            return [$control->id => [
+                                                'effectiveness' => $control->effectiveness,
+                                                'applicability' => $control->applicability,
+                                                'control_owner_id' => $control->control_owner_id,
+                                                'standard_id' => $control->standard_id,
+                                                'last_assessed_at' => $latestAudit?->updated_at?->toDateTimeString(),
+                                            ]];
+                                        })->toArray();
                                     } else {
                                         $controls = [];
                                     }
@@ -165,13 +198,47 @@ class CreateAudit extends CreateRecord
                                 }
 
                                 return [
-                                    MultiselectTwoSides::make('controls')
+                                    ActionableMultiselectTwoSides::make('controls')
                                         ->options($controls)
+                                        ->optionsMetadata($metadata)
                                         ->selectableLabel('Available Items')
                                         ->selectedLabel('Selected Items')
                                         ->enableSearch()
                                         ->default(! is_array($controls) ? $controls->toArray() : $controls)
-                                        ->required(),
+                                        ->required()
+                                        ->addDropdownAction(
+                                            name: 'randomSelect',
+                                            label: 'Random Select',
+                                            callback: ActionableMultiselectTwoSides::randomSelector(),
+                                            options: [
+                                                ['label' => 'Random 5', 'count' => 5],
+                                                ['label' => 'Random 10', 'count' => 10],
+                                                ['label' => 'Random 20', 'count' => 20],
+                                            ],
+                                            icon: 'heroicon-o-sparkles'
+                                        )
+                                        ->addDropdownAction(
+                                            name: 'randomUnassessed',
+                                            label: 'Random (Unassessed)',
+                                            callback: ActionableMultiselectTwoSides::randomUnassessedSelector(),
+                                            options: [
+                                                ['label' => '5 Unassessed', 'count' => 5],
+                                                ['label' => '10 Unassessed', 'count' => 10],
+                                                ['label' => 'All Unassessed', 'count' => 0],
+                                            ],
+                                            icon: 'heroicon-o-question-mark-circle'
+                                        )
+                                        ->addDropdownAction(
+                                            name: 'oldestAssessed',
+                                            label: 'Oldest Assessed',
+                                            callback: ActionableMultiselectTwoSides::oldestAssessedSelector(),
+                                            options: [
+                                                ['label' => '5 Oldest', 'count' => 5],
+                                                ['label' => '10 Oldest', 'count' => 10],
+                                                ['label' => '20 Oldest', 'count' => 20],
+                                            ],
+                                            icon: 'heroicon-o-clock'
+                                        ),
                                 ];
                             }),
                 ]),

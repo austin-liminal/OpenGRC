@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\RiskStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
+use App\Filament\Exports\RiskExporter;
 use App\Filament\Resources\RiskResource\Pages;
 use App\Filament\Resources\RiskResource\RelationManagers\ImplementationsRelationManager;
 use App\Filament\Resources\RiskResource\RelationManagers\MitigationsRelationManager;
@@ -13,6 +14,8 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +24,7 @@ use Rmsramos\Activitylog\RelationManagers\ActivitylogRelationManager;
 class RiskResource extends Resource
 {
     use HasTaxonomyFields;
-    
+
     protected static ?string $model = Risk::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-fire';
@@ -180,7 +183,9 @@ class RiskResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
-                        if (!$departmentParent) return;
+                        if (! $departmentParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as dept_taxonomables', function ($join) {
                             $join->on('risks.id', '=', 'dept_taxonomables.taxonomable_id')
@@ -202,7 +207,9 @@ class RiskResource extends Resource
                     })
                     ->sortable(query: function ($query, string $direction): void {
                         $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
-                        if (!$scopeParent) return;
+                        if (! $scopeParent) {
+                            return;
+                        }
 
                         $query->leftJoin('taxonomables as scope_taxonomables', function ($join) {
                             $join->on('risks.id', '=', 'scope_taxonomables.taxonomable_id')
@@ -273,7 +280,7 @@ class RiskResource extends Resource
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('department');
 
-                        if (!$taxonomy) {
+                        if (! $taxonomy) {
                             return [];
                         }
 
@@ -283,7 +290,7 @@ class RiskResource extends Resource
                             ->toArray();
                     })
                     ->query(function ($query, array $data) {
-                        if (!$data['value']) {
+                        if (! $data['value']) {
                             return;
                         }
 
@@ -296,7 +303,7 @@ class RiskResource extends Resource
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('scope');
 
-                        if (!$taxonomy) {
+                        if (! $taxonomy) {
                             return [];
                         }
 
@@ -306,7 +313,7 @@ class RiskResource extends Resource
                             ->toArray();
                     })
                     ->query(function ($query, array $data) {
-                        if (!$data['value']) {
+                        if (! $data['value']) {
                             return;
                         }
 
@@ -323,6 +330,9 @@ class RiskResource extends Resource
                     ->default('1'),
             ])
             ->headerActions([
+                ExportAction::make()
+                    ->exporter(RiskExporter::class)
+                    ->icon('heroicon-o-arrow-down-tray'),
                 Tables\Actions\Action::make('reset_filters')
                     ->label('Reset Filters')
                     ->icon('heroicon-o-arrow-path')
@@ -336,9 +346,13 @@ class RiskResource extends Resource
                     ->hidden(),
             ])
             ->bulkActions([
-                //                Tables\Actions\BulkActionGroup::make([
-                //                    Tables\Actions\DeleteBulkAction::make(),
-                //                ]),
+                Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exporter(RiskExporter::class)
+                        ->label('Export Selected')
+                        ->icon('heroicon-o-arrow-down-tray'),
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 

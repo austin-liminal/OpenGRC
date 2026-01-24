@@ -26,7 +26,7 @@ class SecurityHeaders
 
         // HSTS - only in production to avoid issues with local development
         if (app()->environment('production')) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            //$response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
         // CSP only for HTML responses
@@ -54,6 +54,7 @@ class SecurityHeaders
     {
         $storageEndpoints = $this->getStorageEndpoints();
         $cdnSources = $this->getCdnSources($request);
+        $formAction = $this->getFormAction($request);
 
         $directives = [
             // Default fallback - restrict to same origin
@@ -71,8 +72,8 @@ class SecurityHeaders
             // Images: self + data URIs + ui-avatars for default avatars + external storage
             "img-src 'self' data: blob: https://ui-avatars.com".$storageEndpoints,
 
-            // Forms can only submit to same origin
-            "form-action 'self'",
+            // Forms - relaxed for OAuth routes that need to redirect to external clients
+            "form-action ".$formAction,
 
             // Prevent site from being embedded in frames (clickjacking protection)
             "frame-ancestors 'self'",
@@ -148,6 +149,22 @@ class SecurityHeaders
         }
 
         return $endpoints ? ' '.implode(' ', array_unique($endpoints)) : '';
+    }
+
+    /**
+     * Get form-action directive value based on the request path.
+     *
+     * OAuth authorization routes need relaxed form-action to allow
+     * redirecting to external MCP client redirect URIs.
+     */
+    protected function getFormAction(Request $request): string
+    {
+        // OAuth routes need to submit forms that redirect to external clients
+        if ($request->is('oauth/*')) {
+            return "'self' https:";
+        }
+
+        return "'self'";
     }
 
     /**
