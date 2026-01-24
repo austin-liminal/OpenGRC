@@ -177,14 +177,26 @@ class EditAuditItem extends EditRecord
 
                 Forms\Components\Section::make('Audit Evidence')
                     ->schema([
-                        // Todo: This can be replaced with a Repeater component when nested relationships are
-                        // supported in Filament - potentially in v4.x. Or, maybe do a footer widget.
+                        // When auditing controls, show associated implementations
                         Placeholder::make('control.implementations')
                             ->hidden($this->record->audit->audit_type == 'implementations')
                             ->label('Documented Implementations')
-                            ->view('tables.implementations-table', ['implementations' => $this->record->auditable->implementations])
+                            ->view('tables.implementations-table', ['implementations' => $this->record->auditable->implementations ?? collect()])
                             ->columnSpanFull()
                             ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Implementations that are related to this control.'),
+                        // When auditing implementations directly, show the implementation details
+                        Placeholder::make('implementation.details')
+                            ->hidden($this->record->audit->audit_type != 'implementations')
+                            ->label('Implementation Details')
+                            ->content(fn (AuditItem $record): HtmlString => new HtmlString($record->auditable->details ?? '<em>No details provided.</em>'))
+                            ->columnSpanFull()
+                            ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Details describing this implementation.'),
+                        Placeholder::make('implementation.test_procedure')
+                            ->hidden($this->record->audit->audit_type != 'implementations')
+                            ->label('Test Procedure')
+                            ->content(fn (AuditItem $record): HtmlString => new HtmlString($record->auditable->test_procedure ?? '<em>No test procedure provided.</em>'))
+                            ->columnSpanFull()
+                            ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Procedure for testing or verifying this implementation.'),
                         Placeholder::make('data_requests')
                             ->label('Data Requests')
                             ->view('tables.data-requests-table', ['requests' => $this->record->dataRequests])
