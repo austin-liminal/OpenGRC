@@ -47,6 +47,9 @@ class AppPanelProvider extends PanelProvider
 
         // Build social providers array using FilamentSocialite v3 API
         try {
+            // Check if database is available before accessing settings
+            DB::connection()->getPdo();
+
             if (setting('auth.okta.enabled')) {
                 $socialProviders[] = Provider::make('okta')
                     ->label('Okta')
@@ -83,7 +86,8 @@ class AppPanelProvider extends PanelProvider
             }
 
         } catch (Exception $e) {
-            // Silently fail and use empty social providers during setup
+            // Log the error to help debug SSO issues
+            logger()->warning('SSO providers could not be loaded: '.$e->getMessage());
         }
 
         return $panel
