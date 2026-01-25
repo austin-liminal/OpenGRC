@@ -46,48 +46,51 @@ class AppPanelProvider extends PanelProvider
         $socialProviders = [];
 
         // Build social providers array using FilamentSocialite v3 API
-        try {
-            // Check if database is available before accessing settings
-            DB::connection()->getPdo();
+        // Check if settings service is available (may not be during early boot)
+        if (app()->bound('setting')) {
+            try {
+                // Check if database is available before accessing settings
+                DB::connection()->getPdo();
 
-            if (setting('auth.okta.enabled')) {
-                $socialProviders[] = Provider::make('okta')
-                    ->label('Okta')
-                    ->icon('heroicon-o-lock-closed')
-                    ->color(Color::Slate);
+                if (setting('auth.okta.enabled')) {
+                    $socialProviders[] = Provider::make('okta')
+                        ->label('Okta')
+                        ->icon('heroicon-o-lock-closed')
+                        ->color(Color::Slate);
+                }
+
+                if (setting('auth.microsoft.enabled')) {
+                    $socialProviders[] = Provider::make('microsoft')
+                        ->label('Microsoft')
+                        ->icon('heroicon-o-window')
+                        ->color(Color::Slate);
+                }
+
+                if (setting('auth.azure.enabled')) {
+                    $socialProviders[] = Provider::make('azure')
+                        ->label('Azure AD')
+                        ->icon('heroicon-o-cloud')
+                        ->color(Color::Slate);
+                }
+
+                if (setting('auth.google.enabled')) {
+                    $socialProviders[] = Provider::make('google')
+                        ->label('Google')
+                        ->icon('heroicon-o-globe-alt')
+                        ->color(Color::Slate);
+                }
+
+                if (setting('auth.auth0.enabled')) {
+                    $socialProviders[] = Provider::make('auth0')
+                        ->label('Auth0')
+                        ->icon('heroicon-o-lock-closed')
+                        ->color(Color::Slate);
+                }
+
+            } catch (Exception $e) {
+                // Log the error to help debug SSO issues
+                logger()->warning('SSO providers could not be loaded: '.$e->getMessage());
             }
-
-            if (setting('auth.microsoft.enabled')) {
-                $socialProviders[] = Provider::make('microsoft')
-                    ->label('Microsoft')
-                    ->icon('heroicon-o-window')
-                    ->color(Color::Slate);
-            }
-
-            if (setting('auth.azure.enabled')) {
-                $socialProviders[] = Provider::make('azure')
-                    ->label('Azure AD')
-                    ->icon('heroicon-o-cloud')
-                    ->color(Color::Slate);
-            }
-
-            if (setting('auth.google.enabled')) {
-                $socialProviders[] = Provider::make('google')
-                    ->label('Google')
-                    ->icon('heroicon-o-globe-alt')
-                    ->color(Color::Slate);
-            }
-
-            if (setting('auth.auth0.enabled')) {
-                $socialProviders[] = Provider::make('auth0')
-                    ->label('Auth0')
-                    ->icon('heroicon-o-lock-closed')
-                    ->color(Color::Slate);
-            }
-
-        } catch (Exception $e) {
-            // Log the error to help debug SSO issues
-            logger()->warning('SSO providers could not be loaded: '.$e->getMessage());
         }
 
         return $panel

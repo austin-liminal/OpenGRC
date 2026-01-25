@@ -220,5 +220,13 @@ class AppServiceProvider extends ServiceProvider
                 'prefix' => 'grc',
             ]);
         });
+
+        // Register setting service early so it's available for Filament panel providers
+        // The mangoldsecurity/settings package registers this in boot() which is too late
+        if (! $this->app->bound('setting')) {
+            $this->app->singleton('setting', function () {
+                return new \MangoldSecurity\Settings\Services\Setting;
+            });
+        }
     }
 }
