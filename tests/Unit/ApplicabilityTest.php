@@ -9,6 +9,7 @@ use Tests\TestCase;
 class ApplicabilityTest extends TestCase
 {
     use RefreshDatabase;
+
     public function test_applicability_enum_has_correct_cases(): void
     {
         $this->assertEquals('Applicable', Applicability::APPLICABLE->value);
@@ -26,7 +27,7 @@ class ApplicabilityTest extends TestCase
             'UNKNOWN',
         ];
 
-        $actualCases = array_map(fn($case) => $case->name, Applicability::cases());
+        $actualCases = array_map(fn ($case) => $case->name, Applicability::cases());
 
         $this->assertEquals($expectedCases, $actualCases);
         $this->assertCount(4, Applicability::cases());

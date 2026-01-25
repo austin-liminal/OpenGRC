@@ -10,7 +10,6 @@ use App\Enums\Effectiveness;
 use App\Models\AuditItem;
 use App\Models\Control;
 use App\Models\Implementation;
-use App\Models\Policy;
 use App\Models\Program;
 use App\Models\Standard;
 use App\Models\User;
@@ -42,7 +41,7 @@ class ControlTest extends TestCase
 
         // Test that the model has the correct casts defined
         $casts = $control->getCasts();
-        
+
         $this->assertEquals(Applicability::class, $casts['status']);
         $this->assertEquals(Effectiveness::class, $casts['effectiveness']);
         $this->assertEquals(ControlType::class, $casts['type']);
@@ -186,7 +185,7 @@ class ControlTest extends TestCase
 
     public function test_control_has_searchable_as_method(): void
     {
-        $control = new Control();
+        $control = new Control;
 
         $this->assertEquals('controls_index', $control->searchableAs());
     }

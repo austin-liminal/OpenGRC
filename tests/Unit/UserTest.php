@@ -2,13 +2,11 @@
 
 namespace Tests\Unit;
 
-use App\Models\Audit;
+use App\Enums\ResponseStatus;
 use App\Models\DataRequestResponse;
 use App\Models\Program;
 use App\Models\User;
-use App\Enums\ResponseStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -34,7 +32,7 @@ class UserTest extends TestCase
     public function test_user_has_fillable_attributes(): void
     {
         $fillable = ['name', 'text', 'email', 'password'];
-        $user = new User();
+        $user = new User;
 
         $this->assertEquals($fillable, $user->getFillable());
     }
@@ -42,14 +40,14 @@ class UserTest extends TestCase
     public function test_user_has_hidden_attributes(): void
     {
         $hidden = ['password', 'remember_token'];
-        $user = new User();
+        $user = new User;
 
         $this->assertEquals($hidden, $user->getHidden());
     }
 
     public function test_password_is_cast_as_hashed(): void
     {
-        $user = new User();
+        $user = new User;
         $casts = $user->getCasts();
 
         $this->assertEquals('hashed', $casts['password']);
@@ -57,7 +55,7 @@ class UserTest extends TestCase
 
     public function test_email_verified_at_is_cast_as_datetime(): void
     {
-        $user = new User();
+        $user = new User;
         $casts = $user->getCasts();
 
         $this->assertEquals('datetime', $casts['email_verified_at']);
@@ -65,7 +63,7 @@ class UserTest extends TestCase
 
     public function test_last_activity_is_cast_as_datetime(): void
     {
-        $user = new User();
+        $user = new User;
         $casts = $user->getCasts();
 
         $this->assertEquals('datetime', $casts['last_activity']);
@@ -110,7 +108,7 @@ class UserTest extends TestCase
     public function test_user_has_open_todos_relationship(): void
     {
         $user = User::factory()->create();
-        
+
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->openTodos());
         $this->assertEquals('requestee_id', $user->openTodos()->getForeignKeyName());
     }
@@ -118,9 +116,9 @@ class UserTest extends TestCase
     public function test_open_todos_filters_by_status(): void
     {
         $user = User::factory()->create();
-        
+
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->openTodos());
-        
+
         // Check that the query contains the correct where conditions
         $query = $user->openTodos();
         $bindings = $query->getQuery()->getBindings();
@@ -159,7 +157,7 @@ class UserTest extends TestCase
 
     public function test_user_has_activity_log_options(): void
     {
-        $user = new User();
+        $user = new User;
         $logOptions = $user->getActivitylogOptions();
 
         $this->assertInstanceOf(\Spatie\Activitylog\LogOptions::class, $logOptions);
@@ -167,9 +165,9 @@ class UserTest extends TestCase
 
     public function test_user_logs_specific_attributes(): void
     {
-        $user = new User();
+        $user = new User;
         $logOptions = $user->getActivitylogOptions();
-        
+
         $reflection = new \ReflectionClass($logOptions);
         $attributesProperty = $reflection->getProperty('logAttributes');
         $attributesProperty->setAccessible(true);

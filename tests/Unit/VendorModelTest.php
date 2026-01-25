@@ -31,18 +31,18 @@ class VendorModelTest extends TestCase
             'risk_score_calculated_at',
             'notes',
         ];
-        
-        $vendor = new Vendor();
-        
+
+        $vendor = new Vendor;
+
         $this->assertEquals($fillable, $vendor->getFillable());
     }
 
     public function test_vendor_model_has_correct_casts()
     {
-        $vendor = new Vendor();
-        
+        $vendor = new Vendor;
+
         $casts = $vendor->getCasts();
-        
+
         $this->assertEquals(VendorStatus::class, $casts['status']);
         $this->assertEquals(VendorRiskRating::class, $casts['risk_rating']);
         $this->assertEquals('array', $casts['logo']);
@@ -73,7 +73,7 @@ class VendorModelTest extends TestCase
             'contact_email' => 'john@test-vendor.com',
             'risk_score' => 65,
         ]);
-        
+
         $this->assertEquals('Test Vendor', $vendor->name);
         $this->assertEquals(VendorStatus::ACTIVE, $vendor->status);
         $this->assertEquals(VendorRiskRating::MEDIUM, $vendor->risk_rating);
@@ -113,7 +113,7 @@ class VendorModelTest extends TestCase
 
         // Should not exist in normal queries
         $this->assertNull(Vendor::find($vendor->id));
-        
+
         // But should exist in withTrashed queries
         $this->assertNotNull(Vendor::withTrashed()->find($vendor->id));
         $this->assertTrue(Vendor::withTrashed()->find($vendor->id)->trashed());

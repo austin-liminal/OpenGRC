@@ -15,18 +15,18 @@ class RiskModelTest extends TestCase
     public function test_risk_model_has_correct_fillable_attributes()
     {
         $fillable = ['name', 'likelihood', 'impact'];
-        
-        $risk = new Risk();
-        
+
+        $risk = new Risk;
+
         $this->assertEquals($fillable, $risk->getFillable());
     }
 
     public function test_risk_model_has_correct_casts()
     {
-        $risk = new Risk();
-        
+        $risk = new Risk;
+
         $casts = $risk->getCasts();
-        
+
         $this->assertEquals('integer', $casts['id']);
         $this->assertEquals(MitigationType::class, $casts['action']);
         $this->assertEquals(RiskStatus::class, $casts['status']);
@@ -38,7 +38,7 @@ class RiskModelTest extends TestCase
         $riskData = [
             'name' => 'Test Risk',
             'likelihood' => 5,
-            'impact' => 8
+            'impact' => 8,
         ];
 
         $risk = Risk::create($riskData);
@@ -51,7 +51,7 @@ class RiskModelTest extends TestCase
 
     public function test_searchable_as_returns_correct_index_name()
     {
-        $risk = new Risk();
+        $risk = new Risk;
 
         $indexName = $risk->searchableAs();
 
@@ -63,7 +63,7 @@ class RiskModelTest extends TestCase
         $risk = Risk::factory()->create([
             'name' => 'Test Risk',
             'likelihood' => 5,
-            'impact' => 8
+            'impact' => 8,
         ]);
 
         $searchableArray = $risk->toSearchableArray();

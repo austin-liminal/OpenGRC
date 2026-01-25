@@ -9,7 +9,6 @@ use App\Models\Survey;
 use App\Models\SurveyAnswer;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyTemplate;
-use App\Models\Vendor;
 use App\Services\VendorRiskScoringService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -23,7 +22,7 @@ class VendorRiskScoringServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new VendorRiskScoringService();
+        $this->service = new VendorRiskScoringService;
     }
 
     public function test_calculate_survey_score_returns_zero_when_no_template()
@@ -39,11 +38,11 @@ class VendorRiskScoringServiceTest extends TestCase
     {
         $template = SurveyTemplate::factory()->create();
         $survey = Survey::factory()->create(['template_id' => $template->id]);
-        
+
         // Create a question with zero weight
         SurveyQuestion::factory()->create([
             'template_id' => $template->id,
-            'risk_weight' => 0
+            'risk_weight' => 0,
         ]);
 
         $score = $this->service->calculateSurveyScore($survey);
@@ -55,7 +54,7 @@ class VendorRiskScoringServiceTest extends TestCase
     {
         $question = SurveyQuestion::factory()->create([
             'question_type' => QuestionType::BOOLEAN,
-            'risk_impact' => RiskImpact::POSITIVE
+            'risk_impact' => RiskImpact::POSITIVE,
         ]);
 
         // Yes answer for positive impact = good (0 risk)
@@ -73,7 +72,7 @@ class VendorRiskScoringServiceTest extends TestCase
     {
         $question = SurveyQuestion::factory()->create([
             'question_type' => QuestionType::BOOLEAN,
-            'risk_impact' => RiskImpact::NEGATIVE
+            'risk_impact' => RiskImpact::NEGATIVE,
         ]);
 
         // Yes answer for negative impact = bad (100 risk)
@@ -91,7 +90,7 @@ class VendorRiskScoringServiceTest extends TestCase
     {
         $question = SurveyQuestion::factory()->create([
             'question_type' => QuestionType::BOOLEAN,
-            'risk_impact' => RiskImpact::NEUTRAL
+            'risk_impact' => RiskImpact::NEUTRAL,
         ]);
 
         $answer = SurveyAnswer::factory()->create(['answer_value' => true]);

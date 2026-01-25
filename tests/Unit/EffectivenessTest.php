@@ -9,6 +9,7 @@ use Tests\TestCase;
 class EffectivenessTest extends TestCase
 {
     use RefreshDatabase;
+
     public function test_effectiveness_enum_has_correct_cases(): void
     {
         $this->assertEquals('Effective', Effectiveness::EFFECTIVE->value);
@@ -26,7 +27,7 @@ class EffectivenessTest extends TestCase
             'UNKNOWN',
         ];
 
-        $actualCases = array_map(fn($case) => $case->name, Effectiveness::cases());
+        $actualCases = array_map(fn ($case) => $case->name, Effectiveness::cases());
 
         $this->assertEquals($expectedCases, $actualCases);
         $this->assertCount(4, Effectiveness::cases());
