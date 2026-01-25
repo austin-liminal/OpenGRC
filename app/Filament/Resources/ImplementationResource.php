@@ -35,7 +35,6 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Resource;
@@ -49,6 +48,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Livewire\Component;
 
 class ImplementationResource extends Resource
 {
@@ -86,7 +86,7 @@ class ImplementationResource extends Resource
                     ->required()
                     ->unique(Implementation::class, 'code', ignoreRecord: true)
                     ->live()
-                    ->afterStateUpdated(function (HasForms $livewire, TextInput $component) {
+                    ->afterStateUpdated(function (Component $livewire, TextInput $component) {
                         $livewire->validateOnly($component->getStatePath());
                     })
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter a unique code for this implementation. This code will be used to identify this implementation in the system.'),

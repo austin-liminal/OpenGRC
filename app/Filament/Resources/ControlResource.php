@@ -30,7 +30,6 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Resource;
@@ -45,6 +44,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\HtmlString;
+use Livewire\Component;
 
 class ControlResource extends Resource
 {
@@ -93,7 +93,7 @@ class ControlResource extends Resource
                     ->maxLength(255)
                     ->unique(Control::class, 'code', ignoreRecord: true)
                     ->live()
-                    ->afterStateUpdated(function (HasForms $livewire, TextInput $component) {
+                    ->afterStateUpdated(function (Component $livewire, TextInput $component) {
                         $livewire->validateOnly($component->getStatePath());
                     }),
                 Select::make('standard_id')
