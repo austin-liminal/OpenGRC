@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <x-filament-panels::form wire:submit="submit">
+    <form wire:submit="submit" class="fi-form grid gap-y-6">
         {{ $this->form }}
 
         <div class="flex gap-3 justify-end">
@@ -7,5 +7,7 @@
                 {{ $action }}
             @endforeach
         </div>
-    </x-filament-panels::form>
+    </form>
+
+    <x-filament-actions::modals />
 </x-filament-panels::page>

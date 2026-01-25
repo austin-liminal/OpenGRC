@@ -1,12 +1,12 @@
 <x-filament-panels::page.simple>
     @if($mode === 'login')
-        <x-filament-panels::form wire:submit="login">
+        <form wire:submit="login" class="fi-form grid gap-y-6">
             {{ $this->loginForm }}
 
             <x-filament::button type="submit" class="w-full">
                 Sign In
             </x-filament::button>
-        </x-filament-panels::form>
+        </form>
 
         <div class="mt-4 text-center">
             <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -17,13 +17,13 @@
             </p>
         </div>
     @elseif($mode === 'register')
-        <x-filament-panels::form wire:submit="register">
+        <form wire:submit="register" class="fi-form grid gap-y-6">
             {{ $this->registerForm }}
 
             <x-filament::button type="submit" class="w-full">
                 Create Account
             </x-filament::button>
-        </x-filament-panels::form>
+        </form>
 
         <div class="mt-4 text-center">
             <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -34,12 +34,12 @@
             </p>
         </div>
     @elseif($mode === 'set-password')
-        <x-filament-panels::form wire:submit="setPassword">
+        <form wire:submit="setPassword" class="fi-form grid gap-y-6">
             {{ $this->setPasswordForm }}
 
             <x-filament::button type="submit" class="w-full">
                 Set Password & Continue
             </x-filament::button>
-        </x-filament-panels::form>
+        </form>
     @endif
 </x-filament-panels::page.simple>
