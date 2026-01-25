@@ -10,9 +10,9 @@ class ImplementationsStatsWidget extends ChartWidget
 {
     protected static bool $isLazy = false;
 
-    protected static ?string $heading = null;
+    protected ?string $heading = null;
 
-    protected static ?string $maxHeight = '250px';
+    protected ?string $maxHeight = '250px';
 
     protected int|string|array $columnSpan = '1';
 
@@ -26,12 +26,12 @@ class ImplementationsStatsWidget extends ChartWidget
     protected function getData(): array
     {
         // Single query with conditional aggregation for all effectiveness counts
-        $counts = Implementation::selectRaw("
+        $counts = Implementation::selectRaw('
             SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as effective,
             SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as partial,
             SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as ineffective,
             SUM(CASE WHEN effectiveness = ? THEN 1 ELSE 0 END) as unknown
-        ", [
+        ', [
             Effectiveness::EFFECTIVE->value,
             Effectiveness::PARTIAL->value,
             Effectiveness::INEFFECTIVE->value,

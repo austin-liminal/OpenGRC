@@ -2,23 +2,33 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TrustCenterContentBlockResource\Pages;
+use App\Filament\Resources\TrustCenterContentBlockResource\Pages\CreateTrustCenterContentBlock;
+use App\Filament\Resources\TrustCenterContentBlockResource\Pages\EditTrustCenterContentBlock;
+use App\Filament\Resources\TrustCenterContentBlockResource\Pages\ListTrustCenterContentBlocks;
+use App\Filament\Resources\TrustCenterContentBlockResource\Pages\ViewTrustCenterContentBlock;
 use App\Models\TrustCenterContentBlock;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class TrustCenterContentBlockResource extends Resource
 {
     protected static ?string $model = TrustCenterContentBlock::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
 
     // Hide from navigation - access via Trust Center Manager
     protected static bool $shouldRegisterNavigation = false;
@@ -43,41 +53,41 @@ class TrustCenterContentBlockResource extends Resource
         return __('Content Blocks');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make(__('Block Settings'))
+        return $schema
+            ->components([
+                Section::make(__('Block Settings'))
                     ->schema([
-                        Forms\Components\TextInput::make('title')
+                        TextInput::make('title')
                             ->label(__('Title'))
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('slug')
+                        TextInput::make('slug')
                             ->label(__('Slug'))
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(100)
                             ->disabled(fn (?TrustCenterContentBlock $record) => $record !== null)
                             ->helperText(__('The slug is used to identify this block and cannot be changed after creation.')),
-                        Forms\Components\TextInput::make('icon')
+                        TextInput::make('icon')
                             ->label(__('Icon'))
                             ->placeholder('heroicon-o-information-circle')
                             ->helperText(__('Heroicon name for display')),
-                        Forms\Components\TextInput::make('sort_order')
+                        TextInput::make('sort_order')
                             ->label(__('Sort Order'))
                             ->numeric()
                             ->default(0),
-                        Forms\Components\Toggle::make('is_enabled')
+                        Toggle::make('is_enabled')
                             ->label(__('Enabled'))
                             ->helperText(__('When enabled, this block will be displayed on the public Trust Center page.'))
                             ->default(false),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make(__('Content'))
+                Section::make(__('Content'))
                     ->schema([
-                        Forms\Components\RichEditor::make('content')
+                        RichEditor::make('content')
                             ->label(__('Content'))
                             ->toolbarButtons([
                                 'bold',
@@ -98,15 +108,15 @@ class TrustCenterContentBlockResource extends Resource
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make()
                     ->schema([
                         TextEntry::make('title')
                             ->hiddenLabel()
-                            ->size(TextEntry\TextEntrySize::Large)
+                            ->size(TextSize::Large)
                             ->weight('bold'),
                         TextEntry::make('slug')
                             ->label(__('Slug'))
@@ -133,40 +143,40 @@ class TrustCenterContentBlockResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->label(__('Title'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('slug')
+                TextColumn::make('slug')
                     ->label(__('Slug'))
                     ->badge()
                     ->color('gray')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_enabled')
+                IconColumn::make('is_enabled')
                     ->label(__('Enabled'))
                     ->boolean(),
-                Tables\Columns\TextColumn::make('sort_order')
+                TextColumn::make('sort_order')
                     ->label(__('Order'))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label(__('Last Updated'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_enabled')
+                TernaryFilter::make('is_enabled')
                     ->label(__('Status'))
                     ->placeholder(__('All'))
                     ->trueLabel(__('Enabled'))
                     ->falseLabel(__('Disabled')),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make()
                     ->hidden(fn (TrustCenterContentBlock $record) => $record->slug === 'overview'),
             ])
-            ->bulkActions([])
+            ->toolbarActions([])
             ->defaultSort('sort_order', 'asc')
             ->reorderable('sort_order');
     }
@@ -181,10 +191,10 @@ class TrustCenterContentBlockResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTrustCenterContentBlocks::route('/'),
-            'create' => Pages\CreateTrustCenterContentBlock::route('/create'),
-            'view' => Pages\ViewTrustCenterContentBlock::route('/{record}'),
-            'edit' => Pages\EditTrustCenterContentBlock::route('/{record}/edit'),
+            'index' => ListTrustCenterContentBlocks::route('/'),
+            'create' => CreateTrustCenterContentBlock::route('/create'),
+            'view' => ViewTrustCenterContentBlock::route('/{record}'),
+            'edit' => EditTrustCenterContentBlock::route('/{record}/edit'),
         ];
     }
 }

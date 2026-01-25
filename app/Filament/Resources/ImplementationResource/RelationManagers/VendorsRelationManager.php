@@ -3,18 +3,24 @@
 namespace App\Filament\Resources\ImplementationResource\RelationManagers;
 
 use App\Filament\Resources\VendorResource;
-use Filament\Forms\Form;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class VendorsRelationManager extends RelationManager
 {
     protected static string $relationship = 'vendors';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return VendorResource::form($form);
+        return VendorResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -22,30 +28,30 @@ class VendorsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn ($record) => $record->status->getColor())
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('risk_rating')
+                TextColumn::make('risk_rating')
                     ->label(__('Risk Rating'))
                     ->badge()
                     ->color(fn ($record) => $record->risk_rating->getColor())
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('vendorManager.name')
+                TextColumn::make('vendorManager.name')
                     ->label(__('Vendor Manager'))
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('url')
+                TextColumn::make('url')
                     ->label(__('URL'))
                     ->url(fn ($record) => $record->url, true)
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -54,20 +60,20 @@ class VendorsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Relate to Vendor')
                     ->preloadRecordSelect(),
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Create a New Vendor'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => VendorResource::getUrl('view', ['record' => $record])),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

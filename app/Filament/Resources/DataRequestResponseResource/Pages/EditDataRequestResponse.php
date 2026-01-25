@@ -5,7 +5,8 @@ namespace App\Filament\Resources\DataRequestResponseResource\Pages;
 use App\Enums\ResponseStatus;
 use App\Filament\Resources\DataRequestResponseResource;
 use App\Models\DataRequestResponse;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,7 +21,7 @@ class EditDataRequestResponse extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 
@@ -36,9 +37,9 @@ class EditDataRequestResponse extends EditRecord
         ];
     }
 
-    protected function getSubmitAction(): Actions\Action
+    protected function getSubmitAction(): Action
     {
-        return Actions\Action::make('submit')
+        return Action::make('submit')
             ->label('Submit Response')
             ->color('success')
             ->action(function () {

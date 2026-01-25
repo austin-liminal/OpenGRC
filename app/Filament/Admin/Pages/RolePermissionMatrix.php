@@ -4,11 +4,11 @@ namespace App\Filament\Admin\Pages;
 
 use App\Filament\Forms\Components\PermissionMatrix;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
@@ -18,9 +18,9 @@ class RolePermissionMatrix extends Page
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-key';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-key';
 
-    protected static ?string $navigationGroup = 'System';
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
 
     protected static ?string $title = 'Role & Permission Matrix';
 
@@ -28,7 +28,7 @@ class RolePermissionMatrix extends Page
 
     protected static ?int $navigationSort = 81;
 
-    protected static string $view = 'filament.pages.role-permission-matrix';
+    protected string $view = 'filament.pages.role-permission-matrix';
 
     public ?array $data = [];
 
@@ -43,10 +43,10 @@ class RolePermissionMatrix extends Page
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make()
                     ->schema([
                         PermissionMatrix::make('permissions')

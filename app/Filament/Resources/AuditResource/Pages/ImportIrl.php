@@ -10,16 +10,16 @@ use Exception;
 use Filament\Actions\Concerns\HasWizard;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Wizard;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Schema;
 use Filament\Support\Exceptions\Halt;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 use League\Csv\Reader;
@@ -33,7 +33,7 @@ class ImportIrl extends Page implements HasForms
 
     protected static string $resource = AuditResource::class;
 
-    protected static string $view = 'filament.resources.audit-resource.pages.import-irl';
+    protected string $view = 'filament.resources.audit-resource.pages.import-irl';
 
     protected static ?string $title = 'IRL Import Wizard';
 
@@ -73,18 +73,18 @@ class ImportIrl extends Page implements HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
         $this->users = User::query()->pluck('name', 'id')->toArray();
         $this->currentDataRequests = DataRequest::query()->where('audit_id', $this->record->id)->get();
         $this->auditItems = $this->record->auditItems()->with('control')->get();
         $this->controlCodes = $this->auditItems->pluck('auditable.code')->toArray();
-        $template_url = "/resources/irl-template.csv";
+        $template_url = '/resources/irl-template.csv';
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('IRL File')
+                    Step::make('IRL File')
                         ->id('irl-file')
                         ->icon('heroicon-m-document')
                         ->completedIcon('heroicon-m-check')
@@ -118,12 +118,12 @@ class ImportIrl extends Page implements HasForms
                                             $this->irl_file_contents = $state->get();
 
                                             if (empty($this->irl_file_contents)) {
-                                                throw new \Exception("File contents are empty");
+                                                throw new Exception('File contents are empty');
                                             }
 
                                             $this->isIrlFileValid = $this->validateIrlFile() && $this->validateIrlFileData();
-                                        } catch (\Exception $e) {
-                                            $this->addError('irl_file', 'Failed to read uploaded file: ' . $e->getMessage());
+                                        } catch (Exception $e) {
+                                            $this->addError('irl_file', 'Failed to read uploaded file: '.$e->getMessage());
                                             $this->isIrlFileValid = false;
                                         }
 
@@ -137,7 +137,7 @@ class ImportIrl extends Page implements HasForms
                                 throw new Halt;
                             }
                         }),
-                    Wizard\Step::make('Review Data')
+                    Step::make('Review Data')
                         ->icon('heroicon-m-document-check')
                         ->schema([
                             Placeholder::make('Changes to be made')
@@ -211,8 +211,8 @@ class ImportIrl extends Page implements HasForms
                 }
 
                 // Skip empty rows (rows with only empty values or commas)
-                $nonEmptyValues = array_filter($row, function($value) {
-                    return !empty(trim($value));
+                $nonEmptyValues = array_filter($row, function ($value) {
+                    return ! empty(trim($value));
                 });
                 if (empty($nonEmptyValues)) {
                     continue;
@@ -257,15 +257,15 @@ class ImportIrl extends Page implements HasForms
                 $controlCodes = array_map('trim', explode(',', $row['Control Code']));
                 $invalidCodes = [];
                 foreach ($controlCodes as $code) {
-                    if (!in_array($code, $this->controlCodes)) {
+                    if (! in_array($code, $this->controlCodes)) {
                         $invalidCodes[] = $code;
                     }
                 }
 
-                if (!empty($invalidCodes)) {
+                if (! empty($invalidCodes)) {
                     $has_errors = true;
-                    $finalRecord['Control Code'] = "Control Code Not In Audit: " . implode(', ', $invalidCodes);
-                    $error_array[] = "Row $index: no control with the code(s): " . implode(', ', $invalidCodes);
+                    $finalRecord['Control Code'] = 'Control Code Not In Audit: '.implode(', ', $invalidCodes);
+                    $error_array[] = "Row $index: no control with the code(s): ".implode(', ', $invalidCodes);
                 } else {
                     $finalRecord['Control Code'] = $row['Control Code'];
                 }
@@ -282,14 +282,14 @@ class ImportIrl extends Page implements HasForms
 
                 // Gracefully handle date formatting - auto-format single digit months/days
                 $dueDate = trim($row['Due On']);
-                
+
                 // Try to auto-format dates like "1/5/2024" to "01/05/2024"
                 if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dueDate, $matches)) {
                     $month = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
                     $day = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
                     $year = $matches[3];
                     $formattedDate = "$month/$day/$year";
-                    
+
                     // Validate the formatted date
                     if (preg_match('/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/', $formattedDate)) {
                         $finalRecord['Due On'] = $formattedDate;
@@ -313,7 +313,7 @@ class ImportIrl extends Page implements HasForms
 
             if ($has_errors) {
                 $this->isIrlFileValid = false;
-                
+
                 // Show errors and indicate if processing was stopped early
                 $displayErrors = $error_array;
                 if (count($error_array) >= 5) {
@@ -321,7 +321,7 @@ class ImportIrl extends Page implements HasForms
                     $processedRows = count($this->finalData);
                     $displayErrors[] = "Processing stopped after {$processedRows} of {$totalRows} rows due to multiple errors. Please fix the above errors and try again.";
                 }
-                
+
                 $this->error_string = implode(' | ', $displayErrors);
                 $this->addError('irl_file', $this->error_string);
 

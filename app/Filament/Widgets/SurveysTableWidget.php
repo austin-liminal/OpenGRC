@@ -6,8 +6,15 @@ use App\Enums\SurveyStatus;
 use App\Filament\Resources\SurveyResource;
 use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Notifications\Notification;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Support\Facades\Mail;
@@ -24,23 +31,23 @@ class SurveysTableWidget extends BaseWidget
             ->query(Survey::query()->with(['template', 'assignedTo', 'createdBy']))
             ->heading(__('survey.manager.tabs.surveys'))
             ->columns([
-                Tables\Columns\TextColumn::make('display_title')
+                TextColumn::make('display_title')
                     ->label(__('survey.survey.table.columns.title'))
                     ->searchable(['title'])
                     ->sortable('title')
                     ->wrap(),
-                Tables\Columns\TextColumn::make('template.title')
+                TextColumn::make('template.title')
                     ->label(__('survey.survey.table.columns.template'))
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('respondent_display')
+                TextColumn::make('respondent_display')
                     ->label(__('survey.survey.table.columns.respondent'))
                     ->getStateUsing(fn (Survey $record): string => $record->respondent_name ?? $record->respondent_email ?? $record->assignedTo?->name ?? '-'),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('survey.survey.table.columns.status'))
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('progress')
+                TextColumn::make('progress')
                     ->label(__('survey.survey.table.columns.progress'))
                     ->getStateUsing(fn (Survey $record): string => $record->progress.'%')
                     ->color(fn (Survey $record): string => match (true) {
@@ -49,41 +56,41 @@ class SurveysTableWidget extends BaseWidget
                         $record->progress > 0 => 'info',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('due_date')
+                TextColumn::make('due_date')
                     ->label(__('survey.survey.table.columns.due_date'))
                     ->date()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('completed_at')
+                TextColumn::make('completed_at')
                     ->label(__('survey.survey.table.columns.completed_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('survey.survey.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(SurveyStatus::class)
                     ->label(__('survey.survey.table.filters.status')),
-                Tables\Filters\SelectFilter::make('template_id')
+                SelectFilter::make('template_id')
                     ->relationship('template', 'title')
                     ->label(__('survey.survey.table.filters.template')),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('view')
+            ->recordActions([
+                ActionGroup::make([
+                    Action::make('view')
                         ->label('View')
                         ->icon('heroicon-o-eye')
                         ->url(fn (Survey $record): string => SurveyResource::getUrl('view', ['record' => $record])),
-                    Tables\Actions\Action::make('edit')
+                    Action::make('edit')
                         ->label('Edit')
                         ->icon('heroicon-o-pencil')
                         ->url(fn (Survey $record): string => SurveyResource::getUrl('edit', ['record' => $record])),
-                    Tables\Actions\Action::make('copy_link')
+                    Action::make('copy_link')
                         ->label(__('survey.survey.actions.copy_link'))
                         ->icon('heroicon-o-clipboard-document')
                         ->color('gray')
@@ -93,7 +100,7 @@ class SurveysTableWidget extends BaseWidget
                             'x-on:click' => "navigator.clipboard.writeText('{$record->getPublicUrl()}'); \$tooltip('Link copied!')",
                         ])
                         ->visible(fn (Survey $record): bool => $record->access_token !== null),
-                    Tables\Actions\Action::make('send_invitation')
+                    Action::make('send_invitation')
                         ->label(__('survey.survey.actions.send_invitation'))
                         ->icon('heroicon-o-envelope')
                         ->color('primary')
@@ -112,7 +119,7 @@ class SurveysTableWidget extends BaseWidget
                                     ->body(__('survey.survey.notifications.invitation_sent.body', ['email' => $record->respondent_email]))
                                     ->success()
                                     ->send();
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()
                                     ->title(__('survey.survey.notifications.invitation_failed.title'))
                                     ->body($e->getMessage())
@@ -121,7 +128,7 @@ class SurveysTableWidget extends BaseWidget
                             }
                         })
                         ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && $record->status === SurveyStatus::DRAFT),
-                    Tables\Actions\Action::make('resend_invitation')
+                    Action::make('resend_invitation')
                         ->label(__('survey.survey.actions.resend_invitation'))
                         ->icon('heroicon-o-arrow-path')
                         ->color('gray')
@@ -138,7 +145,7 @@ class SurveysTableWidget extends BaseWidget
                                     ->body(__('survey.survey.notifications.invitation_sent.body', ['email' => $record->respondent_email]))
                                     ->success()
                                     ->send();
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()
                                     ->title(__('survey.survey.notifications.invitation_failed.title'))
                                     ->body($e->getMessage())
@@ -147,16 +154,16 @@ class SurveysTableWidget extends BaseWidget
                             }
                         })
                         ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && in_array($record->status, [SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])),
-                    Tables\Actions\DeleteAction::make(),
+                    DeleteAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('create')
+                Action::make('create')
                     ->label('Create Survey')
                     ->icon('heroicon-o-plus')
                     ->url(SurveyResource::getUrl('create')),

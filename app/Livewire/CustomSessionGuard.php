@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use DB;
 use EightCedars\FilamentInactivityGuard\Livewire\SessionGuard;
 use Filament\Facades\Filament;
 
@@ -14,7 +15,7 @@ class CustomSessionGuard extends SessionGuard
 
         // Also update the user's last_activity in the database if needed
         if (Filament::auth()->check()) {
-            \DB::table('users')
+            DB::table('users')
                 ->where('id', Filament::auth()->id())
                 ->update(['last_activity' => now()]);
         }

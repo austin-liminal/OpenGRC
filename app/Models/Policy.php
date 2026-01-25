@@ -6,6 +6,7 @@ use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use Aliziodev\LaravelTaxonomy\Traits\HasTaxonomy;
 use App\Enums\DocumentType;
 use App\Mcp\Traits\HasMcpSupport;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -197,8 +198,8 @@ class Policy extends Model
     /**
      * Scope a query to filter by status.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByStatus($query, string $statusName)
     {
@@ -210,8 +211,8 @@ class Policy extends Model
     /**
      * Scope a query to filter by department.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByDepartment($query, int $departmentId)
     {
@@ -221,8 +222,8 @@ class Policy extends Model
     /**
      * Scope a query to filter by scope.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeByScope($query, string $scopeName)
     {

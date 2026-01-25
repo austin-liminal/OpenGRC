@@ -3,21 +3,23 @@
 namespace App\Filament\Resources\ProgramResource\Pages;
 
 use App\Filament\Resources\ProgramResource;
+use App\Filament\Widgets\StatsOverview;
+use App\Models\Control;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Infolists\Components\Section;
+use Filament\Actions\EditAction;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\ActionSize;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Size;
 
 class ProgramPage extends ViewRecord
 {
     protected static string $resource = ProgramResource::class;
 
-    protected static string $view = 'filament.resources.program-resource.pages.program-page';
+    protected string $view = 'filament.resources.program-resource.pages.program-page';
 
     public function getTitle(): string
     {
@@ -36,16 +38,16 @@ class ProgramPage extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make()
+            EditAction::make()
                 ->label('Edit')
                 ->icon('heroicon-m-pencil')
-                ->size(ActionSize::Small)
+                ->size(Size::Small)
                 ->color('primary')
                 ->button(),
             ActionGroup::make([
                 Action::make('download_ssp')
                     ->label('Download SSP')
-                    ->size(ActionSize::Small)
+                    ->size(Size::Small)
                     ->color('primary')
                     ->action(function () {
                         $program = $this->record;
@@ -56,7 +58,7 @@ class ProgramPage extends ViewRecord
 
                         // Get control IDs and eager load relationships
                         $controlIds = $controls->pluck('id')->toArray();
-                        $controls = \App\Models\Control::whereIn('id', $controlIds)
+                        $controls = Control::whereIn('id', $controlIds)
                             ->with(['implementations', 'standard'])
                             ->get();
 
@@ -76,16 +78,16 @@ class ProgramPage extends ViewRecord
             ])
                 ->label('Reports')
                 ->icon('heroicon-m-ellipsis-vertical')
-                ->size(ActionSize::Small)
+                ->size(Size::Small)
                 ->color('primary')
                 ->button(),
         ];
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make(__('Program Details'))
                     ->schema([
                         TextEntry::make('name')
@@ -127,7 +129,7 @@ class ProgramPage extends ViewRecord
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Widgets\StatsOverview::make(['program' => $this->record]),
+            StatsOverview::make(['program' => $this->record]),
         ];
     }
 

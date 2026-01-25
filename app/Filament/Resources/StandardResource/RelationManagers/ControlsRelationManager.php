@@ -3,18 +3,22 @@
 namespace App\Filament\Resources\StandardResource\RelationManagers;
 
 use App\Filament\Resources\ControlResource;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class ControlsRelationManager extends RelationManager
 {
     protected static string $relationship = 'Controls';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return ControlResource::form($form);
+        return ControlResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -22,13 +26,13 @@ class ControlsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('title')
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->wrap()
                     ->html()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->html()
                     ->wrap()
                     ->limit(300)
@@ -38,16 +42,16 @@ class ControlsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()->label('Add New Control'),
+                CreateAction::make()->label('Add New Control'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->hiddenLabel()
                     ->url(fn ($record) => route('filament.app.resources.controls.view', $record)),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

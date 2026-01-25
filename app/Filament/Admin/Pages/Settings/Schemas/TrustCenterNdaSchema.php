@@ -3,8 +3,8 @@
 namespace App\Filament\Admin\Pages\Settings\Schemas;
 
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 
 class TrustCenterNdaSchema
 {

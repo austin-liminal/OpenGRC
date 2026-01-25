@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -47,7 +48,7 @@ class UserController extends BaseApiController
     /**
      * Override the store method to handle password hashing and role assignment
      */
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $this->authorize('Create '.$this->resourceName);
 
@@ -78,7 +79,7 @@ class UserController extends BaseApiController
     /**
      * Override the update method to handle password hashing and role assignment
      */
-    public function update(Request $request, int $id): \Illuminate\Http\JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
         $this->authorize('Update '.$this->resourceName);
 

@@ -1,5 +1,2 @@
-@import 'filament/role-permission-matrix.css';
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import './filament/role-permission-matrix.css';

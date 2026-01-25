@@ -2,10 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Filament\Resources\AuditResource;
 use App\Http\Controllers\PdfHelper;
 use App\Models\Audit;
+use App\Models\DataRequest;
 use App\Models\FileAttachment;
+use App\Models\User;
+use App\Notifications\DropdownNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,6 +18,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use Log;
+use Throwable;
 use ZipArchive;
 
 class ExportAuditEvidenceJob implements ShouldQueue
@@ -63,7 +70,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
         $this->dataRequestIds = $dataRequestIds;
 
         $itemCount = $dataRequestIds ? count($dataRequestIds) : 'all';
-        \Log::info("ExportAuditEvidenceJob constructed for audit {$auditId}, user {$userId}, data requests: {$itemCount}");
+        Log::info("ExportAuditEvidenceJob constructed for audit {$auditId}, user {$userId}, data requests: {$itemCount}");
     }
 
     /**
@@ -80,7 +87,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
     public function handle()
     {
         $exportType = $this->isPartialExport() ? 'partial' : 'full';
-        \Log::info("ExportAuditEvidenceJob started for audit {$this->auditId} ({$exportType} export)");
+        Log::info("ExportAuditEvidenceJob started for audit {$this->auditId} ({$exportType} export)");
 
         $audit = Audit::with([
             'auditItems',
@@ -101,7 +108,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
         $allFiles = [];
 
         // Build data requests query
-        $dataRequestsQuery = \App\Models\DataRequest::where('audit_id', $this->auditId)
+        $dataRequestsQuery = DataRequest::where('audit_id', $this->auditId)
             ->with(['responses.attachments', 'responses.policyAttachments.policy', 'auditItems.auditable', 'auditItem.auditable']);
 
         // Filter by data request IDs if this is a partial export
@@ -111,7 +118,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
 
         $dataRequests = $dataRequestsQuery->get();
 
-        \Log::info("Found {$dataRequests->count()} data requests to export");
+        Log::info("Found {$dataRequests->count()} data requests to export");
 
         // Directory/key prefix for exports
         $exportDir = "exports/audit_{$this->auditId}/";
@@ -123,7 +130,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
         }
 
         foreach ($dataRequests as $dataRequest) {
-            \Log::info("Processing data request {$dataRequest->id}");
+            Log::info("Processing data request {$dataRequest->id}");
             $dataRequest->loadMissing(['responses.attachments', 'responses.policyAttachments.policy', 'auditItems.auditable']);
 
             // Collect all attachments for processing
@@ -166,12 +173,12 @@ class ExportAuditEvidenceJob implements ShouldQueue
             // Check if using many-to-many relationship
             if ($dataRequest->auditItems && $dataRequest->auditItems->count() > 0) {
                 $pdfData['auditItems'] = $dataRequest->auditItems;
-                \Log::info("Data request {$dataRequest->id} has {$dataRequest->auditItems->count()} audit items (many-to-many)");
+                Log::info("Data request {$dataRequest->id} has {$dataRequest->auditItems->count()} audit items (many-to-many)");
             } elseif ($dataRequest->auditItem) {
                 $pdfData['auditItem'] = $dataRequest->auditItem;
-                \Log::info("Data request {$dataRequest->id} has single audit item (legacy)");
+                Log::info("Data request {$dataRequest->id} has single audit item (legacy)");
             } else {
-                \Log::info("Skipping data request {$dataRequest->id} - no audit items");
+                Log::info("Skipping data request {$dataRequest->id} - no audit items");
 
                 continue;
             }
@@ -195,7 +202,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
 
             $allFiles[] = $mainPdfPath;
-            \Log::info("Generated PDF for data request {$dataRequest->id}: {$mainPdfPath}");
+            Log::info("Generated PDF for data request {$dataRequest->id}: {$mainPdfPath}");
 
             // Export other attachments with prefixed names
             foreach ($otherAttachments as $attachment) {
@@ -212,7 +219,7 @@ class ExportAuditEvidenceJob implements ShouldQueue
             }
         }
 
-        \Log::info('Total files to include in zip: '.count($allFiles));
+        Log::info('Total files to include in zip: '.count($allFiles));
 
         // Create a hashfile for all files
         foreach ($allFiles as $file) {
@@ -282,8 +289,8 @@ class ExportAuditEvidenceJob implements ShouldQueue
                 mkdir($exportPath, 0777, true);
             }
             $zipPath = $exportPath.$zipFilename;
-            $zip = new \ZipArchive;
-            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
                 foreach ($allFiles as $file) {
                     $zip->addFile($file, basename($file));
                 }
@@ -318,29 +325,29 @@ class ExportAuditEvidenceJob implements ShouldQueue
             rmdir($tmpDir);
         }
 
-        \Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId} ({$exportType} export)");
+        Log::info("ExportAuditEvidenceJob completed for audit {$this->auditId} ({$exportType} export)");
 
         // Notify the user who initiated the export
-        \Log::info('Attempting to notify user. User ID: '.($this->userId ?? 'null'));
+        Log::info('Attempting to notify user. User ID: '.($this->userId ?? 'null'));
         if ($this->userId) {
-            $user = \App\Models\User::find($this->userId);
-            \Log::info('User found: '.($user ? $user->name : 'null'));
+            $user = User::find($this->userId);
+            Log::info('User found: '.($user ? $user->name : 'null'));
             if ($user) {
                 try {
                     // Generate URL to the audit's attachments tab
-                    $auditUrl = \App\Filament\Resources\AuditResource::getUrl('view', [
+                    $auditUrl = AuditResource::getUrl('view', [
                         'record' => $this->auditId,
                         'activeRelationManager' => 2, // Index of attachments relation manager (0: AuditItems, 1: DataRequests, 2: Attachments)
                     ]);
 
-                    \Log::info("Generated audit URL: {$auditUrl}");
+                    Log::info("Generated audit URL: {$auditUrl}");
 
                     $notificationTitle = $isPartial ? 'Partial Evidence Export Completed' : 'Evidence Export Completed';
                     $notificationBody = $isPartial
                         ? 'Your partial evidence export is ready for download.'
                         : 'Your evidence export is ready for download.';
 
-                    $user->notify(new \App\Notifications\DropdownNotification(
+                    $user->notify(new DropdownNotification(
                         title: $notificationTitle,
                         body: $notificationBody,
                         icon: 'heroicon-o-check-circle',
@@ -349,24 +356,24 @@ class ExportAuditEvidenceJob implements ShouldQueue
                         actionLabel: 'View Attachments'
                     ));
 
-                    \Log::info("Notification sent successfully to user {$user->id}");
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send notification: '.$e->getMessage());
-                    \Log::error($e->getTraceAsString());
+                    Log::info("Notification sent successfully to user {$user->id}");
+                } catch (Exception $e) {
+                    Log::error('Failed to send notification: '.$e->getMessage());
+                    Log::error($e->getTraceAsString());
                 }
             } else {
-                \Log::warning("User with ID {$this->userId} not found");
+                Log::warning("User with ID {$this->userId} not found");
             }
         } else {
-            \Log::warning('No user ID provided to export job');
+            Log::warning('No user ID provided to export job');
         }
     }
 
     /**
      * Handle a job failure.
      */
-    public function failed(\Throwable $exception): void
+    public function failed(Throwable $exception): void
     {
-        \Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: ".$exception->getMessage());
+        Log::error("ExportAuditEvidenceJob failed for audit {$this->auditId}: ".$exception->getMessage());
     }
 }

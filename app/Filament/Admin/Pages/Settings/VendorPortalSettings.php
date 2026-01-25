@@ -6,16 +6,17 @@ use App\Filament\Admin\Pages\Settings\Schemas\RiskScoringSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\SurveySettingsSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\VendorPortalMailSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\VendorPortalSchema;
-use Closure;
-use Filament\Forms\Components\Tabs;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
 
 class VendorPortalSettings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 8;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
     public static function canAccess(): bool
     {
@@ -41,24 +42,26 @@ class VendorPortalSettings extends BaseSettings
         return 'Vendor Portal Settings';
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Tabs::make('VendorPortalSettings')
-                ->tabs([
-                    Tabs\Tab::make(__('Configuration'))
-                        ->icon('heroicon-o-cog-6-tooth')
-                        ->schema(VendorPortalSchema::schema()),
-                    Tabs\Tab::make(__('Risk Scoring'))
-                        ->icon('heroicon-o-chart-bar')
-                        ->schema(RiskScoringSchema::schema()),
-                    Tabs\Tab::make(__('Email Templates'))
-                        ->icon('heroicon-o-envelope')
-                        ->schema(VendorPortalMailSchema::schema()),
-                    Tabs\Tab::make(__('Surveys'))
-                        ->icon('heroicon-o-clipboard-document-list')
-                        ->schema(SurveySettingsSchema::schema()),
-                ]),
-        ];
+        return $schema
+            ->components([
+                Tabs::make('VendorPortalSettings')
+                    ->columnSpanFull()
+                    ->tabs([
+                        Tab::make(__('Configuration'))
+                            ->icon('heroicon-o-cog-6-tooth')
+                            ->schema(VendorPortalSchema::schema()),
+                        Tab::make(__('Risk Scoring'))
+                            ->icon('heroicon-o-chart-bar')
+                            ->schema(RiskScoringSchema::schema()),
+                        Tab::make(__('Email Templates'))
+                            ->icon('heroicon-o-envelope')
+                            ->schema(VendorPortalMailSchema::schema()),
+                        Tab::make(__('Surveys'))
+                            ->icon('heroicon-o-clipboard-document-list')
+                            ->schema(SurveySettingsSchema::schema()),
+                    ]),
+            ]);
     }
 }

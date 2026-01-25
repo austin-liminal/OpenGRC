@@ -3,14 +3,26 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Exports\AuditItemExporter;
-use App\Filament\Resources\AuditItemResource\Pages;
+use App\Filament\Resources\AuditItemResource\Pages\CreateAuditItem;
+use App\Filament\Resources\AuditItemResource\Pages\EditAuditItem;
+use App\Filament\Resources\AuditItemResource\Pages\ListAuditItems;
+use App\Filament\Resources\AuditItemResource\Pages\ViewAuditItem;
 use App\Models\AuditItem;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Exception;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -19,34 +31,34 @@ class AuditItemResource extends Resource
 {
     protected static ?string $model = AuditItem::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-inbox-arrow-down';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-arrow-down';
 
-    protected static ?string $navigationGroup = 'Foundations';
+    protected static string|\UnitEnum|null $navigationGroup = 'Foundations';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('audit_id')
+        return $schema
+            ->components([
+                TextInput::make('audit_id')
                     ->numeric(),
-                Forms\Components\TextInput::make('user_id')
+                TextInput::make('user_id')
                     ->numeric(),
-                Forms\Components\TextInput::make('control_id')
+                TextInput::make('control_id')
                     ->required()
                     ->numeric(),
-                Forms\Components\Textarea::make('auditor_notes')
+                Textarea::make('auditor_notes')
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('status')
+                TextInput::make('status')
                     ->required()
                     ->maxLength(255)
                     ->default('Not Tested'),
-                Forms\Components\TextInput::make('effectiveness')
+                TextInput::make('effectiveness')
                     ->required()
                     ->maxLength(255)
                     ->default('Unknown'),
-                Forms\Components\TextInput::make('applicability')
+                TextInput::make('applicability')
                     ->required()
                     ->maxLength(255)
                     ->default('Unknown'),
@@ -54,53 +66,53 @@ class AuditItemResource extends Resource
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('audit_id')
+                TextColumn::make('audit_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user_id')
+                TextColumn::make('user_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('control_id')
+                TextColumn::make('control_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('effectiveness')
+                TextColumn::make('effectiveness')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('applicability')
+                TextColumn::make('applicability')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
             ->headerActions([
                 ExportAction::make()
                     ->exporter(AuditItemExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                     ExportBulkAction::make()
                         ->exporter(AuditItemExporter::class)
                         ->icon('heroicon-o-arrow-down-tray'),
@@ -118,10 +130,10 @@ class AuditItemResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAuditItems::route('/'),
-            'create' => Pages\CreateAuditItem::route('/create'),
-            'view' => Pages\ViewAuditItem::route('/{record}'),
-            'edit' => Pages\EditAuditItem::route('/{record}/edit'),
+            'index' => ListAuditItems::route('/'),
+            'create' => CreateAuditItem::route('/create'),
+            'view' => ViewAuditItem::route('/{record}'),
+            'edit' => EditAuditItem::route('/{record}/edit'),
         ];
     }
 

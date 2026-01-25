@@ -185,7 +185,7 @@ class Control extends Model
      */
     public function controlOwner(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'control_owner_id');
+        return $this->belongsTo(User::class, 'control_owner_id');
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -11,7 +11,7 @@ use Filament\Actions\Action;
 
 class TrustCenterManager extends TabbedPage
 {
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
     protected static ?string $navigationLabel = 'Trust Center';
 

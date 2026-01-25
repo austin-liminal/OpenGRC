@@ -4,23 +4,25 @@ namespace App\Filament\Resources\ControlResource\Pages;
 
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Resources\ControlResource;
-use App\Models\Control;
-use Filament\Actions;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditControl extends EditRecord
 {
     use HasTaxonomyFields;
-    
+
     protected static string $resource = ControlResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
-            Actions\ForceDeleteAction::make(),
-            Actions\RestoreAction::make(),
+            ViewAction::make(),
+            DeleteAction::make(),
+            ForceDeleteAction::make(),
+            RestoreAction::make(),
         ];
     }
 
@@ -33,7 +35,6 @@ class EditControl extends EditRecord
     {
         return [];
     }
-
 
     public function save(bool $shouldRedirect = true, bool $shouldSendSavedNotification = true): void
     {

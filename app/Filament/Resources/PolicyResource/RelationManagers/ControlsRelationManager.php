@@ -2,8 +2,13 @@
 
 namespace App\Filament\Resources\PolicyResource\RelationManagers;
 
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -16,26 +21,26 @@ class ControlsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('title')
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->sortable()
                     ->searchable()
                     ->badge()
                     ->color('primary')
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('standard.name')
+                TextColumn::make('standard.name')
                     ->label('Standard')
                     ->sortable()
                     ->searchable()
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->sortable()
                     ->searchable()
                     ->limit(50)
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
             ])
@@ -43,7 +48,7 @@ class ControlsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Attach Control')
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(function (Builder $query) {
@@ -54,14 +59,14 @@ class ControlsRelationManager extends RelationManager
                     })
                     ->recordSelectSearchColumns(['code', 'title']),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => route('filament.app.resources.controls.view', $record)),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()->label('Detach from Policy'),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()->label('Detach from Policy'),
                 ]),
             ]);
     }

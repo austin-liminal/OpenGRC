@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -140,7 +141,7 @@ class QueueShow extends Command
             );
 
             $this->info('Total pending jobs: '.count($tableData));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->warn('Could not fetch database queue jobs: '.$e->getMessage());
         }
     }
@@ -190,7 +191,7 @@ class QueueShow extends Command
                     $this->info("Showing first 10 jobs. Total: {$jobCount}");
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->warn('Could not fetch Redis queue jobs: '.$e->getMessage());
         }
     }
@@ -245,7 +246,7 @@ class QueueShow extends Command
             if ($totalFailed > 20) {
                 $this->info('Showing most recent 20 failed jobs.');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->warn('Could not fetch failed jobs: '.$e->getMessage());
         }
     }

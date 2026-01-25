@@ -2,17 +2,17 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use Closure;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class SecuritySettings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 7;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
     public static function canAccess(): bool
     {
@@ -33,20 +33,22 @@ class SecuritySettings extends BaseSettings
         return __('navigation.settings.security_settings');
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Section::make('Security Configuration')
-                ->schema([
-                    TextInput::make('security.session_timeout')
-                        ->label('Session Timeout (minutes)')
-                        ->numeric()
-                        ->default(15)
-                        ->minValue(1)
-                        ->maxValue(1440)
-                        ->required()
-                        ->helperText('Number of minutes before an inactive session expires. Default: 15 minutes'),
-                ]),
-        ];
+        return $schema
+            ->components([
+                Section::make('Security Configuration')
+                    ->columnSpanFull()
+                    ->schema([
+                        TextInput::make('security.session_timeout')
+                            ->label('Session Timeout (minutes)')
+                            ->numeric()
+                            ->default(15)
+                            ->minValue(1)
+                            ->maxValue(1440)
+                            ->required()
+                            ->helperText('Number of minutes before an inactive session expires. Default: 15 minutes'),
+                    ]),
+            ]);
     }
 }

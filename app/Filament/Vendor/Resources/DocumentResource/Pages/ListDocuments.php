@@ -3,7 +3,7 @@
 namespace App\Filament\Vendor\Resources\DocumentResource\Pages;
 
 use App\Filament\Vendor\Resources\DocumentResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListDocuments extends ListRecords
@@ -13,7 +13,7 @@ class ListDocuments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->label('Upload Document'),
         ];
     }

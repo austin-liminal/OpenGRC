@@ -3,16 +3,16 @@
 namespace App\Filament\Admin\Pages\Settings;
 
 use App\Filament\Admin\Pages\Settings\Schemas\MailSchema;
-use Closure;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class MailSettings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $navigationIcon = 'heroicon-o-envelope';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-envelope';
 
     public static function canAccess(): bool
     {
@@ -33,12 +33,13 @@ class MailSettings extends BaseSettings
         return __('navigation.settings.mail_settings');
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Section::make(__('navigation.settings.tabs.mail'))
-                ->columns(3)
-                ->schema(MailSchema::schema()),
-        ];
+        return $schema
+            ->components([
+                Section::make(__('navigation.settings.tabs.mail'))
+                    ->columns(3)
+                    ->schema(MailSchema::schema()),
+            ]);
     }
 }

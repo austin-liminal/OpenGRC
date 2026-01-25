@@ -3,11 +3,20 @@
 namespace App\Filament\Admin\Resources\TaxonomyResource\RelationManagers;
 
 use App\Filament\Concerns\RestoresSoftDeletedTaxonomies;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Str;
 
 class TaxonomyChildrenRelationManager extends RelationManager
 {
@@ -34,20 +43,20 @@ class TaxonomyChildrenRelationManager extends RelationManager
         'data-classification',
     ];
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255)
                     ->label('Term Name'),
-                Forms\Components\Hidden::make('slug'),
-                Forms\Components\Textarea::make('description')
+                Hidden::make('slug'),
+                Textarea::make('description')
                     ->maxLength(1000)
                     ->columnSpanFull()
                     ->label('Description'),
-                Forms\Components\Hidden::make('type')
+                Hidden::make('type')
                     ->default(fn ($livewire) => $livewire->ownerRecord->type ?? 'general'),
             ]);
     }
@@ -58,25 +67,25 @@ class TaxonomyChildrenRelationManager extends RelationManager
             ->emptyStateHeading(fn () => 'No '.$this->getOwnerRecord()->name.' Terms')
             ->emptyStateDescription(fn () => 'Click "Add '.$this->getOwnerRecord()->name.' Term" to add '.$this->getOwnerRecord()->name.' terms.')
             ->emptyStateIcon('heroicon-o-tag')
-            ->heading(fn () => \Str::plural($this->getOwnerRecord()->name))
+            ->heading(fn () => Str::plural($this->getOwnerRecord()->name))
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->label('Term Name'),
-                Tables\Columns\TextColumn::make('slug')
+                TextColumn::make('slug')
                     ->searchable()
                     ->sortable()
                     ->label('Slug'),
-                Tables\Columns\TextColumn::make('children_count')
+                TextColumn::make('children_count')
                     ->counts('children')
                     ->label('Sub-Terms')
                     ->sortable()
                     ->placeholder('0'),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->limit(50)
-                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                    ->tooltip(function (TextColumn $column): ?string {
                         $state = $column->getState();
 
                         return strlen($state) > 50 ? $state : null;
@@ -87,29 +96,29 @@ class TaxonomyChildrenRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->label(fn () => 'Add '.\Str::plural($this->getOwnerRecord()->name))
+                CreateAction::make()
+                    ->label(fn () => 'Add '.Str::plural($this->getOwnerRecord()->name))
                     ->modalHeading(fn () => 'Create New '.$this->getOwnerRecord()->name.' Term')
                     ->createAnother(false)
                     ->using(fn (array $data) => $this->createOrRestoreTaxonomy($data, $this->getOwnerRecord()->id)),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->label('View')
                     ->modalHeading(fn ($record) => 'View '.$this->getOwnerRecord()->name.' Term: '.$record->name),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->label('Edit')
                     ->modalHeading(fn ($record) => 'Edit '.$this->getOwnerRecord()->name.' Term: '.$record->name),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->label('Delete')
                     ->requiresConfirmation()
                     ->modalHeading(fn ($record) => 'Delete '.$this->getOwnerRecord()->name.' Term')
                     ->modalDescription(fn ($record) => 'Are you sure you want to delete "'.$record->name.'"? This action cannot be undone.')
                     ->action(fn ($record) => RestoresSoftDeletedTaxonomies::deleteTaxonomyWithChildren($record)),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->action(fn ($records) => $records->each(fn ($record) => RestoresSoftDeletedTaxonomies::deleteTaxonomyWithChildren($record))),
                 ]),
             ]);

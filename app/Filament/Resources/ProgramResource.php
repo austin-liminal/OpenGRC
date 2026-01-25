@@ -2,18 +2,31 @@
 
 namespace App\Filament\Resources;
 
+use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Exports\ProgramExporter;
-use App\Filament\Resources\ProgramResource\Pages;
-use App\Filament\Resources\ProgramResource\RelationManagers;
+use App\Filament\Resources\ProgramResource\Pages\CreateProgram;
+use App\Filament\Resources\ProgramResource\Pages\EditProgram;
+use App\Filament\Resources\ProgramResource\Pages\ListPrograms;
+use App\Filament\Resources\ProgramResource\Pages\ProgramPage;
+use App\Filament\Resources\ProgramResource\RelationManagers\AuditsRelationManager;
+use App\Filament\Resources\ProgramResource\RelationManagers\ControlsRelationManager;
+use App\Filament\Resources\ProgramResource\RelationManagers\RisksRelationManager;
+use App\Filament\Resources\ProgramResource\RelationManagers\StandardsRelationManager;
 use App\Models\Program;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Form;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ProgramResource extends Resource
@@ -22,11 +35,11 @@ class ProgramResource extends Resource
 
     protected static ?string $model = Program::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     public static function getNavigationLabel(): string
     {
@@ -48,11 +61,11 @@ class ProgramResource extends Resource
         return __('programs.labels.plural');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label(__('programs.form.name'))
                     ->columnSpanFull()
                     ->required()
@@ -63,13 +76,13 @@ class ProgramResource extends Resource
                     ->fileAttachmentsVisibility('private')
                     ->fileAttachmentsDirectory('ssp-uploads')
                     ->columnSpanFull(),
-                Forms\Components\Select::make('program_manager_id')
+                Select::make('program_manager_id')
                     ->label(__('programs.form.program_manager'))
                     ->relationship('programManager', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
-                Forms\Components\Select::make('scope_status')
+                Select::make('scope_status')
                     ->label(__('programs.form.scope_status'))
                     ->options([
                         'In Scope' => __('programs.scope_status.in_scope'),
@@ -89,28 +102,28 @@ class ProgramResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->recordUrl(fn (Program $record): string => Pages\ProgramPage::getUrl(['record' => $record]))
+            ->recordUrl(fn (Program $record): string => ProgramPage::getUrl(['record' => $record]))
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('programs.table.name'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('programManager.name')
+                TextColumn::make('programManager.name')
                     ->label(__('programs.table.program_manager'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('last_audit_date')
+                TextColumn::make('last_audit_date')
                     ->label(__('programs.table.last_audit_date'))
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('scope_status')
+                TextColumn::make('scope_status')
                     ->label(__('programs.table.scope_status'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('taxonomy_department')
+                TextColumn::make('taxonomy_department')
                     ->label('Department')
                     ->getStateUsing(function (Program $record) {
                         return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                     })
                     ->sortable(query: function ($query, string $direction): void {
-                        $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
+                        $departmentParent = Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
                         if (! $departmentParent) {
                             return;
                         }
@@ -127,13 +140,13 @@ class ProgramResource extends Resource
                             ->select('programs.*');
                     })
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('taxonomy_scope')
+                TextColumn::make('taxonomy_scope')
                     ->label('Scope')
                     ->getStateUsing(function (Program $record) {
                         return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                     })
                     ->sortable(query: function ($query, string $direction): void {
-                        $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
+                        $scopeParent = Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
                         if (! $scopeParent) {
                             return;
                         }
@@ -150,19 +163,19 @@ class ProgramResource extends Resource
                             ->select('programs.*');
                     })
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('programs.table.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label(__('programs.table.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('department')
+                SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('department');
@@ -171,7 +184,7 @@ class ProgramResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -185,7 +198,7 @@ class ProgramResource extends Resource
                             $query->where('taxonomy_id', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('scope')
+                SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('scope');
@@ -194,7 +207,7 @@ class ProgramResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -214,18 +227,18 @@ class ProgramResource extends Resource
                     ->exporter(ProgramExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+                ViewAction::make(),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(ProgramExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -233,20 +246,20 @@ class ProgramResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\StandardsRelationManager::class,
-            RelationManagers\ControlsRelationManager::class,
-            RelationManagers\RisksRelationManager::class,
-            RelationManagers\AuditsRelationManager::class,
+            StandardsRelationManager::class,
+            ControlsRelationManager::class,
+            RisksRelationManager::class,
+            AuditsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPrograms::route('/'),
-            'create' => Pages\CreateProgram::route('/create'),
-            'view' => Pages\ProgramPage::route('/{record}'),
-            'edit' => Pages\EditProgram::route('/{record}/edit'),
+            'index' => ListPrograms::route('/'),
+            'create' => CreateProgram::route('/create'),
+            'view' => ProgramPage::route('/{record}'),
+            'edit' => EditProgram::route('/{record}/edit'),
         ];
     }
 }

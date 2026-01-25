@@ -8,9 +8,9 @@ use Parsedown;
 
 class ApiDocumentation extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-code-bracket';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-code-bracket';
 
-    protected static string $view = 'filament.admin.pages.api-documentation';
+    protected string $view = 'filament.admin.pages.api-documentation';
 
     protected static ?string $navigationLabel = 'API Documentation';
 
@@ -18,7 +18,7 @@ class ApiDocumentation extends Page
 
     protected static ?int $navigationSort = 900;
 
-    protected static ?string $navigationGroup = 'System';
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
 
     public string $documentationHtml = '';
 

@@ -3,17 +3,21 @@
 namespace App\Livewire;
 
 use App\Models\DataRequest;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
-class ListRequests extends Component implements HasForms, HasTable
+class ListRequests extends Component implements HasActions, HasForms, HasTable
 {
+    use InteractsWithActions;
     use InteractsWithForms;
     use InteractsWithTable;
 
@@ -22,29 +26,29 @@ class ListRequests extends Component implements HasForms, HasTable
         return $table
             ->query(DataRequest::query())
             ->columns([
-                Tables\Columns\TextColumn::make('createdBy.name')
+                TextColumn::make('createdBy.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('assignedTo.name')
+                TextColumn::make('assignedTo.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('auditItem.id')
+                TextColumn::make('auditItem.id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('audit.title')
+                TextColumn::make('audit.title')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('deleted_at')
+                TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -52,11 +56,11 @@ class ListRequests extends Component implements HasForms, HasTable
             ->filters([
                 //
             ])
-            ->actions([
+            ->recordActions([
                 //
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     //
                 ]),
             ]);

@@ -4,7 +4,7 @@ namespace App\Filament\Resources\StandardResource\Pages;
 
 use App\Filament\Resources\StandardResource;
 use App\Filament\Widgets\TableDescriptionWidget;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListStandards extends ListRecords
@@ -14,7 +14,7 @@ class ListStandards extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

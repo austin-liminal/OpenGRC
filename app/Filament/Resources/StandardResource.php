@@ -5,21 +5,36 @@ namespace App\Filament\Resources;
 use App\Enums\StandardStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Exports\StandardExporter;
-use App\Filament\Resources\StandardResource\Pages;
-use App\Filament\Resources\StandardResource\RelationManagers;
+use App\Filament\Resources\StandardResource\Pages\CreateStandard;
+use App\Filament\Resources\StandardResource\Pages\EditStandard;
+use App\Filament\Resources\StandardResource\Pages\ListStandards;
+use App\Filament\Resources\StandardResource\Pages\ViewStandard;
+use App\Filament\Resources\StandardResource\RelationManagers\AuditsRelationManager;
+use App\Filament\Resources\StandardResource\RelationManagers\ControlsRelationManager;
 use App\Models\Standard;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,11 +48,11 @@ class StandardResource extends Resource
 
     protected static ?string $model = Standard::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 10;
 
@@ -61,11 +76,11 @@ class StandardResource extends Resource
         return __('standard.model.plural_label');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(3)
-            ->schema([
+            ->components([
                 TextInput::make('name')
                     ->autofocus()
                     ->columnSpanFull()
@@ -128,50 +143,50 @@ class StandardResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label(__('standard.table.columns.code'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('standard.table.columns.name'))
                     ->searchable()
                     ->sortable()
                     ->wrap(true),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label(__('standard.table.columns.description'))
                     ->html()
                     ->searchable()
                     ->sortable()
                     ->wrap(true)
                     ->limit(250),
-                Tables\Columns\TextColumn::make('authority')
+                TextColumn::make('authority')
                     ->label(__('standard.table.columns.authority'))
                     ->searchable()
                     ->sortable()
                     ->wrap(true),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('standard.table.columns.status'))
                     ->badge()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(StandardStatus::class)
                     ->label(__('standard.table.filters.status')),
-                Tables\Filters\SelectFilter::make('authority')
+                SelectFilter::make('authority')
                     ->options(Standard::pluck('authority', 'authority')->toArray())
                     ->label(__('standard.table.filters.authority')),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
             ->headerActions([
                 ExportAction::make()
                     ->exporter(StandardExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()->hiddenLabel(),
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('set_in_scope')
+            ->recordActions([
+                ViewAction::make()->hiddenLabel(),
+                ActionGroup::make([
+                    Action::make('set_in_scope')
                         ->label(__('standard.table.actions.set_in_scope.label'))
                         ->icon('heroicon-o-check-circle')
                         ->modalHeading(__('standard.table.actions.set_in_scope.modal_heading'))
@@ -181,7 +196,7 @@ class StandardResource extends Resource
                             fn ($record) => $record->status === StandardStatus::IN_SCOPE
                         )
                         ->action(fn ($record) => $record->update(['status' => StandardStatus::IN_SCOPE])),
-                    Tables\Actions\Action::make('set_out_scope')
+                    Action::make('set_out_scope')
                         ->label(__('standard.table.actions.set_out_scope.label'))
                         ->icon('heroicon-o-check-circle')
                         ->modalHeading(__('standard.table.actions.set_out_scope.modal_heading'))
@@ -191,20 +206,20 @@ class StandardResource extends Resource
                             fn ($record) => $record->status !== StandardStatus::IN_SCOPE
                         )
                         ->action(fn ($record) => $record->update(['status' => StandardStatus::DRAFT])),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
                 ])->label(__('standard.table.actions.group_label')),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(StandardExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading(new HtmlString(__('standard.table.empty_state.heading')))
@@ -218,18 +233,18 @@ class StandardResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\ControlsRelationManager::class,
-            RelationManagers\AuditsRelationManager::class,
+            ControlsRelationManager::class,
+            AuditsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStandards::route('/'),
-            'create' => Pages\CreateStandard::route('/create'),
-            'view' => Pages\ViewStandard::route('/{record}'),
-            'edit' => Pages\EditStandard::route('/{record}/edit'),
+            'index' => ListStandards::route('/'),
+            'create' => CreateStandard::route('/create'),
+            'view' => ViewStandard::route('/{record}'),
+            'edit' => EditStandard::route('/{record}/edit'),
         ];
     }
 
@@ -242,11 +257,12 @@ class StandardResource extends Resource
     }
 
     // This is the view page for a single Standard record
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make(__('standard.infolist.section_title'))
+                    ->columnSpanFull()
                     ->columns(4)
                     ->schema([
                         TextEntry::make('name'),

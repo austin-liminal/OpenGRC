@@ -5,20 +5,43 @@ namespace App\Filament\Resources;
 use App\Enums\SurveyStatus;
 use App\Enums\SurveyTemplateStatus;
 use App\Enums\SurveyType;
-use App\Filament\Resources\SurveyResource\Pages;
-use App\Filament\Resources\SurveyResource\RelationManagers;
+use App\Filament\Resources\SurveyResource\Pages\CreateSurvey;
+use App\Filament\Resources\SurveyResource\Pages\EditSurvey;
+use App\Filament\Resources\SurveyResource\Pages\ListSurveys;
+use App\Filament\Resources\SurveyResource\Pages\RespondToSurveyInternal;
+use App\Filament\Resources\SurveyResource\Pages\ScoreSurvey;
+use App\Filament\Resources\SurveyResource\Pages\ViewSurvey;
+use App\Filament\Resources\SurveyResource\RelationManagers\AnswersRelationManager;
 use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
 use App\Models\User;
 use App\Services\VendorRiskScoringService;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists\Components\Section;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -28,9 +51,9 @@ class SurveyResource extends Resource
 {
     protected static ?string $model = Survey::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-paper-airplane';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-paper-airplane';
 
-    protected static ?string $navigationGroup = 'Surveys';
+    protected static string|\UnitEnum|null $navigationGroup = 'Surveys';
 
     protected static ?int $navigationSort = 20;
 
@@ -53,14 +76,14 @@ class SurveyResource extends Resource
         return __('survey.survey.model.plural_label');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Survey Details')
+        return $schema
+            ->components([
+                Section::make('Survey Details')
                     ->columns(2)
                     ->schema([
-                        Forms\Components\Select::make('survey_template_id')
+                        Select::make('survey_template_id')
                             ->label(__('survey.survey.form.template.label'))
                             ->relationship('template', 'title', fn (Builder $query) => $query->where('status', SurveyTemplateStatus::ACTIVE))
                             ->searchable()
@@ -69,66 +92,66 @@ class SurveyResource extends Resource
                             ->default(fn () => request()->query('template'))
                             ->disabled(fn (?Survey $record): bool => $record !== null)
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('title')
+                        TextInput::make('title')
                             ->label(__('survey.survey.form.title.label'))
                             ->helperText(__('survey.survey.form.title.helper'))
                             ->maxLength(255),
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->label(__('survey.survey.form.status.label'))
                             ->options(SurveyStatus::class)
                             ->default(SurveyStatus::DRAFT)
                             ->required(),
-                        Forms\Components\Select::make('type')
+                        Select::make('type')
                             ->label(__('Type'))
                             ->options(SurveyType::class)
                             ->default(SurveyType::VENDOR_ASSESSMENT)
                             ->required(),
-                        Forms\Components\RichEditor::make('description')
+                        RichEditor::make('description')
                             ->label(__('survey.survey.form.description.label'))
                             ->helperText(__('survey.survey.form.description.helper'))
                             ->disableToolbarButtons(['attachFiles'])
                             ->columnSpanFull(),
                     ]),
-                Forms\Components\Section::make('Vendor')
+                Section::make('Vendor')
                     ->schema([
-                        Forms\Components\Select::make('vendor_id')
+                        Select::make('vendor_id')
                             ->label(__('Vendor'))
                             ->relationship('vendor', 'name')
                             ->searchable()
                             ->preload()
                             ->helperText('Associate this survey with a vendor for TPRM tracking'),
                     ]),
-                Forms\Components\Section::make('Respondent Information')
+                Section::make('Respondent Information')
                     ->description(__('survey.survey.form.respondent.description'))
                     ->columns(2)
                     ->schema([
-                        Forms\Components\TextInput::make('respondent_email')
+                        TextInput::make('respondent_email')
                             ->label(__('survey.survey.form.respondent_email.label'))
                             ->email()
                             ->maxLength(255)
                             ->helperText(__('survey.survey.form.respondent_email.helper')),
-                        Forms\Components\TextInput::make('respondent_name')
+                        TextInput::make('respondent_name')
                             ->label(__('survey.survey.form.respondent_name.label'))
                             ->maxLength(255),
-                        Forms\Components\Select::make('assigned_to_id')
+                        Select::make('assigned_to_id')
                             ->label(__('survey.survey.form.assigned_to.label'))
                             ->options(User::whereNotNull('name')->pluck('name', 'id'))
                             ->searchable()
                             ->helperText(__('survey.survey.form.assigned_to.helper')),
-                        Forms\Components\DatePicker::make('due_date')
+                        DatePicker::make('due_date')
                             ->label(__('survey.survey.form.due_date.label'))
                             ->native(false),
-                        Forms\Components\DatePicker::make('expiration_date')
+                        DatePicker::make('expiration_date')
                             ->label(__('survey.survey.form.expiration_date.label'))
                             ->helperText(__('survey.survey.form.expiration_date.helper'))
                             ->native(false),
                     ]),
-                Forms\Components\Section::make('Survey Link')
+                Section::make('Survey Link')
                     ->description(fn (?Survey $record): string => $record?->isInternal()
                         ? __('Internal survey - accessible via admin panel')
                         : __('survey.survey.form.link.description'))
                     ->schema([
-                        Forms\Components\Placeholder::make('public_url')
+                        Placeholder::make('public_url')
                             ->label(fn (?Survey $record): string => $record?->isInternal()
                                 ? __('Internal Assessment Link')
                                 : __('survey.survey.form.link.label'))
@@ -140,7 +163,7 @@ class SurveyResource extends Resource
                             ->visible(fn (?Survey $record): bool => $record !== null),
                     ])
                     ->visible(fn (?Survey $record): bool => $record !== null),
-                Forms\Components\Hidden::make('created_by_id')
+                Hidden::make('created_by_id')
                     ->default(fn () => auth()->id()),
             ]);
     }
@@ -149,34 +172,34 @@ class SurveyResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('display_title')
+                TextColumn::make('display_title')
                     ->label(__('survey.survey.table.columns.title'))
                     ->searchable(['title'])
                     ->sortable(['title'])
                     ->wrap(),
-                Tables\Columns\TextColumn::make('template.title')
+                TextColumn::make('template.title')
                     ->label(__('survey.survey.table.columns.template'))
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('vendor.name')
+                TextColumn::make('vendor.name')
                     ->label('Vendor')
                     ->sortable()
                     ->searchable()
                     ->placeholder('-')
                     ->url(fn (Survey $record) => $record->vendor_id ? VendorResource::getUrl('view', ['record' => $record->vendor_id]) : null),
-                Tables\Columns\TextColumn::make('respondent_display')
+                TextColumn::make('respondent_display')
                     ->label(__('survey.survey.table.columns.respondent'))
                     ->wrap(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('survey.survey.table.columns.status'))
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->label(__('Type'))
                     ->badge()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('progress')
+                TextColumn::make('progress')
                     ->label(__('survey.survey.table.columns.progress'))
                     ->suffix('%')
                     ->color(fn (Survey $record): string => match (true) {
@@ -184,17 +207,17 @@ class SurveyResource extends Resource
                         $record->progress >= 50 => 'warning',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('due_date')
+                TextColumn::make('due_date')
                     ->label(__('survey.survey.table.columns.due_date'))
                     ->date()
                     ->sortable()
                     ->color(fn (Survey $record): ?string => $record->isExpired() ? 'danger' : null),
-                Tables\Columns\TextColumn::make('completed_at')
+                TextColumn::make('completed_at')
                     ->label(__('survey.survey.table.columns.completed_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('risk_score')
+                TextColumn::make('risk_score')
                     ->label('Risk Score')
                     ->badge()
                     ->color(fn (?int $state): string => match (true) {
@@ -208,45 +231,45 @@ class SurveyResource extends Resource
                     ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : '-')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('createdBy.name')
+                TextColumn::make('createdBy.name')
                     ->label(__('survey.survey.table.columns.created_by'))
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('survey.survey.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(SurveyStatus::class)
                     ->label(__('survey.survey.table.filters.status')),
-                Tables\Filters\SelectFilter::make('type')
+                SelectFilter::make('type')
                     ->options(SurveyType::class)
                     ->label(__('Type')),
-                Tables\Filters\SelectFilter::make('vendor_id')
+                SelectFilter::make('vendor_id')
                     ->relationship('vendor', 'name')
                     ->label('Vendor')
                     ->searchable()
                     ->preload(),
-                Tables\Filters\SelectFilter::make('survey_template_id')
+                SelectFilter::make('survey_template_id')
                     ->relationship('template', 'title')
                     ->label(__('survey.survey.table.filters.template'))
                     ->searchable()
                     ->preload(),
-                Tables\Filters\SelectFilter::make('assigned_to_id')
+                SelectFilter::make('assigned_to_id')
                     ->relationship('assignedTo', 'name')
                     ->label(__('survey.survey.table.filters.assigned_to'))
                     ->searchable()
                     ->preload(),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('copy_link')
+            ->recordActions([
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                    Action::make('copy_link')
                         ->label(fn (Survey $record): string => $record->isInternal()
                             ? __('Open Assessment')
                             : __('survey.survey.actions.copy_link'))
@@ -261,7 +284,7 @@ class SurveyResource extends Resource
                         ->modalSubmitActionLabel('Copy to Clipboard')
                         ->action(fn () => null)
                         ->visible(fn (Survey $record): bool => $record->isInternal() || $record->access_token !== null),
-                    Tables\Actions\Action::make('mark_complete')
+                    Action::make('mark_complete')
                         ->label(__('survey.survey.actions.mark_complete'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -273,7 +296,7 @@ class SurveyResource extends Resource
                             ]);
                         })
                         ->visible(fn (Survey $record): bool => ! in_array($record->status, [SurveyStatus::COMPLETED, SurveyStatus::EXPIRED])),
-                    Tables\Actions\Action::make('send_invitation')
+                    Action::make('send_invitation')
                         ->label(__('survey.survey.actions.send_invitation'))
                         ->icon('heroicon-o-envelope')
                         ->color('primary')
@@ -293,7 +316,7 @@ class SurveyResource extends Resource
                                     ->body(__('survey.survey.notifications.invitation_sent.body', ['email' => $record->respondent_email]))
                                     ->success()
                                     ->send();
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()
                                     ->title(__('Survey Sent'))
                                     ->body(__('Survey marked as sent but email notification failed: ').$e->getMessage())
@@ -302,7 +325,7 @@ class SurveyResource extends Resource
                             }
                         })
                         ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && $record->status === SurveyStatus::DRAFT),
-                    Tables\Actions\Action::make('resend_invitation')
+                    Action::make('resend_invitation')
                         ->label(__('survey.survey.actions.resend_invitation'))
                         ->icon('heroicon-o-arrow-path')
                         ->color('gray')
@@ -319,7 +342,7 @@ class SurveyResource extends Resource
                                     ->body(__('survey.survey.notifications.invitation_sent.body', ['email' => $record->respondent_email]))
                                     ->success()
                                     ->send();
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()
                                     ->title(__('survey.survey.notifications.invitation_failed.title'))
                                     ->body($e->getMessage())
@@ -328,13 +351,13 @@ class SurveyResource extends Resource
                             }
                         })
                         ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && in_array($record->status, [SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])),
-                    Tables\Actions\Action::make('score_survey')
+                    Action::make('score_survey')
                         ->label(__('Score Survey'))
                         ->icon('heroicon-o-clipboard-document-check')
                         ->color('primary')
                         ->url(fn (Survey $record): string => static::getUrl('score', ['record' => $record]))
                         ->visible(fn (Survey $record): bool => in_array($record->status, [SurveyStatus::PENDING_SCORING, SurveyStatus::COMPLETED])),
-                    Tables\Actions\Action::make('recalculate_score')
+                    Action::make('recalculate_score')
                         ->label(__('Recalculate Risk Score'))
                         ->icon('heroicon-o-calculator')
                         ->color('warning')
@@ -355,26 +378,26 @@ class SurveyResource extends Resource
                                 ->send();
                         })
                         ->visible(fn (Survey $record): bool => $record->status === SurveyStatus::COMPLETED),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\ForceDeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
+                    DeleteAction::make(),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading(__('survey.survey.table.empty_state.heading'))
             ->emptyStateDescription(__('survey.survey.table.empty_state.description'));
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make(__('survey.survey.infolist.section_title'))
                     ->columns(3)
                     ->schema([
@@ -453,19 +476,19 @@ class SurveyResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\AnswersRelationManager::class,
+            AnswersRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSurveys::route('/'),
-            'create' => Pages\CreateSurvey::route('/create'),
-            'view' => Pages\ViewSurvey::route('/{record}'),
-            'edit' => Pages\EditSurvey::route('/{record}/edit'),
-            'score' => Pages\ScoreSurvey::route('/{record}/score'),
-            'respond-internal' => Pages\RespondToSurveyInternal::route('/{record}/respond'),
+            'index' => ListSurveys::route('/'),
+            'create' => CreateSurvey::route('/create'),
+            'view' => ViewSurvey::route('/{record}'),
+            'edit' => EditSurvey::route('/{record}/edit'),
+            'score' => ScoreSurvey::route('/{record}/score'),
+            'respond-internal' => RespondToSurveyInternal::route('/{record}/respond'),
         ];
     }
 

@@ -2,22 +2,25 @@
 
 namespace App\Filament\Resources\ImplementationResource\RelationManagers;
 
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\AssetResource;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Table;
 
 class AssetsRelationManager extends RelationManager
 {
     protected static string $relationship = 'assets';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return AssetResource::form($form);
+        return AssetResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -25,55 +28,55 @@ class AssetsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('asset_type')
+                TextColumn::make('asset_type')
                     ->label('Type')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('owner')
+                TextColumn::make('owner')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('location')
+                TextColumn::make('location')
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('value')
+                TextColumn::make('value')
                     ->money('USD')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('serial_number')
+                TextColumn::make('serial_number')
                     ->label('Serial #')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Relate to Asset')
                     ->preloadRecordSelect(),
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Create a New Asset'),
             ])
-            ->actions([
-                Tables\Actions\DetachAction::make(),
+            ->recordActions([
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

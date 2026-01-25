@@ -3,7 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Audit;
-use Filament\Tables;
+use Filament\Actions\Action;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Support\HtmlString;
@@ -11,7 +12,7 @@ use Illuminate\Support\HtmlString;
 class AuditListWidget extends BaseWidget
 {
     protected static bool $isLazy = false;
-    
+
     protected int|string|array $columnSpan = '2';
 
     public function table(Table $table): Table
@@ -25,18 +26,18 @@ class AuditListWidget extends BaseWidget
             ->emptyStateDescription(trans('widgets.audit_list.empty_description'))
             ->emptyStateIcon('heroicon-o-check-circle')
             ->columns([
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->url(fn (Audit $audit) => route('filament.app.resources.audits.view', $audit)),
-                Tables\Columns\TextColumn::make('manager_id')
+                TextColumn::make('manager_id')
                     ->label(trans('widgets.audit_list.manager'))
                     ->state(fn (Audit $audit) => $audit->manager->name),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->wrap(),
             ])
             ->paginated(false)
             ->headerActions([
-                Tables\Actions\Action::make('create')
+                Action::make('create')
                     ->label(trans('widgets.audit_list.view_all'))
                     ->url(route('filament.app.resources.audits.index'))
                     ->color('primary')

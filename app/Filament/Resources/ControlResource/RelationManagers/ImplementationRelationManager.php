@@ -4,27 +4,34 @@ namespace App\Filament\Resources\ControlResource\RelationManagers;
 
 use App\Enums\Effectiveness;
 use App\Enums\ImplementationStatus;
-use Filament\Forms;
-use Filament\Forms\Form;
+use App\Filament\Resources\ImplementationResource;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\ImplementationResource;
+use Illuminate\Database\Eloquent\Model;
 
 class ImplementationRelationManager extends RelationManager
 {
     protected static string $relationship = 'Implementations';
 
-    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return auth()->check() && auth()->user()->can('Read Implementations');
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return ImplementationResource::form($form);
+        return ImplementationResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -32,18 +39,18 @@ class ImplementationRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('details')
             ->columns([
-                Tables\Columns\TextColumn::make('details')
+                TextColumn::make('details')
                     ->html()
                     ->wrap()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('effectiveness')
+                TextColumn::make('effectiveness')
                     ->getStateUsing(fn ($record) => $record->getEffectiveness())
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_assessed')
+                TextColumn::make('last_assessed')
                     ->label('Last Audit')
                     ->getStateUsing(fn ($record) => $record->getEffectivenessDate() ? $record->getEffectivenessDate() : 'Not yet audited')
                     ->sortable(true)
@@ -54,9 +61,9 @@ class ImplementationRelationManager extends RelationManager
                 SelectFilter::make('effectiveness')->options(Effectiveness::class),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New implementation'),
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Add Existing Implementation')
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(function (Builder $query) {
@@ -68,15 +75,15 @@ class ImplementationRelationManager extends RelationManager
                     })
                     ->recordSelectSearchColumns(['code', 'title']),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
                 //                    ->url(fn ($record) => route('filament.app.resources.implementations.view', $record)),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\DetachBulkAction::make()->label('Detach from this Control'),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    DetachBulkAction::make()->label('Detach from this Control'),
                 ]),
             ]);
     }

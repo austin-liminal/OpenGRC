@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\DataRequestResource\Pages;
 
 use App\Filament\Resources\DataRequestResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListDataRequests extends ListRecords
@@ -13,7 +13,7 @@ class ListDataRequests extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

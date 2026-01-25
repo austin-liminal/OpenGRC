@@ -2,10 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Models\Settings;
-use App\Models\User;
-use Carbon\Carbon;
+use App\Filament\Pages\Auth\Login;
+use DB;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
+use DutchCodingCompany\FilamentSocialite\Provider;
+use Exception;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -19,13 +20,11 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Illuminate\Support\Facades\Blade;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
-use Livewire\Livewire;
-use Rmsramos\Activitylog\ActivitylogPlugin;
 
 class AppPanelProvider extends PanelProvider
 {
@@ -33,10 +32,10 @@ class AppPanelProvider extends PanelProvider
     {
         try {
             // Check if database is connected
-            \DB::connection()->getPdo();
+            DB::connection()->getPdo();
 
             return setting('security.session_timeout', 15);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Return default value if database is not available
             return 15;
         }
@@ -46,49 +45,44 @@ class AppPanelProvider extends PanelProvider
     {
         $socialProviders = [];
 
-        // Comment out or wrap all settings() calls in try-catch
+        // Build social providers array using FilamentSocialite v3 API
         try {
             if (setting('auth.okta.enabled')) {
-                $socialProviders['okta'] = [
-                    'label' => 'Okta',
-                    'icon' => 'heroicon-o-lock-closed',
-                    'color' => 'primary',
-                ];
+                $socialProviders[] = Provider::make('okta')
+                    ->label('Okta')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color(Color::Slate);
             }
 
             if (setting('auth.microsoft.enabled')) {
-                $socialProviders['microsoft'] = [
-                    'label' => 'Microsoft',
-                    'icon' => 'heroicon-o-window',
-                    'color' => 'primary',
-                ];
+                $socialProviders[] = Provider::make('microsoft')
+                    ->label('Microsoft')
+                    ->icon('heroicon-o-window')
+                    ->color(Color::Slate);
             }
 
             if (setting('auth.azure.enabled')) {
-                $socialProviders['azure'] = [
-                    'label' => 'Azure AD',
-                    'icon' => 'heroicon-o-cloud',
-                    'color' => 'primary',
-                ];
+                $socialProviders[] = Provider::make('azure')
+                    ->label('Azure AD')
+                    ->icon('heroicon-o-cloud')
+                    ->color(Color::Slate);
             }
 
             if (setting('auth.google.enabled')) {
-                $socialProviders['google'] = [
-                    'label' => 'Google',
-                    'icon' => 'heroicon-o-globe-alt',
-                    'color' => 'primary',
-                ];
+                $socialProviders[] = Provider::make('google')
+                    ->label('Google')
+                    ->icon('heroicon-o-globe-alt')
+                    ->color(Color::Slate);
             }
 
             if (setting('auth.auth0.enabled')) {
-                $socialProviders['auth0'] = [
-                    'label' => 'Auth0',
-                    'icon' => 'heroicon-o-lock-closed',
-                    'color' => 'primary',
-                ];
+                $socialProviders[] = Provider::make('auth0')
+                    ->label('Auth0')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color(Color::Slate);
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Silently fail and use empty social providers during setup
         }
 
@@ -96,7 +90,7 @@ class AppPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('app')
-            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->login(Login::class)
             ->loginRouteSlug('login')
             ->colors([
                 'primary' => Color::Slate,
@@ -124,17 +118,14 @@ class AppPanelProvider extends PanelProvider
                         navigationGroup: 'Settings',
                     )
                     ->enableTwoFactorAuthentication(
-                        force: false, // force the user to enable 2FA before they can use the application (default = false)
+                        force: false,
                     )
                     ->passwordUpdateRules(
                         rules: [Password::default()->mixedCase()->uncompromised(3)->min(12)],
                     )
                     ->enableSanctumTokens(),
                 FilamentSocialitePlugin::make()
-                    ->setProviders($socialProviders),
-                ActivitylogPlugin::make()
-                    ->isResourceActionHidden(true)
-                    ->navigationItem(false),
+                    ->providers($socialProviders),
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,
@@ -143,6 +134,10 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => view('components.session-expiration-handler')
+            )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_FOOTER,
+                fn () => view('filament.app.sidebar-bottom-links')
             )
             ->navigationGroups([
                 'Foundations',

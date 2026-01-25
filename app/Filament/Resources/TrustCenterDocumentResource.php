@@ -3,16 +3,38 @@
 namespace App\Filament\Resources;
 
 use App\Enums\TrustLevel;
-use App\Filament\Resources\TrustCenterDocumentResource\Pages;
+use App\Filament\Resources\TrustCenterDocumentResource\Pages\CreateTrustCenterDocument;
+use App\Filament\Resources\TrustCenterDocumentResource\Pages\EditTrustCenterDocument;
+use App\Filament\Resources\TrustCenterDocumentResource\Pages\ListTrustCenterDocuments;
+use App\Filament\Resources\TrustCenterDocumentResource\Pages\ViewTrustCenterDocument;
 use App\Models\TrustCenterDocument;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -21,7 +43,7 @@ class TrustCenterDocumentResource extends Resource
 {
     protected static ?string $model = TrustCenterDocument::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     // Hide from navigation - access via Trust Center Manager
     protected static bool $shouldRegisterNavigation = false;
@@ -46,17 +68,18 @@ class TrustCenterDocumentResource extends Resource
         return __('Documents');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make(__('Document Information'))
+        return $schema
+            ->components([
+                Section::make(__('Document Information'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label(__('Document Name'))
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->label(__('Description'))
                             ->rows(3)
                             ->maxLength(65535)
@@ -64,30 +87,32 @@ class TrustCenterDocumentResource extends Resource
                     ])
                     ->columns(1),
 
-                Forms\Components\Section::make(__('Access Control'))
+                Section::make(__('Access Control'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\Select::make('trust_level')
+                        Select::make('trust_level')
                             ->label(__('Trust Level'))
                             ->enum(TrustLevel::class)
                             ->options(collect(TrustLevel::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
                             ->required()
                             ->default(TrustLevel::PUBLIC->value)
                             ->helperText(__('Public documents are visible to everyone. Protected documents require access approval.')),
-                        Forms\Components\Toggle::make('requires_nda')
+                        Toggle::make('requires_nda')
                             ->label(__('Requires NDA Agreement'))
                             ->helperText(__('If enabled, requesters must agree to the NDA before accessing this document.'))
                             ->default(false)
-                            ->visible(fn (Forms\Get $get) => $get('trust_level') === TrustLevel::PROTECTED->value),
-                        Forms\Components\Toggle::make('is_active')
+                            ->visible(fn (Get $get) => $get('trust_level') === TrustLevel::PROTECTED->value),
+                        Toggle::make('is_active')
                             ->label(__('Active'))
                             ->helperText(__('Inactive documents are not shown in the Trust Center.'))
                             ->default(true),
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make(__('Certifications'))
+                Section::make(__('Certifications'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\Select::make('certifications')
+                        Select::make('certifications')
                             ->label(__('Related Certifications'))
                             ->relationship('certifications', 'name')
                             ->multiple()
@@ -97,9 +122,10 @@ class TrustCenterDocumentResource extends Resource
                     ])
                     ->columns(1),
 
-                Forms\Components\Section::make(__('Document File'))
+                Section::make(__('Document File'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\FileUpload::make('file_path')
+                        FileUpload::make('file_path')
                             ->label(__('Upload Document'))
                             ->disk(setting('storage.driver', 'private'))
                             ->directory('trust-center-documents')
@@ -120,12 +146,13 @@ class TrustCenterDocumentResource extends Resource
                     ])
                     ->columns(1),
 
-                Forms\Components\Section::make(__('Validity Period'))
+                Section::make(__('Validity Period'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\DatePicker::make('valid_from')
+                        DatePicker::make('valid_from')
                             ->label(__('Valid From'))
                             ->native(false),
-                        Forms\Components\DatePicker::make('valid_until')
+                        DatePicker::make('valid_until')
                             ->label(__('Valid Until'))
                             ->native(false)
                             ->helperText(__('Leave empty if the document does not expire.')),
@@ -134,9 +161,10 @@ class TrustCenterDocumentResource extends Resource
                     ->collapsible()
                     ->collapsed(),
 
-                Forms\Components\Section::make(__('Display Order'))
+                Section::make(__('Display Order'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('sort_order')
+                        TextInput::make('sort_order')
                             ->label(__('Sort Order'))
                             ->numeric()
                             ->default(0)
@@ -148,15 +176,16 @@ class TrustCenterDocumentResource extends Resource
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make()
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('name')
                             ->hiddenLabel()
-                            ->size(TextEntry\TextEntrySize::Large)
+                            ->size(TextSize::Large)
                             ->weight('bold')
                             ->columnSpanFull(),
                         TextEntry::make('trust_level')
@@ -173,6 +202,7 @@ class TrustCenterDocumentResource extends Resource
                     ->columns(4),
 
                 Section::make(__('Description'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('description')
                             ->hiddenLabel()
@@ -183,6 +213,7 @@ class TrustCenterDocumentResource extends Resource
                     ->hidden(fn (?TrustCenterDocument $record) => empty($record?->description)),
 
                 Section::make(__('Certifications'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('certifications.name')
                             ->label(__('Related Certifications'))
@@ -192,6 +223,7 @@ class TrustCenterDocumentResource extends Resource
                     ->collapsible(),
 
                 Section::make(__('File Information'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('file_name')
                             ->label(__('File Name')),
@@ -204,6 +236,7 @@ class TrustCenterDocumentResource extends Resource
                     ->columns(3),
 
                 Section::make(__('Validity'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('valid_from')
                             ->label(__('Valid From'))
@@ -220,6 +253,7 @@ class TrustCenterDocumentResource extends Resource
                     ->collapsible(),
 
                 Section::make(__('Metadata'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('created_at')
                             ->label(__('Created'))
@@ -238,70 +272,70 @@ class TrustCenterDocumentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('trust_level')
+                TextColumn::make('trust_level')
                     ->label(__('Trust Level'))
                     ->badge()
                     ->color(fn (TrustCenterDocument $record) => $record->trust_level->getColor()),
-                Tables\Columns\TextColumn::make('certifications.name')
+                TextColumn::make('certifications.name')
                     ->label(__('Certifications'))
                     ->badge()
                     ->separator(', ')
                     ->wrap()
                     ->toggleable(),
-                Tables\Columns\IconColumn::make('requires_nda')
+                IconColumn::make('requires_nda')
                     ->label(__('NDA'))
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label(__('Active'))
                     ->boolean(),
-                Tables\Columns\TextColumn::make('valid_until')
+                TextColumn::make('valid_until')
                     ->label(__('Expires'))
                     ->date()
                     ->placeholder(__('Never'))
                     ->color(fn (?TrustCenterDocument $record): string => $record?->isExpired() ? 'danger' : ($record?->isExpiringSoon() ? 'warning' : 'gray'))
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('uploadedBy.name')
+                TextColumn::make('uploadedBy.name')
                     ->label(__('Uploaded By'))
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('Created'))
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('trust_level')
+                SelectFilter::make('trust_level')
                     ->label(__('Trust Level'))
                     ->options(collect(TrustLevel::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])),
-                Tables\Filters\SelectFilter::make('certifications')
+                SelectFilter::make('certifications')
                     ->label(__('Certification'))
                     ->relationship('certifications', 'name')
                     ->multiple()
                     ->preload(),
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label(__('Active'))
                     ->placeholder(__('All'))
                     ->trueLabel(__('Active only'))
                     ->falseLabel(__('Inactive only')),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
+                ForceDeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('sort_order', 'asc');
@@ -317,10 +351,10 @@ class TrustCenterDocumentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTrustCenterDocuments::route('/'),
-            'create' => Pages\CreateTrustCenterDocument::route('/create'),
-            'view' => Pages\ViewTrustCenterDocument::route('/{record}'),
-            'edit' => Pages\EditTrustCenterDocument::route('/{record}/edit'),
+            'index' => ListTrustCenterDocuments::route('/'),
+            'create' => CreateTrustCenterDocument::route('/create'),
+            'view' => ViewTrustCenterDocument::route('/{record}'),
+            'edit' => EditTrustCenterDocument::route('/{record}/edit'),
         ];
     }
 

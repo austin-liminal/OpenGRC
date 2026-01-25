@@ -2,18 +2,18 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use Closure;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class ReportSettings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
 
     public static function canAccess(): bool
     {
@@ -34,27 +34,29 @@ class ReportSettings extends BaseSettings
         return __('navigation.settings.report_settings');
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Section::make('Report Configuration')
-                ->schema([
-                    FileUpload::make('report.logo')
-                        ->label('Custom Report Logo (Optional)')
-                        ->helperText('The logo to display on reports. Be sure to upload a file that is at least 512px wide.')
-                        ->acceptedFileTypes(['image/*'])
-                        ->directory('report-assets')
-                        ->image()
-                        ->disk(fn () => config('filesystems.default'))
-                        ->visibility('private')
-                        ->maxFiles(1)
-                        ->imagePreviewHeight('300px')
-                        ->deleteUploadedFileUsing(function ($state) {
-                            if ($state) {
-                                Storage::disk(config('filesystems.default'))->delete($state);
-                            }
-                        }),
-                ]),
-        ];
+        return $schema
+            ->components([
+                Section::make('Report Configuration')
+                    ->columnSpanFull()
+                    ->schema([
+                        FileUpload::make('report.logo')
+                            ->label('Custom Report Logo (Optional)')
+                            ->helperText('The logo to display on reports. Be sure to upload a file that is at least 512px wide.')
+                            ->acceptedFileTypes(['image/*'])
+                            ->directory('report-assets')
+                            ->image()
+                            ->disk(fn () => config('filesystems.default'))
+                            ->visibility('private')
+                            ->maxFiles(1)
+                            ->imagePreviewHeight('300px')
+                            ->deleteUploadedFileUsing(function ($state) {
+                                if ($state) {
+                                    Storage::disk(config('filesystems.default'))->delete($state);
+                                }
+                            }),
+                    ]),
+            ]);
     }
 }

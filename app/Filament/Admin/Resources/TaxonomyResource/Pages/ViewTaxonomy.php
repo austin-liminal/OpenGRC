@@ -3,7 +3,7 @@
 namespace App\Filament\Admin\Resources\TaxonomyResource\Pages;
 
 use App\Filament\Admin\Resources\TaxonomyResource;
-use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewTaxonomy extends ViewRecord
@@ -13,7 +13,7 @@ class ViewTaxonomy extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

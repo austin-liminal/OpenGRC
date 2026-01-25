@@ -3,7 +3,9 @@
 namespace App\Filament\Admin\Resources\TaxonomyResource\Pages;
 
 use App\Filament\Admin\Resources\TaxonomyResource;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTaxonomy extends EditRecord
@@ -13,19 +15,19 @@ class EditTaxonomy extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            ViewAction::make(),
+            DeleteAction::make(),
         ];
     }
 
-    protected function getSaveFormAction(): Actions\Action
+    protected function getSaveFormAction(): Action
     {
         return parent::getSaveFormAction()
-            ->label(fn () => 'Save ' . ($this->record->name ?? 'Taxonomy'));
+            ->label(fn () => 'Save '.($this->record->name ?? 'Taxonomy'));
     }
 
     protected function getSavedNotificationTitle(): ?string
     {
-        return $this->record->name . ' saved successfully';
+        return $this->record->name.' saved successfully';
     }
 }

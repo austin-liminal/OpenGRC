@@ -4,8 +4,9 @@ namespace App\Providers;
 
 use App\Livewire\CustomSessionGuard;
 use App\Models\User;
-use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
+use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use BladeUI\Icons\Factory as IconFactory;
+use Exception;
 use Filament\Support\Facades\FilamentColor;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Log;
 use Schema;
 
 class AppServiceProvider extends ServiceProvider
@@ -62,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
                 if (! empty($mailPassword)) {
                     try {
                         $mailPassword = Crypt::decryptString($mailPassword);
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         // If decryption fails, assume it's plaintext (legacy data)
                     }
                 }
@@ -130,8 +132,8 @@ class AppServiceProvider extends ServiceProvider
                             config("filesystems.disks.{$storageDriver}", []),
                             $diskConfig
                         ));
-                    } catch (\Exception $e) {
-                        \Log::error("Failed to decrypt {$storageDriver} credentials: ".$e->getMessage());
+                    } catch (Exception $e) {
+                        Log::error("Failed to decrypt {$storageDriver} credentials: ".$e->getMessage());
                         $storageDriver = 'private';
                     }
                 }

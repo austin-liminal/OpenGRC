@@ -10,8 +10,14 @@ use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
 use App\Models\SurveyTemplate;
 use App\Models\Vendor;
-use Filament\Forms;
+use Exception;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Mail;
 
 class VendorAssessmentService
@@ -22,7 +28,7 @@ class VendorAssessmentService
     public static function getAssessRiskFormSchema(): array
     {
         return [
-            Forms\Components\Radio::make('assessment_type')
+            Radio::make('assessment_type')
                 ->label(__('Assessment Type'))
                 ->options([
                     'internal' => __('Internal Assessment - Complete the assessment yourself'),
@@ -31,22 +37,22 @@ class VendorAssessmentService
                 ->default('internal')
                 ->required()
                 ->live(),
-            Forms\Components\Select::make('survey_template_id')
+            Select::make('survey_template_id')
                 ->label(__('Survey Template'))
                 ->options(SurveyTemplate::where('status', SurveyTemplateStatus::ACTIVE)->pluck('title', 'id'))
                 ->searchable()
                 ->required(),
-            Forms\Components\TextInput::make('respondent_email')
+            TextInput::make('respondent_email')
                 ->label(__('Respondent Email'))
                 ->email()
-                ->required(fn (Forms\Get $get) => $get('assessment_type') === 'external')
-                ->visible(fn (Forms\Get $get) => $get('assessment_type') === 'external')
+                ->required(fn (Get $get) => $get('assessment_type') === 'external')
+                ->visible(fn (Get $get) => $get('assessment_type') === 'external')
                 ->helperText(__('The email address to send the survey to')),
-            Forms\Components\TextInput::make('respondent_name')
+            TextInput::make('respondent_name')
                 ->label(__('Respondent Name'))
-                ->visible(fn (Forms\Get $get) => $get('assessment_type') === 'external')
+                ->visible(fn (Get $get) => $get('assessment_type') === 'external')
                 ->helperText(__('Name of the person completing the survey')),
-            Forms\Components\DatePicker::make('due_date')
+            DatePicker::make('due_date')
                 ->label(__('Due Date'))
                 ->native(false),
         ];
@@ -55,7 +61,7 @@ class VendorAssessmentService
     /**
      * Handle the Assess Risk action for a vendor.
      *
-     * @return \Illuminate\Http\RedirectResponse|null
+     * @return RedirectResponse|null
      */
     public static function handleAssessRisk(Vendor $vendor, array $data)
     {
@@ -91,7 +97,7 @@ class VendorAssessmentService
                 ->body(__('Survey invitation sent to :email', ['email' => $data['respondent_email']]))
                 ->success()
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title(__('Survey Created'))
                 ->body(__('Survey created but email notification failed: ').$e->getMessage())

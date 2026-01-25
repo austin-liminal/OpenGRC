@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\TrustCenterContentBlockResource\Pages;
 
 use App\Filament\Resources\TrustCenterContentBlockResource;
-use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewTrustCenterContentBlock extends ViewRecord
@@ -13,7 +13,7 @@ class ViewTrustCenterContentBlock extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

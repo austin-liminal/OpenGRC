@@ -7,7 +7,10 @@ use App\Enums\SurveyTemplateStatus;
 use App\Enums\VendorRiskRating;
 use App\Enums\VendorStatus;
 use App\Filament\Exports\VendorExporter;
-use App\Filament\Resources\VendorResource\Pages;
+use App\Filament\Resources\VendorResource\Pages\CreateVendor;
+use App\Filament\Resources\VendorResource\Pages\EditVendor;
+use App\Filament\Resources\VendorResource\Pages\ListVendors;
+use App\Filament\Resources\VendorResource\Pages\ViewVendor;
 use App\Filament\Resources\VendorResource\RelationManagers\ApplicationsRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\ImplementationsRelationManager;
 use App\Filament\Resources\VendorResource\RelationManagers\SurveysRelationManager;
@@ -18,24 +21,36 @@ use App\Models\Survey;
 use App\Models\SurveyTemplate;
 use App\Models\User;
 use App\Models\Vendor;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists\Components\Section;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class VendorResource extends Resource
 {
     protected static ?string $model = Vendor::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
     // Hide from navigation - access via Vendor Manager
     protected static bool $shouldRegisterNavigation = false;
@@ -60,35 +75,35 @@ class VendorResource extends Resource
         return __('Vendors');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make(__('Vendor Information'))
+        return $schema
+            ->components([
+                Section::make(__('Vendor Information'))
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label(__('Name'))
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('url')
+                        TextInput::make('url')
                             ->label(__('Website URL'))
                             ->url()
                             ->maxLength(512),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->label(__('Description'))
                             ->maxLength(65535)
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make(__('Status & Risk'))
+                Section::make(__('Status & Risk'))
                     ->schema([
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->label(__('Status'))
                             ->enum(VendorStatus::class)
                             ->options(collect(VendorStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
                             ->required(),
-                        Forms\Components\Select::make('risk_rating')
+                        Select::make('risk_rating')
                             ->label(__('Organizational Risk Rating'))
                             ->helperText(__('The potential impact this vendor could have on your organization before any controls or mitigations are applied.'))
                             ->enum(VendorRiskRating::class)
@@ -97,9 +112,9 @@ class VendorResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make(__('Management'))
+                Section::make(__('Management'))
                     ->schema([
-                        Forms\Components\Select::make('vendor_manager_id')
+                        Select::make('vendor_manager_id')
                             ->label(__('Vendor Relationship Manager'))
                             ->helperText(__('Internal owner responsible for managing this vendor relationship'))
                             ->relationship('vendorManager', 'name')
@@ -109,35 +124,35 @@ class VendorResource extends Resource
                     ])
                     ->columns(1),
 
-                Forms\Components\Section::make(__('Vendor Contact'))
+                Section::make(__('Vendor Contact'))
                     ->description(__('Primary contact at the vendor organization'))
                     ->schema([
-                        Forms\Components\TextInput::make('contact_name')
+                        TextInput::make('contact_name')
                             ->label(__('Contact Name'))
                             ->helperText(__('Main point of contact at the vendor'))
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('contact_email')
+                        TextInput::make('contact_email')
                             ->label(__('Contact Email'))
                             ->email()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('contact_phone')
+                        TextInput::make('contact_phone')
                             ->label(__('Contact Phone'))
                             ->tel()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('address')
+                        Textarea::make('address')
                             ->label(__('Physical Address'))
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make(__('Additional Information'))
+                Section::make(__('Additional Information'))
                     ->schema([
-                        Forms\Components\Textarea::make('notes')
+                        Textarea::make('notes')
                             ->label(__('Notes'))
                             ->maxLength(65535)
                             ->columnSpanFull(),
-                        Forms\Components\FileUpload::make('logo')
+                        FileUpload::make('logo')
                             ->label(__('Logo'))
                             ->disk(config('filesystems.default'))
                             ->directory('vendor-logos')
@@ -147,7 +162,7 @@ class VendorResource extends Resource
                             ->deletable()
                             ->deleteUploadedFileUsing(function ($state) {
                                 if ($state) {
-                                    \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->delete($state);
+                                    Storage::disk(config('filesystems.default'))->delete($state);
                                 }
                             }),
                     ])
@@ -156,15 +171,16 @@ class VendorResource extends Resource
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make()
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('name')
                             ->hiddenLabel()
-                            ->size(TextEntry\TextEntrySize::Large)
+                            ->size(TextSize::Large)
                             ->weight('bold')
                             ->columnSpanFull(),
                         TextEntry::make('status')
@@ -194,6 +210,7 @@ class VendorResource extends Resource
                     ->columns(4),
 
                 Section::make(__('Details'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('description')
                             ->label(__('Description'))
@@ -254,14 +271,14 @@ class VendorResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label(__('Name'))->searchable(),
-                Tables\Columns\TextColumn::make('vendorManager.name')
+                TextColumn::make('name')->label(__('Name'))->searchable(),
+                TextColumn::make('vendorManager.name')
                     ->label(__('Vendor Manager'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('status')->label(__('Status'))->badge()->color(fn ($record) => $record->status->getColor()),
-                Tables\Columns\TextColumn::make('risk_rating')->label(__('Risk Rating'))->badge()->color(fn ($record) => $record->risk_rating->getColor()),
-                Tables\Columns\TextColumn::make('url')
+                TextColumn::make('status')->label(__('Status'))->badge()->color(fn ($record) => $record->status->getColor()),
+                TextColumn::make('risk_rating')->label(__('Risk Rating'))->badge()->color(fn ($record) => $record->risk_rating->getColor()),
+                TextColumn::make('url')
                     ->label(__('URL'))
                     ->url(fn ($record) => $record->url, true)
                     ->wrap()
@@ -269,25 +286,25 @@ class VendorResource extends Resource
                     ->searchable()
                     ->hidden()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('Created'))
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label(__('Updated'))
                     ->date()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label(__('Status'))
                     ->options(collect(VendorStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])),
-                Tables\Filters\SelectFilter::make('risk_rating')
+                SelectFilter::make('risk_rating')
                     ->label(__('Risk Rating'))
                     ->options(collect(VendorRiskRating::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])),
-                Tables\Filters\SelectFilter::make('vendor_manager_id')
+                SelectFilter::make('vendor_manager_id')
                     ->label(__('Vendor Manager'))
                     ->options(User::all()->pluck('name', 'id')),
             ])
@@ -296,26 +313,26 @@ class VendorResource extends Resource
                     ->exporter(VendorExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\Action::make('send_survey')
+            ->recordActions([
+                Action::make('send_survey')
                     ->label(__('Send Survey'))
                     ->icon('heroicon-o-paper-airplane')
                     ->color('primary')
-                    ->form([
-                        Forms\Components\Select::make('survey_template_id')
+                    ->schema([
+                        Select::make('survey_template_id')
                             ->label(__('Survey Template'))
                             ->options(SurveyTemplate::where('status', SurveyTemplateStatus::ACTIVE)->pluck('title', 'id'))
                             ->searchable()
                             ->required(),
-                        Forms\Components\TextInput::make('respondent_email')
+                        TextInput::make('respondent_email')
                             ->label(__('Respondent Email'))
                             ->email()
                             ->required()
                             ->helperText(__('The email address to send the survey to')),
-                        Forms\Components\TextInput::make('respondent_name')
+                        TextInput::make('respondent_name')
                             ->label(__('Respondent Name'))
                             ->helperText(__('Name of the person completing the survey')),
-                        Forms\Components\DatePicker::make('due_date')
+                        DatePicker::make('due_date')
                             ->label(__('Due Date'))
                             ->native(false),
                     ])
@@ -339,7 +356,7 @@ class VendorResource extends Resource
                                 ->body(__('Survey invitation sent to :email', ['email' => $data['respondent_email']]))
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title(__('Failed to Send Survey'))
                                 ->body($e->getMessage())
@@ -347,16 +364,16 @@ class VendorResource extends Resource
                                 ->send();
                         }
                     }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(VendorExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -375,10 +392,10 @@ class VendorResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListVendors::route('/'),
-            'create' => Pages\CreateVendor::route('/create'),
-            'view' => Pages\ViewVendor::route('/{record}'),
-            'edit' => Pages\EditVendor::route('/{record}/edit'),
+            'index' => ListVendors::route('/'),
+            'create' => CreateVendor::route('/create'),
+            'view' => ViewVendor::route('/{record}'),
+            'edit' => EditVendor::route('/{record}/edit'),
         ];
     }
 }

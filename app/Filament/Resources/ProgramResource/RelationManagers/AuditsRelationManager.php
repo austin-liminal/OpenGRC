@@ -2,13 +2,14 @@
 
 namespace App\Filament\Resources\ProgramResource\RelationManagers;
 
-use Filament\Forms;
-use Filament\Forms\Form;
+use App\Filament\Resources\AuditResource;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AuditsRelationManager extends RelationManager
 {
@@ -19,46 +20,44 @@ class AuditsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('title'),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('title'),
+                TextColumn::make('status')
                     ->label(__('audit.table.columns.status'))
                     ->sortable()
                     ->badge()
                     ->searchable(),
-                 Tables\Columns\TextColumn::make('manager.name')
+                TextColumn::make('manager.name')
                     ->label(__('audit.table.columns.manager'))
                     ->default('Unassigned')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_date')
+                TextColumn::make('start_date')
                     ->label(__('audit.table.columns.start_date'))
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('end_date')
+                TextColumn::make('end_date')
                     ->label(__('audit.table.columns.end_date'))
                     ->date()
                     ->sortable(),
-                
+
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Create New Audit')
-                    ->url(fn (): string =>
-                        \App\Filament\Resources\AuditResource::getUrl('create', ['default_program_id' => $this->ownerRecord->id])
-                ),
+                    ->url(fn (): string => AuditResource::getUrl('create', ['default_program_id' => $this->ownerRecord->id])
+                    ),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn ($record): string =>
-                        \App\Filament\Resources\AuditResource::getUrl('view', ['record' => $record])
-                ),
+            ->recordActions([
+                    ViewAction::make()
+                        ->url(fn ($record): string => AuditResource::getUrl('view', ['record' => $record])
+                        ),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+            ->toolbarActions([
+                        BulkActionGroup::make([
+                            DeleteBulkAction::make(),
+                        ]),
             ]);
     }
 }

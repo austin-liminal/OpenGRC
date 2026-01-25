@@ -2,25 +2,35 @@
 
 namespace App\Filament\Resources;
 
+use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Enums\Effectiveness;
 use App\Enums\WorkflowStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Exports\AuditExporter;
-use App\Filament\Resources\AuditResource\Pages;
-use App\Filament\Resources\AuditResource\RelationManagers;
+use App\Filament\Resources\AuditResource\Pages\CreateAudit;
+use App\Filament\Resources\AuditResource\Pages\EditAudit;
+use App\Filament\Resources\AuditResource\Pages\ImportIrl;
+use App\Filament\Resources\AuditResource\Pages\ListAudits;
+use App\Filament\Resources\AuditResource\Pages\ViewAudit;
+use App\Filament\Resources\AuditResource\RelationManagers\AttachmentsRelationManager;
+use App\Filament\Resources\AuditResource\RelationManagers\AuditItemRelationManager;
+use App\Filament\Resources\AuditResource\RelationManagers\DataRequestsRelationManager;
 use App\Filament\Resources\AuditResource\Widgets\AuditStatsWidget;
 use App\Models\Audit;
+use App\Models\Control;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Forms\Form;
-use Filament\Infolists\Components\Section;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\CreateRecord\Concerns\HasWizard;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,11 +43,11 @@ class AuditResource extends Resource
 
     protected static ?string $model = Audit::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-pencil-square';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-pencil-square';
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 40;
 
@@ -51,9 +61,9 @@ class AuditResource extends Resource
         return __('audit.navigation.group');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form;
+        return $schema;
     }
 
     public static function table(Table $table): Table
@@ -62,33 +72,33 @@ class AuditResource extends Resource
             ->emptyStateHeading(__('audit.table.empty_state.heading'))
             ->emptyStateDescription(__('audit.table.empty_state.description'))
             ->columns([
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->label(__('audit.table.columns.title'))
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('audit_type')
+                TextColumn::make('audit_type')
                     ->label(__('audit.table.columns.audit_type'))
                     ->sortable()
                     ->formatStateUsing(fn ($state) => ucfirst($state))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('audit.table.columns.status'))
                     ->sortable()
                     ->badge()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('manager.name')
+                TextColumn::make('manager.name')
                     ->label(__('audit.table.columns.manager'))
                     ->default('Unassigned')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_date')
+                TextColumn::make('start_date')
                     ->label(__('audit.table.columns.start_date'))
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('end_date')
+                TextColumn::make('end_date')
                     ->label(__('audit.table.columns.end_date'))
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('department')
+                TextColumn::make('department')
                     ->label('Department')
                     ->formatStateUsing(function (Audit $record) {
                         $department = $record->taxonomies()
@@ -101,7 +111,7 @@ class AuditResource extends Resource
                     })
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('scope')
+                TextColumn::make('scope')
                     ->label('Scope')
                     ->formatStateUsing(function (Audit $record) {
                         $scope = $record->taxonomies()
@@ -114,12 +124,12 @@ class AuditResource extends Resource
                     })
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('audit.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label(__('audit.table.columns.updated_at'))
                     ->dateTime()
                     ->sortable()
@@ -135,10 +145,10 @@ class AuditResource extends Resource
                     ->label('Status')
                     ->options(WorkflowStatus::class)
                     ->searchable(),
-                Tables\Filters\SelectFilter::make('department')
+                SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Department')
+                        $taxonomy = Taxonomy::where('name', 'Department')
                             ->whereNull('parent_id')
                             ->first();
 
@@ -146,7 +156,7 @@ class AuditResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -160,10 +170,10 @@ class AuditResource extends Resource
                             $query->where('taxonomy_id', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('scope')
+                SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
-                        $taxonomy = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('name', 'Scope')
+                        $taxonomy = Taxonomy::where('name', 'Scope')
                             ->whereNull('parent_id')
                             ->first();
 
@@ -171,7 +181,7 @@ class AuditResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -191,14 +201,14 @@ class AuditResource extends Resource
                     ->exporter(AuditExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(AuditExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -208,10 +218,10 @@ class AuditResource extends Resource
         return 'Audits';
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make(__('audit.infolist.section.title'))
                     ->columns(3)
                     ->schema([
@@ -251,7 +261,7 @@ class AuditResource extends Resource
                         TextEntry::make('description')
                             ->columnSpanFull()
                             ->html(),
-                    ]),
+                    ])->columnSpanFull(),
             ]);
     }
 
@@ -259,9 +269,9 @@ class AuditResource extends Resource
     {
         if (! request()->routeIs('filament.app.resources.audits.edit')) {
             return [
-                RelationManagers\AuditItemRelationManager::class,
-                RelationManagers\DataRequestsRelationManager::class,
-                RelationManagers\AttachmentsRelationManager::class,
+                AuditItemRelationManager::class,
+                DataRequestsRelationManager::class,
+                AttachmentsRelationManager::class,
             ];
         }
 
@@ -278,11 +288,11 @@ class AuditResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAudits::route('/'),
-            'create' => Pages\CreateAudit::route('/create'),
-            'view' => Pages\ViewAudit::route('/{record}'),
-            'edit' => Pages\EditAudit::route('/{record}/edit'),
-            'import-irl' => Pages\ImportIrl::route('/import-irl/{record}'),
+            'index' => ListAudits::route('/'),
+            'create' => CreateAudit::route('/create'),
+            'view' => ViewAudit::route('/{record}'),
+            'edit' => EditAudit::route('/{record}/edit'),
+            'import-irl' => ImportIrl::route('/import-irl/{record}'),
         ];
     }
 
@@ -305,7 +315,7 @@ class AuditResource extends Resource
 
                 $updateData = ['effectiveness' => $auditItem->effectiveness->value];
             }
-            if ($auditItem->auditable_type == \App\Models\Control::class) {
+            if ($auditItem->auditable_type == Control::class) {
                 $updateData['applicability'] = $auditItem->applicability->value;
             }
 

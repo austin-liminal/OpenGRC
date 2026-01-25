@@ -5,8 +5,8 @@ namespace App\Filament\Resources\DataRequestResource\Pages;
 use App\Filament\Resources\DataRequestResource;
 use App\Models\DataRequest;
 use Filament\Actions\Action;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Schema;
 
 class EditDataRequest extends EditRecord
 {
@@ -34,8 +34,8 @@ class EditDataRequest extends EditRecord
         return $actions;
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return DataRequestResource::getEditForm($form);
+        return DataRequestResource::getEditForm($schema);
     }
 }

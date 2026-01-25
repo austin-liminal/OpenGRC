@@ -2,17 +2,20 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\BundleResource\Pages;
+use App\Filament\Admin\Resources\BundleResource\Pages\ListBundles;
 use App\Http\Controllers\BundleController;
 use App\Models\Bundle;
-use Filament\Infolists\Components\Section;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\Action;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\Layout\Grid;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 
@@ -20,11 +23,11 @@ class BundleResource extends Resource
 {
     protected static ?string $model = Bundle::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-down-on-square-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-down-on-square-stack';
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 5;
 
@@ -39,7 +42,7 @@ class BundleResource extends Resource
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public static function table(Table $table): Table
     {
@@ -48,42 +51,42 @@ class BundleResource extends Resource
                 Grid::make()
                     ->columns(3)
                     ->schema([
-                        Tables\Columns\TextColumn::make('type')
+                        TextColumn::make('type')
                             ->state(function (Bundle $record) {
                                 return new HtmlString("<h3 class='font-bold text-lg'>$record->type</h3>");
                             })
                             ->badge()
                             ->columnSpanFull()
                             ->color('warning'),
-                        Tables\Columns\TextColumn::make('code')
+                        TextColumn::make('code')
                             ->label('Code')
                             ->state(function (Bundle $record) {
                                 return new HtmlString("<span class='font-bold'>Code: </span><br>$record->code");
                             })
                             ->sortable()
                             ->searchable(),
-                        Tables\Columns\TextColumn::make('version')
+                        TextColumn::make('version')
                             ->label('Version')
                             ->state(function (Bundle $record) {
                                 return new HtmlString("<span class='font-bold'>Rev: </span><br>$record->version");
                             })
                             ->sortable()
                             ->searchable(),
-                        Tables\Columns\TextColumn::make('authority')
+                        TextColumn::make('authority')
                             ->label('Authority')
                             ->state(function (Bundle $record) {
                                 return new HtmlString("<span class='font-bold'>Source: </span><br>$record->authority");
                             })
                             ->sortable()
                             ->searchable(),
-                        Tables\Columns\TextColumn::make('name')
+                        TextColumn::make('name')
                             ->label('Name')
                             ->weight('bold')
                             ->size('lg')
                             ->sortable()
                             ->columnSpanFull()
                             ->searchable(),
-                        Tables\Columns\TextColumn::make('description')
+                        TextColumn::make('description')
                             ->label('Description')
                             ->limit(200)
                             ->columnSpanFull()
@@ -94,8 +97,8 @@ class BundleResource extends Resource
             ->contentGrid(['md' => 2, 'xl' => 3])
             ->paginationPageOptions([9, 18, 27])
             ->defaultSort('code')
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->button()
                     ->label('Details'),
                 Action::make('Import')
@@ -126,7 +129,7 @@ class BundleResource extends Resource
                     }),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('fetch')
+                Action::make('fetch')
                     ->label('Fetch Bundles Updates')
                     ->button()
                     ->visible(fn () => auth()->check() && auth()->user()->can('Manage Bundles'))
@@ -141,10 +144,10 @@ class BundleResource extends Resource
                     }),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('authority')
+                SelectFilter::make('authority')
                     ->options(Bundle::pluck('authority', 'authority')->toArray())
                     ->label('Authority'),
-                Tables\Filters\SelectFilter::make('type')
+                SelectFilter::make('type')
                     ->options([
                         'Standard' => 'Standard',
                         'Supplemental' => 'Supplemental',
@@ -156,11 +159,12 @@ class BundleResource extends Resource
 
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Content Bundle Details')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextEntry::make('code'),
@@ -178,7 +182,7 @@ class BundleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListBundles::route('/'),
+            'index' => ListBundles::route('/'),
         ];
     }
 }

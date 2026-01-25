@@ -9,9 +9,9 @@ use RecursiveIteratorIterator;
 
 class About extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-information-circle';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-information-circle';
 
-    protected static string $view = 'filament.admin.pages.about';
+    protected string $view = 'filament.admin.pages.about';
 
     protected static ?string $navigationLabel = 'About';
 
@@ -19,7 +19,7 @@ class About extends Page
 
     protected static ?int $navigationSort = 1000;
 
-    protected static ?string $navigationGroup = 'System';
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
 
     public array $version = [];
 

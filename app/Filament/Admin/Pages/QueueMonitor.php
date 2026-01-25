@@ -3,23 +3,24 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\QueueJob;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Pages\Page;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class QueueMonitor extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-queue-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-queue-list';
 
-    protected static string $view = 'filament.admin.pages.queue-monitor';
+    protected string $view = 'filament.admin.pages.queue-monitor';
 
     protected static ?string $navigationLabel = 'Queue Monitor';
 
@@ -27,12 +28,12 @@ class QueueMonitor extends Page implements HasTable
 
     protected static ?int $navigationSort = 900;
 
-    protected static ?string $navigationGroup = 'System';
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
 
     public function table(Table $table): Table
     {
         return $table
-            ->query(QueueJob::query())                        
+            ->query(QueueJob::query())
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')
@@ -62,13 +63,13 @@ class QueueMonitor extends Page implements HasTable
                     ->formatStateUsing(fn ($state) => $state ? date('Y-m-d H:i:s', $state) : '-')
                     ->sortable(),
             ])
-            ->actions([
+            ->recordActions([
                 DeleteAction::make()
                     ->requiresConfirmation()
                     ->modalHeading('Delete Job')
                     ->modalDescription('Are you sure you want to delete this job from the queue? This action cannot be undone.'),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->requiresConfirmation()
@@ -112,7 +113,7 @@ class QueueMonitor extends Page implements HasTable
                     'queue' => $job->queue,
                     'job' => $payload['displayName'] ?? 'Unknown',
                     'failed_at' => $job->failed_at,
-                    'exception' => \Illuminate\Support\Str::limit($job->exception, 200),
+                    'exception' => Str::limit($job->exception, 200),
                 ];
             })
             ->toArray();

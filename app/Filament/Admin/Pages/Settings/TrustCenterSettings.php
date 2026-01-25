@@ -4,16 +4,17 @@ namespace App\Filament\Admin\Pages\Settings;
 
 use App\Filament\Admin\Pages\Settings\Schemas\TrustCenterMailSchema;
 use App\Filament\Admin\Pages\Settings\Schemas\TrustCenterNdaSchema;
-use Closure;
-use Filament\Forms\Components\Tabs;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
 
 class TrustCenterSettings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 9;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
     public static function canAccess(): bool
     {
@@ -39,18 +40,20 @@ class TrustCenterSettings extends BaseSettings
         return 'Trust Center Settings';
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Tabs::make('TrustCenterSettings')
-                ->tabs([
-                    Tabs\Tab::make(__('NDA'))
-                        ->icon('heroicon-o-document-text')
-                        ->schema(TrustCenterNdaSchema::schema()),
-                    Tabs\Tab::make(__('Email Templates'))
-                        ->icon('heroicon-o-envelope')
-                        ->schema(TrustCenterMailSchema::schema()),
-                ]),
-        ];
+        return $schema
+            ->components([
+                Tabs::make('TrustCenterSettings')
+                    ->columnSpanFull()
+                    ->tabs([
+                        Tab::make(__('NDA'))
+                            ->icon('heroicon-o-document-text')
+                            ->schema(TrustCenterNdaSchema::schema()),
+                        Tab::make(__('Email Templates'))
+                            ->icon('heroicon-o-envelope')
+                            ->schema(TrustCenterMailSchema::schema()),
+                    ]),
+            ]);
     }
 }

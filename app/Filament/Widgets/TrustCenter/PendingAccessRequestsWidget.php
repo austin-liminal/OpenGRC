@@ -7,9 +7,16 @@ use App\Filament\Resources\TrustCenterAccessRequestResource;
 use App\Mail\TrustCenterAccessApprovedMail;
 use App\Mail\TrustCenterAccessRejectedMail;
 use App\Models\TrustCenterAccessRequest;
-use Filament\Forms;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Collection;
@@ -29,44 +36,44 @@ class PendingAccessRequestsWidget extends BaseWidget
                     ->orderBy('created_at', 'desc')
             )
             ->columns([
-                Tables\Columns\TextColumn::make('requester_name')
+                TextColumn::make('requester_name')
                     ->label(__('Name'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('requester_company')
+                TextColumn::make('requester_company')
                     ->label(__('Company'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('requester_email')
+                TextColumn::make('requester_email')
                     ->label(__('Email')),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn (TrustCenterAccessRequest $record) => $record->status->getColor()),
-                Tables\Columns\TextColumn::make('documents_count')
+                TextColumn::make('documents_count')
                     ->label(__('Documents'))
                     ->counts('documents')
                     ->badge()
                     ->color('gray'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('Submitted'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label(__('Status'))
                     ->options(collect(AccessRequestStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn (TrustCenterAccessRequest $record) => TrustCenterAccessRequestResource::getUrl('view', ['record' => $record])),
-                Tables\Actions\Action::make('approve')
+                Action::make('approve')
                     ->label(__('Approve'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
                     ->visible(fn (TrustCenterAccessRequest $record) => $record->status === AccessRequestStatus::PENDING)
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label(__('Notes (Optional)'))
                             ->rows(2),
                     ])
@@ -79,21 +86,21 @@ class PendingAccessRequestsWidget extends BaseWidget
                                 ->title(__('Access Approved'))
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title(__('Approved but email failed'))
                                 ->warning()
                                 ->send();
                         }
                     }),
-                Tables\Actions\Action::make('reject')
+                Action::make('reject')
                     ->label(__('Reject'))
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->visible(fn (TrustCenterAccessRequest $record) => $record->status === AccessRequestStatus::PENDING)
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label(__('Reason'))
                             ->rows(2),
                     ])
@@ -106,14 +113,14 @@ class PendingAccessRequestsWidget extends BaseWidget
                                 ->title(__('Request Rejected'))
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title(__('Rejected but email failed'))
                                 ->warning()
                                 ->send();
                         }
                     }),
-                Tables\Actions\Action::make('revoke')
+                Action::make('revoke')
                     ->label(__('Revoke'))
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
@@ -121,8 +128,8 @@ class PendingAccessRequestsWidget extends BaseWidget
                     ->modalHeading(__('Revoke Access'))
                     ->modalDescription(__('Are you sure you want to revoke this user\'s access? Their magic link will be invalidated immediately.'))
                     ->visible(fn (TrustCenterAccessRequest $record) => $record->status === AccessRequestStatus::APPROVED)
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label(__('Reason (Optional)'))
                             ->rows(2),
                     ])
@@ -136,9 +143,9 @@ class PendingAccessRequestsWidget extends BaseWidget
                             ->send();
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('bulk_approve')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('bulk_approve')
                         ->label(__('Approve Selected'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -162,7 +169,7 @@ class PendingAccessRequestsWidget extends BaseWidget
 
                                 try {
                                     Mail::send(new TrustCenterAccessApprovedMail($record));
-                                } catch (\Exception $e) {
+                                } catch (Exception $e) {
                                     $emailFailed++;
                                 }
                             }
@@ -180,7 +187,7 @@ class PendingAccessRequestsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('bulk_reject')
+                    BulkAction::make('bulk_reject')
                         ->label(__('Reject Selected'))
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
@@ -188,7 +195,7 @@ class PendingAccessRequestsWidget extends BaseWidget
                         ->modalHeading(__('Reject Selected Requests'))
                         ->modalDescription(__('Are you sure you want to reject the selected requests? Rejection emails will be sent to each requester.'))
                         ->form([
-                            Forms\Components\Textarea::make('review_notes')
+                            Textarea::make('review_notes')
                                 ->label(__('Rejection Reason (applied to all)'))
                                 ->rows(2),
                         ])
@@ -209,7 +216,7 @@ class PendingAccessRequestsWidget extends BaseWidget
 
                                 try {
                                     Mail::send(new TrustCenterAccessRejectedMail($record));
-                                } catch (\Exception $e) {
+                                } catch (Exception $e) {
                                     $emailFailed++;
                                 }
                             }
@@ -227,7 +234,7 @@ class PendingAccessRequestsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading(__('No Access Requests'))

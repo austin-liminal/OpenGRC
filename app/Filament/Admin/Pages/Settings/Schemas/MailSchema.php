@@ -2,15 +2,18 @@
 
 namespace App\Filament\Admin\Pages\Settings\Schemas;
 
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Actions\Action;
+use Exception;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
+use Log;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 
 class MailSchema
 {
@@ -86,7 +89,7 @@ class MailSchema
 
         try {
             return Crypt::decryptString($password);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // If decryption fails, assume it's plaintext (legacy data)
             return $password;
         }
@@ -122,7 +125,7 @@ class MailSchema
                 ->success()
                 ->send();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             static::handleMailError($e, $mailConfig);
         } finally {
             // Restore original configuration
@@ -136,16 +139,16 @@ class MailSchema
         if (empty($mailConfig['host']) || empty($mailConfig['port']) ||
             empty($mailConfig['username']) || empty($mailConfig['password']) ||
             empty($mailConfig['from'])) {
-            throw new \Exception('Mail configuration is incomplete. Please ensure all fields are filled.');
+            throw new Exception('Mail configuration is incomplete. Please ensure all fields are filled.');
         }
 
         // AWS SES specific validations
         if (str_contains($mailConfig['host'], 'amazonaws.com')) {
             if (! str_starts_with($mailConfig['username'], 'AKIA')) {
-                throw new \Exception('AWS SES username should start with "AKIA". Please use your AWS SES SMTP credentials, not your AWS console credentials.');
+                throw new Exception('AWS SES username should start with "AKIA". Please use your AWS SES SMTP credentials, not your AWS console credentials.');
             }
             if ($mailConfig['port'] != 587 && $mailConfig['port'] != 465 && $mailConfig['port'] != 25) {
-                throw new \Exception('AWS SES typically uses ports 587 (STARTTLS), 465 (TLS), or 25. Current port: '.$mailConfig['port']);
+                throw new Exception('AWS SES typically uses ports 587 (STARTTLS), 465 (TLS), or 25. Current port: '.$mailConfig['port']);
             }
         }
     }
@@ -191,8 +194,8 @@ class MailSchema
 
         // Add debug info for troubleshooting
         $debugInfo = "Host: {$mailConfig['host']}, Port: {$mailConfig['port']}, Raw Encryption: {$mailConfig['encryption']}, Processed Encryption: {$encryption}, Username: ".substr($mailConfig['username'], 0, 12).'...';
-        \Log::info('Mail test configuration: '.$debugInfo);
-        \Log::info('Full SMTP config: '.json_encode($smtpConfig));
+        Log::info('Mail test configuration: '.$debugInfo);
+        Log::info('Full SMTP config: '.json_encode($smtpConfig));
     }
 
     protected static function testSmtpConnection(array $mailConfig): void
@@ -211,7 +214,7 @@ class MailSchema
         }
         // Port 587 uses STARTTLS (starts plain then upgrades), so useEncryption = false
 
-        $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
+        $transport = new EsmtpTransport(
             $mailConfig['host'],
             (int) $mailConfig['port'],
             $useEncryption
@@ -221,7 +224,7 @@ class MailSchema
 
         // This will test the connection
         $transport->start();
-        \Log::info('SMTP connection test successful');
+        Log::info('SMTP connection test successful');
         $transport->stop();
     }
 
@@ -233,7 +236,7 @@ class MailSchema
         });
     }
 
-    protected static function handleMailError(\Exception $e, array $mailConfig): void
+    protected static function handleMailError(Exception $e, array $mailConfig): void
     {
         $errorMessage = $e->getMessage();
 

@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use DB;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Crypt;
 
@@ -84,7 +86,7 @@ class Deploy extends Command
         try {
             $this->performDeployment($config);
             $this->displaySuccess();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Deployment failed: '.$e->getMessage());
             exit(1); // Exit with error code
         }
@@ -412,30 +414,30 @@ class Deploy extends Command
         $this->info('[INFO] Testing database connection...');
         $isUpdate = false;
         try {
-            \DB::connection()->getPdo();
+            DB::connection()->getPdo();
             $this->info('[SUCCESS] Database connection successful');
 
             // Check if this is an existing database by looking for migrations table
             try {
-                $tables = \DB::select("SHOW TABLES LIKE 'migrations'");
+                $tables = DB::select("SHOW TABLES LIKE 'migrations'");
                 if (count($tables) > 0) {
                     $isUpdate = true;
                     $this->info('[INFO] Existing database detected - this is an update deployment');
                 } else {
                     $this->info('[INFO] New database detected - this is a fresh deployment');
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // For SQLite or other databases, try a different approach
                 try {
-                    \DB::table('migrations')->count();
+                    DB::table('migrations')->count();
                     $isUpdate = true;
                     $this->info('[INFO] Existing database detected - this is an update deployment');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this->info('[INFO] New database detected - this is a fresh deployment');
                 }
             }
-        } catch (\Exception $e) {
-            throw new \Exception('Database connection failed: '.$e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception('Database connection failed: '.$e->getMessage());
         }
 
         $this->performMainDeployment($config, $isUpdate);

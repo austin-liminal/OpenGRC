@@ -3,18 +3,24 @@
 namespace App\Filament\Resources\ImplementationResource\RelationManagers;
 
 use App\Filament\Resources\ApplicationResource;
-use Filament\Forms\Form;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class ApplicationsRelationManager extends RelationManager
 {
     protected static string $relationship = 'applications';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return ApplicationResource::form($form);
+        return ApplicationResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -22,35 +28,35 @@ class ApplicationsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->label(__('Type'))
                     ->badge()
                     ->color(fn ($record) => $record->type->getColor())
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn ($record) => $record->status->getColor())
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('owner.name')
+                TextColumn::make('owner.name')
                     ->label(__('Owner'))
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('vendor.name')
+                TextColumn::make('vendor.name')
                     ->label(__('Vendor'))
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('url')
+                TextColumn::make('url')
                     ->label(__('URL'))
                     ->url(fn ($record) => $record->url, true)
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -59,20 +65,20 @@ class ApplicationsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Relate to Application')
                     ->preloadRecordSelect(),
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Create a New Application'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => ApplicationResource::getUrl('view', ['record' => $record])),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

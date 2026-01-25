@@ -3,25 +3,25 @@
 namespace App\Filament\Resources\RiskResource\RelationManagers;
 
 use App\Filament\Resources\ImplementationResource;
-use Filament\Forms\Form;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
 class ImplementationsRelationManager extends RelationManager
 {
     protected static string $relationship = 'implementations';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return ImplementationResource::getForm($form);
+        return ImplementationResource::getForm($schema);
     }
 
     public function table(Table $table): Table
     {
         $table = ImplementationResource::getTable($table);
-        $table->actions([
-            Tables\Actions\ViewAction::make()->hidden(),
+        $table->recordActions([
+            ViewAction::make()->hidden(),
         ]);
 
         return $table;

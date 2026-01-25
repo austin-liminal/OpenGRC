@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\SurveyTemplateResource\Pages;
 
 use App\Filament\Resources\SurveyTemplateResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListSurveyTemplates extends ListRecords
@@ -13,7 +13,7 @@ class ListSurveyTemplates extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

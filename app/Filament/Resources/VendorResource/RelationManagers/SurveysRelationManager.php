@@ -10,11 +10,20 @@ use App\Mail\SurveyInvitationMail;
 use App\Models\Survey;
 use App\Models\SurveyTemplate;
 use App\Services\VendorAssessmentService;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
@@ -25,23 +34,23 @@ class SurveysRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'title';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('survey_template_id')
+        return $schema
+            ->components([
+                Select::make('survey_template_id')
                     ->label(__('Survey Template'))
                     ->options(SurveyTemplate::where('status', SurveyTemplateStatus::ACTIVE)->pluck('title', 'id'))
                     ->searchable()
                     ->required()
                     ->disabled(fn (?Survey $record): bool => $record !== null),
-                Forms\Components\TextInput::make('respondent_email')
+                TextInput::make('respondent_email')
                     ->label(__('Respondent Email'))
                     ->email()
                     ->required(),
-                Forms\Components\TextInput::make('respondent_name')
+                TextInput::make('respondent_name')
                     ->label(__('Respondent Name')),
-                Forms\Components\DatePicker::make('due_date')
+                DatePicker::make('due_date')
                     ->label(__('Due Date'))
                     ->native(false),
             ]);
@@ -56,28 +65,28 @@ class SurveysRelationManager extends RelationManager
                     ->orWhereNull('type');
             }))
             ->columns([
-                Tables\Columns\TextColumn::make('display_title')
+                TextColumn::make('display_title')
                     ->label(__('survey.survey.table.columns.title'))
                     ->sortable(['title']),
-                Tables\Columns\TextColumn::make('template.title')
+                TextColumn::make('template.title')
                     ->label(__('survey.survey.table.columns.template'))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('respondent_display')
+                TextColumn::make('respondent_display')
                     ->label(__('survey.survey.table.columns.respondent'))
                     ->wrap(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('survey.survey.table.columns.status'))
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('progress')
+                TextColumn::make('progress')
                     ->label(__('survey.survey.table.columns.progress'))
                     ->suffix('%')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('due_date')
+                TextColumn::make('due_date')
                     ->label(__('survey.survey.table.columns.due_date'))
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('risk_score')
+                TextColumn::make('risk_score')
                     ->label('Risk Score')
                     ->badge()
                     ->color(fn (?int $state): string => match (true) {
@@ -90,28 +99,28 @@ class SurveysRelationManager extends RelationManager
                     })
                     ->formatStateUsing(fn (?int $state): string => $state !== null ? "{$state}/100" : '-')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('survey.survey.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(SurveyStatus::class),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('assess_risk')
+                Action::make('assess_risk')
                     ->label(__('Assess Risk'))
                     ->icon('heroicon-o-clipboard-document-check')
                     ->color('primary')
-                    ->form(VendorAssessmentService::getAssessRiskFormSchema())
+                    ->schema(VendorAssessmentService::getAssessRiskFormSchema())
                     ->action(fn (array $data) => VendorAssessmentService::handleAssessRisk($this->ownerRecord, $data)),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => SurveyResource::getUrl('view', ['record' => $record])),
-                Tables\Actions\Action::make('resend_invitation')
+                Action::make('resend_invitation')
                     ->label(__('Resend'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('gray')
@@ -125,7 +134,7 @@ class SurveysRelationManager extends RelationManager
                                 ->body(__('Survey invitation sent to :email', ['email' => $record->respondent_email]))
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title(__('Failed to Send Survey'))
                                 ->body($e->getMessage())
@@ -134,11 +143,11 @@ class SurveysRelationManager extends RelationManager
                         }
                     })
                     ->visible(fn (Survey $record): bool => ! empty($record->respondent_email) && in_array($record->status, [SurveyStatus::SENT, SurveyStatus::IN_PROGRESS])),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

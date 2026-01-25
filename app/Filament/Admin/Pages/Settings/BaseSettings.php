@@ -2,8 +2,13 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use Outerweb\FilamentSettings\Filament\Pages\Settings as PackageSettings;
-use Outerweb\Settings\Models\Setting;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\Field;
+use Filament\Schemas\Components\Component;
+use MangoldSecurity\FilamentSettings\Pages\Settings as PackageSettings;
+use MangoldSecurity\Settings\Facades\Setting;
+use MangoldSecurity\Settings\Models\Setting as SettingModel;
 
 /**
  * Base settings class that filters sensitive data from the Livewire payload.
@@ -14,22 +19,76 @@ use Outerweb\Settings\Models\Setting;
 abstract class BaseSettings extends PackageSettings
 {
     /**
-     * Override fillForm to exclude sensitive data from initial data load.
-     * This prevents encrypted credentials from appearing in the Livewire payload.
+     * Override mount to fix Filament 4 compatibility issue where the package
+     * tries to call getChildComponents() on Action objects.
      */
-    protected function fillForm(): void
+    public function mount(): void
     {
-        $data = Setting::get();
+        $this->form->components(
+            collect($this->form->getComponents(true, true))
+                ->map(function (Component|Action|ActionGroup $component): Component|Action|ActionGroup {
+                    return $this->addModelToFieldComponentsRecursively($component);
+                })
+                ->all(),
+        );
 
+        $this->fillForm();
+    }
+
+    /**
+     * Fixed version of addModelToFieldComponentsRecursively that properly handles
+     * Actions and ActionGroups in Filament 4 (they don't have getChildComponents).
+     */
+    private function addModelToFieldComponentsRecursively(Component|Action|ActionGroup $component): Component|Action|ActionGroup
+    {
+        if ($component instanceof Field) {
+            $component->model(function (Field $component): SettingModel {
+                return $this->getModelForField($component);
+            });
+        }
+
+        // Actions and ActionGroups don't have child components in Filament 4
+        if ($component instanceof Action || $component instanceof ActionGroup) {
+            return $component;
+        }
+
+        // Only process child components for actual Components
+        if ($component instanceof Component && method_exists($component, 'getChildComponents')) {
+            return $component->childComponents(
+                collect($component->getChildComponents())
+                    ->map(function (Component|Action|ActionGroup $childComponent): Action|ActionGroup|Component {
+                        return $this->addModelToFieldComponentsRecursively($childComponent);
+                    })
+                    ->all(),
+            );
+        }
+
+        return $component;
+    }
+
+    /**
+     * Get the model for a field (copied from parent package).
+     */
+    private function getModelForField(Field $field): SettingModel
+    {
+        return Setting::model()::query()
+            ->firstOrNew(['key' => $field->getName()]);
+    }
+
+    /**
+     * Override mutateFormDataBeforeFill to exclude sensitive data from initial data load.
+     * This prevents encrypted credentials from appearing in the Livewire payload.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
         // Remove sensitive credentials from the data
         // These fields use placeholder patterns and only update when new values are entered
         $this->removeSensitiveData($data);
 
-        $this->callHook('beforeFill');
-
-        $this->form->fill($data);
-
-        $this->callHook('afterFill');
+        return $data;
     }
 
     /**

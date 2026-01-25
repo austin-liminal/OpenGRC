@@ -2,15 +2,18 @@
 
 namespace App\Filament\Resources\AssetResource\RelationManagers;
 
-use App\Enums\ImplementationStatus;
 use App\Enums\Effectiveness;
-use Filament\Forms;
-use Filament\Forms\Form;
+use App\Enums\ImplementationStatus;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ImplementationsRelationManager extends RelationManager
 {
@@ -18,11 +21,11 @@ class ImplementationsRelationManager extends RelationManager
 
     protected static ?string $title = 'Implementations';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('details')
+        return $schema
+            ->components([
+                TextInput::make('details')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -33,44 +36,44 @@ class ImplementationsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('details')
             ->columns([
-                Tables\Columns\TextColumn::make('details')
+                TextColumn::make('details')
                     ->label('Details')
                     ->searchable()
                     ->limit(50),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('effectiveness')
+                TextColumn::make('effectiveness')
                     ->badge()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('controls_count')
+                TextColumn::make('controls_count')
                     ->counts('controls')
                     ->label('Controls'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(ImplementationStatus::class),
-                Tables\Filters\SelectFilter::make('effectiveness')
+                SelectFilter::make('effectiveness')
                     ->options(Effectiveness::class),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->preloadRecordSelect(),
             ])
-            ->actions([
-                Tables\Actions\DetachAction::make(),
+            ->recordActions([
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

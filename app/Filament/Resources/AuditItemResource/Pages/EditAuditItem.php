@@ -13,14 +13,21 @@ use App\Mail\EvidenceRequestMail;
 use App\Models\AuditItem;
 use App\Models\DataRequest;
 use App\Models\User;
+use Exception;
 use Filament\Actions\Action;
-use Filament\Forms;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\HtmlString;
 
@@ -72,7 +79,7 @@ class EditAuditItem extends EditRecord
 
                         try {
                             Mail::to($data['email'])->send(new EvidenceRequestMail($data['email'], $data['name']));
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title('Failed to send email')
                                 ->danger()
@@ -90,31 +97,31 @@ class EditAuditItem extends EditRecord
                         ->success()
                         ->send();
                 })
-                ->form([
-                    Forms\Components\Group::make()
+                ->schema([
+                    Group::make()
                         ->columns(2)
                         ->schema([
-                            Forms\Components\Select::make('user_id')
+                            Select::make('user_id')
                                 ->label('Assigned To')
                                 ->options(User::pluck('name', 'id'))
                                 ->default($this->record->audit->manager_id)
                                 ->required()
                                 ->searchable(),
-                            Forms\Components\DatePicker::make('due_at')
+                            DatePicker::make('due_at')
                                 ->label('Due Date')
                                 ->default(HelperController::getEndDate($this->record->audit->end_date, 5))
                                 ->required(),
-                            Forms\Components\Textarea::make('details')
+                            Textarea::make('details')
                                 ->label('Request Details')
                                 ->maxLength(65535)
                                 ->columnSpanFull()
                                 ->required(),
-                            Forms\Components\TextInput::make('code')
+                            TextInput::make('code')
                                 ->label('Request Code')
                                 ->maxLength(255)
                                 ->helperText('Optional. If left blank, will default to Request-{id} after creation.')
                                 ->nullable(),
-                            Forms\Components\Checkbox::make('send_email')
+                            Checkbox::make('send_email')
                                 ->label('Send Email Notification')
                                 ->default(true),
                         ]),
@@ -125,11 +132,12 @@ class EditAuditItem extends EditRecord
         ];
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Item Information')
+        return $schema
+            ->components([
+                Section::make('Item Information')
+                    ->columnSpanFull()
                     ->schema([
                         Placeholder::make('control_code')
                             ->label('Code')
@@ -148,7 +156,8 @@ class EditAuditItem extends EditRecord
 
                     ])->columns(2)->collapsible(true),
 
-                Forms\Components\Section::make('Evaluation')
+                Section::make('Evaluation')
+                    ->columnSpanFull()
                     ->schema([
                         ToggleButtons::make('status')
                             ->label('Status')
@@ -175,7 +184,8 @@ class EditAuditItem extends EditRecord
                             ->label('Auditor Notes'),
                     ]),
 
-                Forms\Components\Section::make('Audit Evidence')
+                Section::make('Audit Evidence')
+                    ->columnSpanFull()
                     ->schema([
                         // Todo: This can be replaced with a Repeater component when nested relationships are
                         // supported in Filament - potentially in v4.x. Or, maybe do a footer widget.

@@ -19,8 +19,7 @@
     ];
 @endphp
 
-<ul class="fi-sidebar-nav-groups -mx-2 flex flex-col gap-y-1 px-4 pb-4">
-    <hr class="border-gray-600 mb-2 mx-2">
+<ul class="fi-sidebar-nav-groups -mx-2 flex flex-col gap-y-1 px-4 py-4 border-t border-gray-600">
     @foreach ($links as $link)
         @if ($link['permissions'])
             @canany($link['permissions'])

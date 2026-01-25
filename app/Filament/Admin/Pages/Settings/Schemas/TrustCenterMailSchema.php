@@ -4,8 +4,8 @@ namespace App\Filament\Admin\Pages\Settings\Schemas;
 
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 
 class TrustCenterMailSchema
 {

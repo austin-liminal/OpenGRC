@@ -4,7 +4,8 @@ namespace App\Filament\Resources\VendorResource\Pages;
 
 use App\Filament\Resources\VendorResource;
 use App\Services\VendorAssessmentService;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewVendor extends ViewRecord
@@ -14,13 +15,13 @@ class ViewVendor extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('assess_risk')
+            Action::make('assess_risk')
                 ->label(__('Assess Risk'))
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('primary')
-                ->form(VendorAssessmentService::getAssessRiskFormSchema())
+                ->schema(VendorAssessmentService::getAssessRiskFormSchema())
                 ->action(fn (array $data) => VendorAssessmentService::handleAssessRisk($this->record, $data)),
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

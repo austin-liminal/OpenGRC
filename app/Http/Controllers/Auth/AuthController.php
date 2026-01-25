@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Spatie\Permission\Models\Role;
+use Str;
 
 class AuthController extends Controller
 {
@@ -22,7 +26,7 @@ class AuthController extends Controller
         $autoProvision = setting("auth.{$provider}.auto_provision", false);
 
         // Find existing user
-        $user = \App\Models\User::where('email', $socialiteUser->getEmail())->first();
+        $user = User::where('email', $socialiteUser->getEmail())->first();
 
         if (! $user && ! $autoProvision) {
             // User doesn't exist and auto-provisioning is disabled
@@ -31,10 +35,10 @@ class AuthController extends Controller
 
         if (! $user && $autoProvision) {
             // Create new user since auto-provisioning is enabled
-            $user = \App\Models\User::create([
+            $user = User::create([
                 'name' => $socialiteUser->getName(),
                 'email' => $socialiteUser->getEmail(),
-                'password' => bcrypt(\Str::random(16)),
+                'password' => bcrypt(Str::random(16)),
                 'email_verified_at' => now(),
                 'password_reset_required' => false,
             ]);
@@ -42,7 +46,7 @@ class AuthController extends Controller
             // Assign the configured role if specified
             $roleId = setting("auth.{$provider}.role");
             if ($roleId) {
-                $role = \Spatie\Permission\Models\Role::find($roleId);
+                $role = Role::find($roleId);
                 if ($role) {
                     $user->assignRole($role);
                 }
@@ -50,7 +54,7 @@ class AuthController extends Controller
         }
 
         // Log the user in
-        \Auth::login($user);
+        Auth::login($user);
         $user->updateLastActivity();
 
         // Redirect to the dashboard

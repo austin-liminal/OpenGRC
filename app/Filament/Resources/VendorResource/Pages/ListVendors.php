@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\VendorResource\Pages;
 
 use App\Filament\Resources\VendorResource;
-use Filament\Actions;
+use Closure;
+use Filament\Actions\CreateAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListVendors extends ListRecords
@@ -13,11 +15,11 @@ class ListVendors extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 
-    public function getTableRecordUrlUsing(): ?\Closure
+    public function getTableRecordUrlUsing(): ?Closure
     {
         return fn ($record) => $this->getResource()::getUrl('view', ['record' => $record]);
     }
@@ -25,7 +27,7 @@ class ListVendors extends ListRecords
     protected function getTableActions(): array
     {
         return [
-            Actions\ViewAction::make(),
+            ViewAction::make(),
         ];
     }
 }

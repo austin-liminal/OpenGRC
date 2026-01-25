@@ -150,7 +150,7 @@ class Implementation extends Model
     public function auditItems(): MorphMany
     {
         return $this->morphMany(AuditItem::class, 'auditable')
-            ->where('auditable_type', '=', \App\Models\Implementation::class);
+            ->where('auditable_type', '=', Implementation::class);
     }
 
     /**
@@ -160,7 +160,7 @@ class Implementation extends Model
     {
         return $this->morphMany(AuditItem::class, 'auditable')
             ->where('status', '=', 'Completed')
-            ->where('auditable_type', '=', \App\Models\Implementation::class);
+            ->where('auditable_type', '=', Implementation::class);
     }
 
     /**
@@ -184,7 +184,7 @@ class Implementation extends Model
      */
     public function implementationOwner(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'implementation_owner_id');
+        return $this->belongsTo(User::class, 'implementation_owner_id');
     }
 
     public function getActivitylogOptions(): LogOptions

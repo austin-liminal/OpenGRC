@@ -9,7 +9,7 @@ class TextWidget extends Widget
     //    protected static ?int $sort = 1;
     //    protected int | string | array $columnSpan = '2';
     //    protected static ?string $title = '';
-    protected static string $view = 'filament.widgets.text-widget';
+    protected string $view = 'filament.widgets.text-widget';
 
     public ?string $message = null;
 

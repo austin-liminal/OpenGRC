@@ -4,7 +4,7 @@ namespace App\Filament\Vendor\Resources\SurveyResource\Pages;
 
 use App\Enums\SurveyStatus;
 use App\Filament\Vendor\Resources\SurveyResource;
-use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewSurvey extends ViewRecord
@@ -14,7 +14,7 @@ class ViewSurvey extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('respond')
+            Action::make('respond')
                 ->label('Respond to Survey')
                 ->icon('heroicon-o-pencil-square')
                 ->color('primary')

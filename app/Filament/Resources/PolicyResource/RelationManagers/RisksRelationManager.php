@@ -2,12 +2,17 @@
 
 namespace App\Filament\Resources\PolicyResource\RelationManagers;
 
+use App\Filament\Resources\RiskResource;
+use App\Models\Risk;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\Risk;
-use App\Filament\Resources\RiskResource;
 
 class RisksRelationManager extends RelationManager
 {
@@ -18,13 +23,13 @@ class RisksRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->sortable()
                     ->searchable()
                     ->limit(50)
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('residual_risk')
+                TextColumn::make('residual_risk')
                     ->label('Residual Risk')
                     ->badge()
                     ->color(function (Risk $record) {
@@ -32,7 +37,7 @@ class RisksRelationManager extends RelationManager
                     })
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status')
                     ->sortable(),
             ])
@@ -40,7 +45,7 @@ class RisksRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Attach Risk')
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(function (Builder $query) {
@@ -51,14 +56,14 @@ class RisksRelationManager extends RelationManager
                     })
                     ->recordSelectSearchColumns(['name']),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => route('filament.app.resources.risks.view', $record)),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()->label('Detach from Policy'),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()->label('Detach from Policy'),
                 ]),
             ]);
     }

@@ -4,22 +4,34 @@ namespace App\Filament\Resources;
 
 use App\Enums\ResponseStatus;
 use App\Filament\Exports\DataRequestExporter;
-use App\Filament\Resources\DataRequestResource\Pages;
+use App\Filament\Resources\DataRequestResource\Pages\CreateDataRequest;
+use App\Filament\Resources\DataRequestResource\Pages\EditDataRequest;
+use App\Filament\Resources\DataRequestResource\Pages\ListDataRequests;
+use App\Filament\Resources\DataRequestResource\Pages\ViewDataRequest;
 use App\Mail\EvidenceRequestMail;
 use App\Models\Audit;
 use App\Models\DataRequest;
 use App\Models\User;
-use Filament\Actions;
-use Filament\Forms;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
@@ -30,55 +42,55 @@ class DataRequestResource extends Resource
 {
     protected static ?string $model = DataRequest::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Foundations';
+    protected static string|\UnitEnum|null $navigationGroup = 'Foundations';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
-                Forms\Components\Select::make('user_id')
+        return $schema
+            ->components([
+                Select::make('user_id')
                     ->label('Assigned To')
                     ->options(User::whereNotNull('name')->pluck('name', 'id')->toArray())
                     ->searchable(),
-                Forms\Components\Select::make('audit_item_id')
+                Select::make('audit_item_id')
                     ->label('Audit name')
                     ->options(Audit::whereNotNull('title')->pluck('title', 'id')->toArray())
                     ->searchable()
                     ->required(),
-                Forms\Components\TextInput::make('code')
+                TextInput::make('code')
                     ->label('Request Code')
                     ->maxLength(255)
                     ->helperText('Optional. If left blank, will default to Request-{id} after creation.')
                     ->nullable(),
-                Forms\Components\Select::make('created_by_id')
+                Select::make('created_by_id')
                     ->label('Created By')
                     ->options(User::whereNotNull('name')->pluck('name', 'id')->toArray())
                     ->default(auth()->id())
                     ->searchable()
                     ->required(),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->label('Response Status')
                     ->options(ResponseStatus::class)
                     ->default(ResponseStatus::PENDING)
                     ->required(),
-                Forms\Components\RichEditor::make('details')
+                RichEditor::make('details')
                     ->disableToolbarButtons([
                         'image',
                         'attachFiles',
                     ])
                     ->required()
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('code')
+                TextInput::make('code')
                     ->label('Request Code')
                     ->maxLength(255)
                     ->helperText('Optional. If left blank, will default to Request-{id} after creation.')
                     ->nullable(),
-                Forms\Components\TextInput::make('code')
+                TextInput::make('code')
                     ->label('Request Code')
                     ->maxLength(255)
                     ->helperText('Optional. If left blank, will default to Request-{id} after creation.')
@@ -90,23 +102,23 @@ class DataRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
+                TextColumn::make('user_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('audit_item_id')
+                TextColumn::make('audit_item_id')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label('Request Code')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -120,19 +132,19 @@ class DataRequestResource extends Resource
                     ->exporter(DataRequestExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->modalFooterActions(fn ($record) => static::getModalFooterActions($record))
                     ->modalSubmitAction(false),
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(DataRequestExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -140,10 +152,10 @@ class DataRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDataRequests::route('/'),
-            'create' => Pages\CreateDataRequest::route('/create'),
-            'view' => Pages\ViewDataRequest::route('/{record}'),
-            'edit' => Pages\EditDataRequest::route('/{record}/edit'),
+            'index' => ListDataRequests::route('/'),
+            'create' => CreateDataRequest::route('/create'),
+            'view' => ViewDataRequest::route('/{record}'),
+            'edit' => EditDataRequest::route('/{record}/edit'),
         ];
     }
 
@@ -163,12 +175,13 @@ class DataRequestResource extends Resource
         ]);
     }
 
-    public static function getEditForm(Form $form): Form
+    public static function getEditForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
-                Forms\Components\Section::make('Request Details')
+                Section::make('Request Details')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->schema([
                         Placeholder::make('code')
@@ -176,17 +189,17 @@ class DataRequestResource extends Resource
                             ->content(function ($record) {
                                 return $record->code;
                             }),
-                        Forms\Components\Section::make('Data Request Details')
+                        Section::make('Data Request Details')
                             ->columnSpanFull()
                             ->schema([
-                                Forms\Components\Placeholder::make('Requested Information')
+                                Placeholder::make('Requested Information')
                                     ->label('')
                                     ->columnSpanFull()
                                     ->content(function ($record) {
                                         return new HtmlString($record->details ?? '');
                                     }),
                             ]),
-                        Forms\Components\Section::make('Control Details')
+                        Section::make('Control Details')
                             ->columnSpanFull()
                             ->collapsible()
                             ->collapsed()
@@ -228,7 +241,7 @@ class DataRequestResource extends Resource
                                         return new HtmlString(! empty($descriptions) ? implode('<br><br>', $descriptions) : '-');
                                     }),
                             ]),
-                        Forms\Components\Section::make('Response')
+                        Section::make('Response')
                             ->columnSpanFull()
                             ->columns(3)
                             ->schema([
@@ -310,7 +323,7 @@ class DataRequestResource extends Resource
                                         return new HtmlString($output);
                                     }),
                             ]),
-                        Forms\Components\Section::make('Comments')
+                        Section::make('Comments')
                             ->columnSpanFull()
                             ->collapsible()
                             ->schema([
@@ -327,11 +340,11 @@ class DataRequestResource extends Resource
     public static function getViewFormActions(): array
     {
         return [
-            Actions\Action::make('reassign')
+            Action::make('reassign')
                 ->label('Reassign Request')
                 ->icon('heroicon-o-arrow-path')
                 ->color('warning')
-                ->form([
+                ->schema([
                     Select::make('new_assignee_id')
                         ->label('Reassign To')
                         ->options(
@@ -344,7 +357,7 @@ class DataRequestResource extends Resource
                         ->searchable()
                         ->required()
                         ->helperText('Select the user to reassign this request to'),
-                    Forms\Components\Checkbox::make('send_notification')
+                    Checkbox::make('send_notification')
                         ->label('Send email notification to the new assignee')
                         ->default(true)
                         ->helperText('Uses the evidence request email template'),
@@ -382,7 +395,7 @@ class DataRequestResource extends Resource
                     if ($data['send_notification'] && $newAssignee->email) {
                         try {
                             Mail::send(new EvidenceRequestMail($newAssignee->email, $newAssignee->name));
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title('Warning')
                                 ->body('Request reassigned but email notification failed to send.')
@@ -409,7 +422,7 @@ class DataRequestResource extends Resource
 
         if ($record->responses()->exists()) {
             // Accept button
-            $actions[] = Tables\Actions\Action::make('set_accepted')
+            $actions[] = Action::make('set_accepted')
                 ->label('Accept')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
@@ -439,7 +452,7 @@ class DataRequestResource extends Resource
                 ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
 
             // Reject button
-            $actions[] = Tables\Actions\Action::make('set_rejected')
+            $actions[] = Action::make('set_rejected')
                 ->label('Reject')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
@@ -469,11 +482,11 @@ class DataRequestResource extends Resource
                 ->after(fn (DataRequest $record) => redirect("/app/audits/{$record->audit_id}?activeRelationManager=1"));
 
             // Reassign button
-            $actions[] = Tables\Actions\Action::make('reassign')
+            $actions[] = Action::make('reassign')
                 ->label('Reassign')
                 ->icon('heroicon-o-user-group')
                 ->color('gray')
-                ->form([
+                ->schema([
                     Select::make('new_assignee_id')
                         ->label('Reassign To')
                         ->options(
@@ -486,7 +499,7 @@ class DataRequestResource extends Resource
                         ->searchable()
                         ->required()
                         ->helperText('Select the user to reassign this request to'),
-                    Forms\Components\Checkbox::make('send_notification')
+                    Checkbox::make('send_notification')
                         ->label('Send email notification to the new assignee')
                         ->default(true)
                         ->helperText('Uses the evidence request email template'),
@@ -525,7 +538,7 @@ class DataRequestResource extends Resource
                     if ($data['send_notification'] && $newAssignee->email) {
                         try {
                             Mail::send(new EvidenceRequestMail($newAssignee->email, $newAssignee->name));
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title('Warning')
                                 ->body('Request reassigned but email notification failed to send.')
@@ -547,12 +560,12 @@ class DataRequestResource extends Resource
             // Change Due Date button (only for Audit Manager)
             $audit = $record->audit;
             if ($audit && $audit->manager_id === auth()->id()) {
-                $actions[] = Tables\Actions\Action::make('change_due_date')
+                $actions[] = Action::make('change_due_date')
                     ->label('Change Due Date')
                     ->icon('heroicon-o-calendar')
                     ->color('gray')
-                    ->form([
-                        Forms\Components\DatePicker::make('new_due_date')
+                    ->schema([
+                        DatePicker::make('new_due_date')
                             ->label('New Due Date')
                             ->required()
                             ->native(false)
@@ -595,7 +608,7 @@ class DataRequestResource extends Resource
 
         if ($record->responses()->exists()) {
             // Accept button
-            $actions[] = Actions\Action::make('set_accepted')
+            $actions[] = Action::make('set_accepted')
                 ->label('Accept')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
@@ -625,7 +638,7 @@ class DataRequestResource extends Resource
                 ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
 
             // Reject button
-            $actions[] = Actions\Action::make('set_rejected')
+            $actions[] = Action::make('set_rejected')
                 ->label('Reject')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
@@ -655,11 +668,11 @@ class DataRequestResource extends Resource
                 ->successRedirectUrl(fn (DataRequest $record) => "/app/audits/{$record->audit_id}?activeRelationManager=1");
 
             // Reassign button
-            $actions[] = Actions\Action::make('reassign')
+            $actions[] = Action::make('reassign')
                 ->label('Reassign')
                 ->icon('heroicon-o-user-group')
                 ->color('gray')
-                ->form([
+                ->schema([
                     Select::make('new_assignee_id')
                         ->label('Reassign To')
                         ->options(
@@ -672,7 +685,7 @@ class DataRequestResource extends Resource
                         ->searchable()
                         ->required()
                         ->helperText('Select the user to reassign this request to'),
-                    Forms\Components\Checkbox::make('send_notification')
+                    Checkbox::make('send_notification')
                         ->label('Send email notification to the new assignee')
                         ->default(true)
                         ->helperText('Uses the evidence request email template'),
@@ -711,7 +724,7 @@ class DataRequestResource extends Resource
                     if ($data['send_notification'] && $newAssignee->email) {
                         try {
                             Mail::send(new EvidenceRequestMail($newAssignee->email, $newAssignee->name));
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title('Warning')
                                 ->body('Request reassigned but email notification failed to send.')
@@ -733,12 +746,12 @@ class DataRequestResource extends Resource
             // Change Due Date button (only for Audit Manager)
             $audit = $record->audit;
             if ($audit && $audit->manager_id === auth()->id()) {
-                $actions[] = Actions\Action::make('change_due_date')
+                $actions[] = Action::make('change_due_date')
                     ->label('Change Due Date')
                     ->icon('heroicon-o-calendar')
                     ->color('gray')
-                    ->form([
-                        Forms\Components\DatePicker::make('new_due_date')
+                    ->schema([
+                        DatePicker::make('new_due_date')
                             ->label('New Due Date')
                             ->required()
                             ->native(false)
