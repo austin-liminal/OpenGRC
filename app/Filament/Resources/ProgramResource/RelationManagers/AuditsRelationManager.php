@@ -45,14 +45,14 @@ class AuditsRelationManager extends RelationManager
                     ),
             ])
             ->actions([
-                    Tables\Actions\ViewAction::make()
-                        ->url(fn ($record): string => \App\Filament\Resources\AuditResource::getUrl('view', ['record' => $record])
-                        ),
+                Tables\Actions\ViewAction::make()
+                    ->url(fn ($record): string => \App\Filament\Resources\AuditResource::getUrl('view', ['record' => $record])
+                    ),
             ])
             ->bulkActions([
-                        Tables\Actions\BulkActionGroup::make([
-                            Tables\Actions\DeleteBulkAction::make(),
-                        ]),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 }
