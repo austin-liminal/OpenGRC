@@ -27,6 +27,7 @@ class TrustCenterPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->brandName($this->getTrustCenterName())
+            ->spa()
             ->discoverResources(in: app_path('Filament/TrustCenter/Resources'), for: 'App\\Filament\\TrustCenter\\Resources')
             ->discoverPages(in: app_path('Filament/TrustCenter/Pages'), for: 'App\\Filament\\TrustCenter\\Pages')
             ->discoverWidgets(in: app_path('Filament/TrustCenter/Widgets'), for: 'App\\Filament\\TrustCenter\\Widgets')

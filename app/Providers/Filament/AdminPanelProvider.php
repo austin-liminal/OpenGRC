@@ -52,6 +52,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName(name: 'OpenGRC Admin')
             ->viteTheme('resources/css/filament/app/theme.css')
             ->brandLogo(fn () => view('filament.admin.logo'))
+            ->spa()
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')

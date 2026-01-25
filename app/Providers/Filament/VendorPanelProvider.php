@@ -39,6 +39,7 @@ class VendorPanelProvider extends PanelProvider
                 'primary' => Color::Teal,
             ])
             ->brandName($this->getPortalName())
+            ->spa()
             ->discoverResources(in: app_path('Filament/Vendor/Resources'), for: 'App\\Filament\\Vendor\\Resources')
             ->discoverPages(in: app_path('Filament/Vendor/Pages'), for: 'App\\Filament\\Vendor\\Pages')
             ->discoverWidgets(in: app_path('Filament/Vendor/Widgets'), for: 'App\\Filament\\Vendor\\Widgets')

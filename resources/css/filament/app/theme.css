@@ -217,7 +217,12 @@ a.fi-logo {
     font-size: 0;
 }
 
-/* Make page transition instant */
-.fi-main-ctn.transition-all {
+/* Use white for active sidebar icons for better contrast (austin-liminal) */
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: white !important;
+}
+
+/* Make page transition instant (F4 no longer has transition-all class) */
+.fi-main-ctn {
     transition-duration: 0s !important;
 }
