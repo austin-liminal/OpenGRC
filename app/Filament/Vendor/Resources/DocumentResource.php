@@ -4,14 +4,25 @@ namespace App\Filament\Vendor\Resources;
 
 use App\Enums\VendorDocumentStatus;
 use App\Enums\VendorDocumentType;
-use App\Filament\Vendor\Resources\DocumentResource\Pages;
+use App\Filament\Vendor\Resources\DocumentResource\Pages\CreateDocument;
+use App\Filament\Vendor\Resources\DocumentResource\Pages\EditDocument;
+use App\Filament\Vendor\Resources\DocumentResource\Pages\ListDocuments;
+use App\Filament\Vendor\Resources\DocumentResource\Pages\ViewDocument;
 use App\Models\VendorDocument;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +31,7 @@ class DocumentResource extends Resource
 {
     protected static ?string $model = VendorDocument::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $navigationLabel = 'Documents';
 
@@ -38,29 +49,30 @@ class DocumentResource extends Resource
             ->where('vendor_id', $vendorUser?->vendor_id);
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Document Information')
+        return $schema
+            ->components([
+                Section::make('Document Information')
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\Select::make('document_type')
+                        Select::make('document_type')
                             ->label('Document Type')
                             ->options(VendorDocumentType::class)
                             ->required()
                             ->native(false),
 
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Document Name')
                             ->required()
                             ->maxLength(255),
 
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->label('Description')
                             ->rows(3)
                             ->maxLength(1000),
 
-                        Forms\Components\FileUpload::make('file_path')
+                        FileUpload::make('file_path')
                             ->label('Document File')
                             ->required()
                             ->disk(config('filesystems.default'))
@@ -80,13 +92,14 @@ class DocumentResource extends Resource
                     ])
                     ->columns(1),
 
-                Forms\Components\Section::make('Dates')
+                Section::make('Dates')
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\DatePicker::make('issue_date')
+                        DatePicker::make('issue_date')
                             ->label('Issue Date')
                             ->native(false),
 
-                        Forms\Components\DatePicker::make('expiration_date')
+                        DatePicker::make('expiration_date')
                             ->label('Expiration Date')
                             ->native(false)
                             ->after('issue_date'),
@@ -99,22 +112,22 @@ class DocumentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('document_type')
+                TextColumn::make('document_type')
                     ->label('Type')
                     ->badge()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
                     ->sortable()
                     ->limit(40),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('expiration_date')
+                TextColumn::make('expiration_date')
                     ->label('Expires')
                     ->date()
                     ->sortable()
@@ -124,72 +137,74 @@ class DocumentResource extends Resource
                         default => null,
                     }),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('document_type')
+                SelectFilter::make('document_type')
                     ->label('Type')
                     ->options(VendorDocumentType::class),
 
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(VendorDocumentStatus::class),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make()
                     ->visible(fn (VendorDocument $record) => in_array($record->status, [
                         VendorDocumentStatus::DRAFT,
                         VendorDocumentStatus::REJECTED,
                     ])),
-                Tables\Actions\Action::make('download')
+                Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('gray')
                     ->url(fn (VendorDocument $record) => route('vendor.document.download', $record))
                     ->openUrlInNewTab(),
             ])
-            ->bulkActions([])
+            ->toolbarActions([])
             ->defaultSort('created_at', 'desc');
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
-                Infolists\Components\Section::make('Document Information')
+        return $schema
+            ->components([
+                Section::make('Document Information')
+                    ->columnSpanFull()
                     ->schema([
-                        Infolists\Components\TextEntry::make('document_type')
+                        TextEntry::make('document_type')
                             ->label('Type')
                             ->badge(),
 
-                        Infolists\Components\TextEntry::make('name')
+                        TextEntry::make('name')
                             ->label('Name'),
 
-                        Infolists\Components\TextEntry::make('description')
+                        TextEntry::make('description')
                             ->label('Description')
                             ->columnSpanFull()
                             ->placeholder('No description provided'),
 
-                        Infolists\Components\TextEntry::make('status')
+                        TextEntry::make('status')
                             ->badge(),
 
-                        Infolists\Components\TextEntry::make('file_name')
+                        TextEntry::make('file_name')
                             ->label('File'),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Dates')
+                Section::make('Dates')
+                    ->columnSpanFull()
                     ->schema([
-                        Infolists\Components\TextEntry::make('issue_date')
+                        TextEntry::make('issue_date')
                             ->label('Issue Date')
                             ->date()
                             ->placeholder('Not specified'),
 
-                        Infolists\Components\TextEntry::make('expiration_date')
+                        TextEntry::make('expiration_date')
                             ->label('Expiration Date')
                             ->date()
                             ->color(fn (VendorDocument $record) => match (true) {
@@ -199,24 +214,25 @@ class DocumentResource extends Resource
                             })
                             ->placeholder('No expiration'),
 
-                        Infolists\Components\TextEntry::make('created_at')
+                        TextEntry::make('created_at')
                             ->label('Uploaded')
                             ->dateTime(),
                     ])
                     ->columns(3),
 
-                Infolists\Components\Section::make('Review Status')
+                Section::make('Review Status')
+                    ->columnSpanFull()
                     ->schema([
-                        Infolists\Components\TextEntry::make('reviewedBy.name')
+                        TextEntry::make('reviewedBy.name')
                             ->label('Reviewed By')
                             ->placeholder('Not yet reviewed'),
 
-                        Infolists\Components\TextEntry::make('reviewed_at')
+                        TextEntry::make('reviewed_at')
                             ->label('Reviewed At')
                             ->dateTime()
                             ->placeholder('Not yet reviewed'),
 
-                        Infolists\Components\TextEntry::make('review_notes')
+                        TextEntry::make('review_notes')
                             ->label('Review Notes')
                             ->columnSpanFull()
                             ->placeholder('No notes'),
@@ -229,10 +245,10 @@ class DocumentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDocuments::route('/'),
-            'create' => Pages\CreateDocument::route('/create'),
-            'view' => Pages\ViewDocument::route('/{record}'),
-            'edit' => Pages\EditDocument::route('/{record}/edit'),
+            'index' => ListDocuments::route('/'),
+            'create' => CreateDocument::route('/create'),
+            'view' => ViewDocument::route('/{record}'),
+            'edit' => EditDocument::route('/{record}/edit'),
         ];
     }
 }

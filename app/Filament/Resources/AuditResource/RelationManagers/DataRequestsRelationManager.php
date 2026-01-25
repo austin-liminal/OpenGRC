@@ -6,18 +6,28 @@ use App\Enums\ResponseStatus;
 use App\Enums\WorkflowStatus;
 use App\Filament\Resources\DataRequestResource;
 use App\Http\Controllers\QueueController;
+use App\Jobs\ExportAuditEvidenceJob;
 use App\Models\DataRequest;
 use App\Models\User;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DataRequestsRelationManager extends RelationManager
@@ -42,13 +52,13 @@ class DataRequestsRelationManager extends RelationManager
             ->exists();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return DataRequestResource::getEditForm($form);
+        return DataRequestResource::getEditForm($schema);
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function table(Table $table): Table
     {
@@ -105,7 +115,7 @@ class DataRequestsRelationManager extends RelationManager
                     ->placeholder('-'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(ResponseStatus::class)
                     ->label('Status')
                     ->query(function ($query, $state) {
@@ -115,7 +125,7 @@ class DataRequestsRelationManager extends RelationManager
                             });
                         }
                     }),
-                Tables\Filters\SelectFilter::make('assigned_to')
+                SelectFilter::make('assigned_to')
                     ->options(function () {
                         return User::whereHas('todos')
                             ->pluck('name', 'id')
@@ -129,18 +139,18 @@ class DataRequestsRelationManager extends RelationManager
                             });
                         }
                     }),
-                Tables\Filters\SelectFilter::make('code')
+                SelectFilter::make('code')
                     ->options(DataRequest::whereNotNull('code')->pluck('code', 'code')->toArray())
                     ->label('Request Code'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Create Data Request')
                     ->modalHeading('Create New Data Request')
                     ->disabled(function () {
                         return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                     })
-                    ->form([
+                    ->schema([
                         Select::make('audit_items')
                             ->label('Audit Item(s)')
                             ->multiple()
@@ -188,7 +198,7 @@ class DataRequestsRelationManager extends RelationManager
                             ->required()
                             ->helperText('When should this request be completed?'),
                     ])
-                    ->mutateFormDataUsing(function (array $data): array {
+                    ->mutateDataUsing(function (array $data): array {
                         $data['created_by_id'] = auth()->id();
                         $data['audit_id'] = $this->getOwnerRecord()->id;
 
@@ -224,7 +234,7 @@ class DataRequestsRelationManager extends RelationManager
                             ->title('Data Request Created')
                             ->body('The data request has been created and assigned successfully.')
                     ),
-                Tables\Actions\Action::make('import_irl')
+                Action::make('import_irl')
                     ->label('Import IRL')
                     ->color('primary')
                     ->disabled(function () {
@@ -238,7 +248,7 @@ class DataRequestsRelationManager extends RelationManager
 
                         return redirect()->route('filament.app.resources.audits.import-irl', $audit);
                     }),
-                Tables\Actions\Action::make('ExportAuditEvidence')
+                Action::make('ExportAuditEvidence')
                     ->label(function () {
                         $audit = $this->getOwnerRecord();
                         $isExporting = $this->isExportInProgress($audit->id);
@@ -284,7 +294,7 @@ class DataRequestsRelationManager extends RelationManager
                                 ->send();
                         }
 
-                        \App\Jobs\ExportAuditEvidenceJob::dispatch($audit->id, auth()->id());
+                        ExportAuditEvidenceJob::dispatch($audit->id, auth()->id());
 
                         // Ensure queue worker is running
                         if (env('QUEUE_AUTO_START') == true) {
@@ -302,14 +312,14 @@ class DataRequestsRelationManager extends RelationManager
                     }),
             ])
 
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->modalHeading('View Data Request')
                     ->modalFooterActions(fn ($record) => DataRequestResource::getModalFooterActions($record))
                     ->disabled(function () {
                         return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                     }),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->disabled(function () {
                         return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                     })
@@ -317,10 +327,10 @@ class DataRequestsRelationManager extends RelationManager
                         return $this->getOwnerRecord()->status == WorkflowStatus::INPROGRESS;
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('bulk_assign_requestee')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    BulkAction::make('bulk_assign_requestee')
                         ->label('Bulk Assign Requestee')
                         ->icon('heroicon-o-user-plus')
                         ->color('primary')
@@ -331,7 +341,7 @@ class DataRequestsRelationManager extends RelationManager
                                 ->searchable()
                                 ->required(),
                         ])
-                        ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
+                        ->action(function (array $data, Collection $records) {
                             $requesteeId = $data['requestee_id'];
                             $updatedCount = 0;
 
@@ -356,7 +366,7 @@ class DataRequestsRelationManager extends RelationManager
                         ->disabled(function () {
                             return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                         }),
-                    Tables\Actions\BulkAction::make('bulk_update_status')
+                    BulkAction::make('bulk_update_status')
                         ->label('Bulk Update Status')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -366,7 +376,7 @@ class DataRequestsRelationManager extends RelationManager
                                 ->options(ResponseStatus::class)
                                 ->required(),
                         ])
-                        ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
+                        ->action(function (array $data, Collection $records) {
                             $status = $data['status'];
                             $updatedCount = 0;
 
@@ -391,7 +401,7 @@ class DataRequestsRelationManager extends RelationManager
                         ->disabled(function () {
                             return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                         }),
-                    Tables\Actions\BulkAction::make('bulk_change_due_date')
+                    BulkAction::make('bulk_change_due_date')
                         ->label('Bulk Change Due Date')
                         ->icon('heroicon-o-calendar')
                         ->color('warning')
@@ -403,7 +413,7 @@ class DataRequestsRelationManager extends RelationManager
                                 ->displayFormat('M d, Y')
                                 ->helperText('This will update the due date for all selected data requests where you are the Audit Manager'),
                         ])
-                        ->action(function (array $data, \Illuminate\Database\Eloquent\Collection $records) {
+                        ->action(function (array $data, Collection $records) {
                             $userId = auth()->id();
                             $audit = $this->getOwnerRecord();
                             $updated = 0;
@@ -451,23 +461,23 @@ class DataRequestsRelationManager extends RelationManager
                         ->disabled(function () {
                             return $this->getOwnerRecord()->status != WorkflowStatus::INPROGRESS;
                         }),
-                    Tables\Actions\BulkAction::make('export_selected_evidence')
+                    BulkAction::make('export_selected_evidence')
                         ->label('Export Selected Evidence')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('primary')
                         ->deselectRecordsAfterCompletion()
                         ->requiresConfirmation()
                         ->modalHeading('Export Selected Evidence')
-                        ->modalDescription(function (\Illuminate\Database\Eloquent\Collection $records): string {
+                        ->modalDescription(function (Collection $records): string {
                             $count = $records->count();
 
                             return "This will generate a PDF for each of the {$count} selected data request(s) and zip them for download. You will be notified when the export is ready.";
                         })
-                        ->action(function (\Illuminate\Database\Eloquent\Collection $records): void {
+                        ->action(function (Collection $records): void {
                             $audit = $this->getOwnerRecord();
                             $dataRequestIds = $records->pluck('id')->toArray();
 
-                            \App\Jobs\ExportAuditEvidenceJob::dispatch(
+                            ExportAuditEvidenceJob::dispatch(
                                 $audit->id,
                                 auth()->id(),
                                 $dataRequestIds

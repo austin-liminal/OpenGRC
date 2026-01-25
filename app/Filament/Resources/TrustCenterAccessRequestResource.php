@@ -3,19 +3,33 @@
 namespace App\Filament\Resources;
 
 use App\Enums\AccessRequestStatus;
-use App\Filament\Resources\TrustCenterAccessRequestResource\Pages;
+use App\Filament\Resources\TrustCenterAccessRequestResource\Pages\ListTrustCenterAccessRequests;
+use App\Filament\Resources\TrustCenterAccessRequestResource\Pages\ViewTrustCenterAccessRequest;
 use App\Mail\TrustCenterAccessApprovedMail;
 use App\Mail\TrustCenterAccessRejectedMail;
 use App\Models\TrustCenterAccessRequest;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -25,7 +39,7 @@ class TrustCenterAccessRequestResource extends Resource
 {
     protected static ?string $model = TrustCenterAccessRequest::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-inbox';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox';
 
     // Hide from navigation - access via Trust Center Manager
     protected static bool $shouldRegisterNavigation = false;
@@ -50,52 +64,56 @@ class TrustCenterAccessRequestResource extends Resource
         return __('Access Requests');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make(__('Requester Information'))
+        return $schema
+            ->components([
+                Section::make(__('Requester Information'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('requester_name')
+                        TextInput::make('requester_name')
                             ->label(__('Name'))
                             ->disabled(),
-                        Forms\Components\TextInput::make('requester_email')
+                        TextInput::make('requester_email')
                             ->label(__('Email'))
                             ->disabled(),
-                        Forms\Components\TextInput::make('requester_company')
+                        TextInput::make('requester_company')
                             ->label(__('Company'))
                             ->disabled(),
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make(__('Request Details'))
+                Section::make(__('Request Details'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\Textarea::make('reason')
+                        Textarea::make('reason')
                             ->label(__('Reason for Access'))
                             ->disabled()
                             ->columnSpanFull(),
-                        Forms\Components\Toggle::make('nda_agreed')
+                        Toggle::make('nda_agreed')
                             ->label(__('NDA Agreed'))
                             ->disabled(),
                     ]),
 
-                Forms\Components\Section::make(__('Requested Documents'))
+                Section::make(__('Requested Documents'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\Select::make('documents')
+                        Select::make('documents')
                             ->label(__('Documents'))
                             ->relationship('documents', 'name')
                             ->multiple()
                             ->disabled(),
                     ]),
 
-                Forms\Components\Section::make(__('Review'))
+                Section::make(__('Review'))
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->label(__('Status'))
                             ->enum(AccessRequestStatus::class)
                             ->options(collect(AccessRequestStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
                             ->disabled(),
-                        Forms\Components\Textarea::make('review_notes')
+                        Textarea::make('review_notes')
                             ->label(__('Review Notes'))
                             ->rows(3)
                             ->columnSpanFull(),
@@ -103,11 +121,12 @@ class TrustCenterAccessRequestResource extends Resource
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make(__('Requester'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('requester_name')
                             ->label(__('Name')),
@@ -124,6 +143,7 @@ class TrustCenterAccessRequestResource extends Resource
                     ->columns(4),
 
                 Section::make(__('Request Details'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('reason')
                             ->label(__('Reason for Access'))
@@ -139,6 +159,7 @@ class TrustCenterAccessRequestResource extends Resource
                     ->columns(2),
 
                 Section::make(__('Requested Documents'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('documents.name')
                             ->label(__('Documents'))
@@ -147,6 +168,7 @@ class TrustCenterAccessRequestResource extends Resource
                     ]),
 
                 Section::make(__('Review Information'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('reviewer.name')
                             ->label(__('Reviewed By'))
@@ -164,6 +186,7 @@ class TrustCenterAccessRequestResource extends Resource
                     ->visible(fn (TrustCenterAccessRequest $record) => ! $record->isPending()),
 
                 Section::make(__('Access Information'))
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('access_expires_at')
                             ->label(__('Access Expires'))
@@ -197,54 +220,54 @@ class TrustCenterAccessRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('requester_name')
+                TextColumn::make('requester_name')
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('requester_company')
+                TextColumn::make('requester_company')
                     ->label(__('Company'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('requester_email')
+                TextColumn::make('requester_email')
                     ->label(__('Email'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn (TrustCenterAccessRequest $record) => $record->status->getColor()),
-                Tables\Columns\TextColumn::make('documents_count')
+                TextColumn::make('documents_count')
                     ->label(__('Documents'))
                     ->counts('documents')
                     ->badge()
                     ->color('gray'),
-                Tables\Columns\IconColumn::make('nda_agreed')
+                IconColumn::make('nda_agreed')
                     ->label(__('NDA'))
                     ->boolean()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('Submitted'))
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('reviewer.name')
+                TextColumn::make('reviewer.name')
                     ->label(__('Reviewed By'))
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label(__('Status'))
                     ->options(collect(AccessRequestStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('approve')
+            ->recordActions([
+                ViewAction::make(),
+                Action::make('approve')
                     ->label(__('Approve'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label(__('Notes (Optional)'))
                             ->rows(3),
                     ])
@@ -259,7 +282,7 @@ class TrustCenterAccessRequestResource extends Resource
                                 ->body(__('Access approved and email sent to :email', ['email' => $record->requester_email]))
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title(__('Access Approved'))
                                 ->body(__('Access approved but email failed to send: :error', ['error' => $e->getMessage()]))
@@ -268,13 +291,13 @@ class TrustCenterAccessRequestResource extends Resource
                         }
                     })
                     ->visible(fn (TrustCenterAccessRequest $record) => $record->isPending()),
-                Tables\Actions\Action::make('reject')
+                Action::make('reject')
                     ->label(__('Reject'))
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label(__('Reason for Rejection'))
                             ->rows(3),
                     ])
@@ -289,7 +312,7 @@ class TrustCenterAccessRequestResource extends Resource
                                 ->body(__('Request rejected and email sent to :email', ['email' => $record->requester_email]))
                                 ->success()
                                 ->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             Notification::make()
                                 ->title(__('Access Rejected'))
                                 ->body(__('Request rejected but email failed to send: :error', ['error' => $e->getMessage()]))
@@ -298,15 +321,15 @@ class TrustCenterAccessRequestResource extends Resource
                         }
                     })
                     ->visible(fn (TrustCenterAccessRequest $record) => $record->isPending()),
-                Tables\Actions\Action::make('revoke')
+                Action::make('revoke')
                     ->label(__('Revoke Access'))
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading(__('Revoke Access'))
                     ->modalDescription(__('Are you sure you want to revoke this user\'s access? Their magic link will be invalidated immediately.'))
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label(__('Reason for Revocation (Optional)'))
                             ->rows(3),
                     ])
@@ -320,13 +343,13 @@ class TrustCenterAccessRequestResource extends Resource
                             ->send();
                     })
                     ->visible(fn (TrustCenterAccessRequest $record) => $record->isApproved()),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -342,8 +365,8 @@ class TrustCenterAccessRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTrustCenterAccessRequests::route('/'),
-            'view' => Pages\ViewTrustCenterAccessRequest::route('/{record}'),
+            'index' => ListTrustCenterAccessRequests::route('/'),
+            'view' => ViewTrustCenterAccessRequest::route('/{record}'),
         ];
     }
 

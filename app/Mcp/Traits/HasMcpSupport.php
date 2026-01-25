@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
+use Throwable;
 
 /**
  * Trait for models to provide MCP (Model Context Protocol) support.
@@ -361,7 +362,7 @@ trait HasMcpSupport
      */
     protected static function deriveUrlPath(string $className): string
     {
-        return '/app/' . Str::kebab(Str::pluralStudly($className));
+        return '/app/'.Str::kebab(Str::pluralStudly($className));
     }
 
     /**
@@ -486,7 +487,7 @@ trait HasMcpSupport
                 if (method_exists($relation, 'getRelated')) {
                     return $relation->getRelated()->getTable();
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Fall through to default behavior
             }
         }

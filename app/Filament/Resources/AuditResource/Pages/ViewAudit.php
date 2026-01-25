@@ -4,15 +4,15 @@ namespace App\Filament\Resources\AuditResource\Pages;
 
 use App\Enums\WorkflowStatus;
 use App\Filament\Resources\AuditResource;
-use App\Http\Controllers\QueueController;
+use App\Filament\Resources\AuditResource\Widgets\TextWidget;
 use App\Models\Audit;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\ActionSize;
+use Filament\Support\Enums\Size;
 use Illuminate\Support\Facades\Storage;
 
 class ViewAudit extends ViewRecord
@@ -42,7 +42,7 @@ class ViewAudit extends ViewRecord
         }
 
         return [
-            AuditResource\Widgets\TextWidget::make([
+            TextWidget::make([
                 'message' => $message,
                 'bg_color' => $bgcolor,
                 'fg_color' => $fgcolor,
@@ -56,16 +56,16 @@ class ViewAudit extends ViewRecord
         $record = $this->record;
 
         return [
-            Actions\EditAction::make()
+            EditAction::make()
                 ->label('Edit')
                 ->icon('heroicon-m-pencil')
-                ->size(ActionSize::Small)
+                ->size(Size::Small)
                 ->color('primary')
                 ->button(),
             ActionGroup::make([
                 Action::make('ActionsButton')
                     ->label('Transition to In Progress')
-                    ->size(ActionSize::Small)
+                    ->size(Size::Small)
                     ->color('primary')
                     ->requiresConfirmation()
                     ->modalHeading('Begin Audit')
@@ -135,13 +135,13 @@ class ViewAudit extends ViewRecord
             ])
                 ->label('Workflow')
                 ->icon('heroicon-m-ellipsis-vertical')
-                ->size(ActionSize::Small)
+                ->size(Size::Small)
                 ->color('primary')
                 ->button(),
             ActionGroup::make([
                 Action::make('ReportsButton')
                     ->label('Download Audit Report')
-                    ->size(ActionSize::Small)
+                    ->size(Size::Small)
                     ->color('primary')
                     ->disabled(function (Audit $record) {
                         $record->load('members');
@@ -194,7 +194,7 @@ class ViewAudit extends ViewRecord
             ])
                 ->label('Reports')
                 ->icon('heroicon-m-ellipsis-vertical')
-                ->size(ActionSize::Small)
+                ->size(Size::Small)
                 ->color('primary')
                 ->button(),
         ];

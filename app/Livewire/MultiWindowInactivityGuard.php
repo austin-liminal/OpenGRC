@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Exception;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
@@ -12,7 +13,7 @@ class MultiWindowInactivityGuard extends Component
 {
     protected const MILLISECONDS_PER_SECOND = 1000;
 
-    public function render(): string | View
+    public function render(): string|View
     {
         if (Filament::auth()->guest()) {
             return '<div></div>';
@@ -21,7 +22,7 @@ class MultiWindowInactivityGuard extends Component
         $inactivityTimeout = 15; // Default timeout in minutes
         try {
             $inactivityTimeout = setting('security.session_timeout', 15);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Use default if settings not available
         }
 

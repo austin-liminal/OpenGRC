@@ -5,24 +5,35 @@ namespace App\Filament\Resources;
 use App\Enums\ApplicationStatus;
 use App\Enums\ApplicationType;
 use App\Filament\Exports\ApplicationExporter;
-use App\Filament\Resources\ApplicationResource\Pages;
-use App\Filament\Resources\ApplicationResource\RelationManagers;
+use App\Filament\Resources\ApplicationResource\Pages\CreateApplication;
+use App\Filament\Resources\ApplicationResource\Pages\EditApplication;
+use App\Filament\Resources\ApplicationResource\Pages\ListApplications;
+use App\Filament\Resources\ApplicationResource\Pages\ViewApplication;
+use App\Filament\Resources\ApplicationResource\RelationManagers\ImplementationsRelationManager;
 use App\Models\Application;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists;
-use Filament\Infolists\Infolist;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
 
 class ApplicationResource extends Resource
 {
     protected static ?string $model = Application::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-window';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-window';
 
     public static function getNavigationLabel(): string
     {
@@ -44,46 +55,46 @@ class ApplicationResource extends Resource
         return __('Applications');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label(__('Name'))
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('owner_id')
+                Select::make('owner_id')
                     ->label(__('Owner'))
                     ->relationship('owner', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
-                Forms\Components\Select::make('type')
+                Select::make('type')
                     ->label(__('Type'))
                     ->enum(ApplicationType::class)
                     ->options(collect(ApplicationType::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
                     ->required(),
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->label(__('Description'))
                     ->maxLength(65535),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->label(__('Status'))
                     ->enum(ApplicationStatus::class)
                     ->options(collect(ApplicationStatus::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()]))
                     ->required(),
-                Forms\Components\TextInput::make('url')
+                TextInput::make('url')
                     ->label(__('URL'))
                     ->maxLength(512),
-                Forms\Components\Textarea::make('notes')
+                Textarea::make('notes')
                     ->label(__('Notes'))
                     ->maxLength(65535),
-                Forms\Components\Select::make('vendor_id')
+                Select::make('vendor_id')
                     ->label(__('Vendor'))
                     ->relationship('vendor', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
-                Forms\Components\FileUpload::make('logo')
+                FileUpload::make('logo')
                     ->label(__('Logo'))
                     ->disk(config('filesystems.default'))
                     ->directory('application-logos')
@@ -93,41 +104,41 @@ class ApplicationResource extends Resource
                     ->deletable()
                     ->deleteUploadedFileUsing(function ($state) {
                         if ($state) {
-                            \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->delete($state);
+                            Storage::disk(config('filesystems.default'))->delete($state);
                         }
                     }),
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
-                Infolists\Components\TextEntry::make('name')
+        return $schema
+            ->components([
+                TextEntry::make('name')
                     ->label(__('Name')),
-                Infolists\Components\TextEntry::make('owner.name')
+                TextEntry::make('owner.name')
                     ->label(__('Owner')),
-                Infolists\Components\TextEntry::make('type')
+                TextEntry::make('type')
                     ->label(__('Type'))
                     ->badge()
                     ->color(fn ($record) => $record->type->getColor()),
-                Infolists\Components\TextEntry::make('description')
+                TextEntry::make('description')
                     ->label(__('Description')),
-                Infolists\Components\TextEntry::make('status')
+                TextEntry::make('status')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn ($record) => $record->status->getColor()),
-                Infolists\Components\TextEntry::make('url')
+                TextEntry::make('url')
                     ->label(__('URL'))
                     ->url(fn ($record) => $record->url, true),
-                Infolists\Components\TextEntry::make('notes')
+                TextEntry::make('notes')
                     ->label(__('Notes')),
-                Infolists\Components\TextEntry::make('vendor.name')
+                TextEntry::make('vendor.name')
                     ->label(__('Vendor')),
-                Infolists\Components\TextEntry::make('created_at')
+                TextEntry::make('created_at')
                     ->label(__('Created'))
                     ->dateTime(),
-                Infolists\Components\TextEntry::make('updated_at')
+                TextEntry::make('updated_at')
                     ->label(__('Updated'))
                     ->dateTime(),
             ]);
@@ -137,14 +148,14 @@ class ApplicationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label(__('Name'))->searchable(),
-                Tables\Columns\TextColumn::make('owner.name')->label(__('Owner'))->searchable(),
-                Tables\Columns\TextColumn::make('type')->label(__('Type'))->badge()->color(fn ($record) => $record->type->getColor()),
-                Tables\Columns\TextColumn::make('vendor.name')->label(__('Vendor'))->searchable(),
-                Tables\Columns\TextColumn::make('status')->label(__('Status'))->badge()->color(fn ($record) => $record->status->getColor()),
-                Tables\Columns\TextColumn::make('url')->label(__('URL'))->url(fn ($record) => $record->url, true),
-                Tables\Columns\TextColumn::make('created_at')->label(__('Created'))->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')->label(__('Updated'))->dateTime()->sortable(),
+                TextColumn::make('name')->label(__('Name'))->searchable(),
+                TextColumn::make('owner.name')->label(__('Owner'))->searchable(),
+                TextColumn::make('type')->label(__('Type'))->badge()->color(fn ($record) => $record->type->getColor()),
+                TextColumn::make('vendor.name')->label(__('Vendor'))->searchable(),
+                TextColumn::make('status')->label(__('Status'))->badge()->color(fn ($record) => $record->status->getColor()),
+                TextColumn::make('url')->label(__('URL'))->url(fn ($record) => $record->url, true),
+                TextColumn::make('created_at')->label(__('Created'))->dateTime()->sortable(),
+                TextColumn::make('updated_at')->label(__('Updated'))->dateTime()->sortable(),
             ])
             ->filters([
 
@@ -154,18 +165,18 @@ class ApplicationResource extends Resource
                     ->exporter(ApplicationExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(ApplicationExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -173,17 +184,17 @@ class ApplicationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\ImplementationsRelationManager::class,
+            ImplementationsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListApplications::route('/'),
-            'create' => Pages\CreateApplication::route('/create'),
-            'view' => Pages\ViewApplication::route('/{record}'),
-            'edit' => Pages\EditApplication::route('/{record}/edit'),
+            'index' => ListApplications::route('/'),
+            'create' => CreateApplication::route('/create'),
+            'view' => ViewApplication::route('/{record}'),
+            'edit' => EditApplication::route('/{record}/edit'),
         ];
     }
 }

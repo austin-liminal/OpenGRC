@@ -3,9 +3,15 @@
 namespace App\Mcp\Tools;
 
 use App\Mcp\EntityConfig;
+use DateTimeInterface;
+use Exception;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
@@ -289,7 +295,7 @@ abstract class BaseManageEntityTool extends Tool
 
         try {
             validator($validated, $prefixedRules)->validate();
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return Response::text(json_encode([
                 'success' => false,
                 'error' => 'Validation failed',
@@ -342,7 +348,7 @@ abstract class BaseManageEntityTool extends Tool
                     Str::singular($config['plural']) => $this->formatItem($entity, $config),
                 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return Response::text(json_encode([
                 'success' => false,
                 'error' => "Failed to create {$config['label']}: ".$e->getMessage(),
@@ -428,7 +434,7 @@ abstract class BaseManageEntityTool extends Tool
                     Str::singular($config['plural']) => $this->formatItem($entity, $config),
                 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return Response::text(json_encode([
                 'success' => false,
                 'error' => "Failed to update {$config['label']}: ".$e->getMessage(),
@@ -473,7 +479,7 @@ abstract class BaseManageEntityTool extends Tool
         try {
             // Check if model uses soft deletes
             $usesSoftDeletes = in_array(
-                \Illuminate\Database\Eloquent\SoftDeletes::class,
+                SoftDeletes::class,
                 class_uses_recursive($modelClass)
             );
 
@@ -486,7 +492,7 @@ abstract class BaseManageEntityTool extends Tool
                 'soft_deleted' => $usesSoftDeletes,
                 'restorable' => $usesSoftDeletes,
             ], JSON_PRETTY_PRINT));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return Response::text(json_encode([
                 'success' => false,
                 'error' => "Failed to delete {$config['label']}: ".$e->getMessage(),
@@ -588,7 +594,7 @@ abstract class BaseManageEntityTool extends Tool
                 }
 
                 // Handle dates
-                if ($value instanceof \DateTimeInterface) {
+                if ($value instanceof DateTimeInterface) {
                     $value = $value->format('Y-m-d');
                 }
 
@@ -629,7 +635,7 @@ abstract class BaseManageEntityTool extends Tool
             }
 
             // Handle dates
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 $value = $value->format('Y-m-d');
             }
 
@@ -646,7 +652,7 @@ abstract class BaseManageEntityTool extends Tool
             $related = $item->{$relation};
             if ($related) {
                 $relatedName = Str::snake($relation);
-                if ($related instanceof \Illuminate\Database\Eloquent\Model) {
+                if ($related instanceof Model) {
                     $output[$relatedName] = [
                         'id' => $related->id,
                         'name' => $related->name ?? $related->title ?? $related->code ?? null,
@@ -688,7 +694,7 @@ abstract class BaseManageEntityTool extends Tool
             }
 
             // Handle dates
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 $value = $value->toIso8601String();
             }
 
@@ -704,11 +710,11 @@ abstract class BaseManageEntityTool extends Tool
                 continue;
             }
 
-            if ($related instanceof \Illuminate\Database\Eloquent\Collection) {
+            if ($related instanceof Collection) {
                 $output[$relatedName] = $related->map(function ($r) {
                     return $this->formatRelatedItem($r);
                 })->toArray();
-            } elseif ($related instanceof \Illuminate\Database\Eloquent\Model) {
+            } elseif ($related instanceof Model) {
                 $output[$relatedName] = [
                     'id' => $related->id,
                     'name' => $related->name ?? $related->title ?? $related->code ?? null,
@@ -752,7 +758,7 @@ abstract class BaseManageEntityTool extends Tool
     /**
      * Get the tool's input schema.
      *
-     * @return array<string, \Illuminate\Contracts\JsonSchema\JsonSchema>
+     * @return array<string, JsonSchema>
      */
     public function schema(JsonSchema $schema): array
     {

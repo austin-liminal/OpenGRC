@@ -3,10 +3,23 @@
 namespace App\Filament\Resources\PolicyResource\RelationManagers;
 
 use App\Enums\PolicyExceptionStatus;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class ExceptionsRelationManager extends RelationManager
@@ -15,22 +28,22 @@ class ExceptionsRelationManager extends RelationManager
 
     protected static ?string $title = 'Policy Exceptions';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Exception Details')
+        return $schema
+            ->components([
+                Section::make('Exception Details')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Exception Name')
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->label('Description')
                             ->rows(3)
                             ->columnSpanFull(),
-                        Forms\Components\Textarea::make('justification')
+                        Textarea::make('justification')
                             ->label('Business Justification')
                             ->helperText('Explain why this exception is necessary')
                             ->rows(3)
@@ -38,46 +51,46 @@ class ExceptionsRelationManager extends RelationManager
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Risk & Mitigation')
+                Section::make('Risk & Mitigation')
                     ->schema([
-                        Forms\Components\Textarea::make('risk_assessment')
+                        Textarea::make('risk_assessment')
                             ->label('Risk Assessment')
                             ->helperText('Describe the risks associated with granting this exception')
                             ->rows(3)
                             ->columnSpanFull(),
-                        Forms\Components\Textarea::make('compensating_controls')
+                        Textarea::make('compensating_controls')
                             ->label('Compensating Controls')
                             ->helperText('Describe any mitigating controls in place')
                             ->rows(3)
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Status & Dates')
+                Section::make('Status & Dates')
                     ->schema([
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->options(PolicyExceptionStatus::class)
                             ->default(PolicyExceptionStatus::Pending)
                             ->required(),
-                        Forms\Components\Select::make('requested_by')
+                        Select::make('requested_by')
                             ->label('Requested By')
                             ->relationship('requester', 'name')
                             ->searchable()
                             ->preload(),
-                        Forms\Components\Select::make('approved_by')
+                        Select::make('approved_by')
                             ->label('Approved By')
                             ->relationship('approver', 'name')
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Forms\Get $get) => in_array($get('status'), [
+                            ->visible(fn (Get $get) => in_array($get('status'), [
                                 PolicyExceptionStatus::Approved->value,
                                 PolicyExceptionStatus::Approved,
                             ])),
-                        Forms\Components\DatePicker::make('requested_date')
+                        DatePicker::make('requested_date')
                             ->label('Requested Date')
                             ->default(now()),
-                        Forms\Components\DatePicker::make('effective_date')
+                        DatePicker::make('effective_date')
                             ->label('Effective Date'),
-                        Forms\Components\DatePicker::make('expiration_date')
+                        DatePicker::make('expiration_date')
                             ->label('Expiration Date')
                             ->helperText('Leave blank for no expiration'),
                     ])
@@ -90,61 +103,61 @@ class ExceptionsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Exception')
                     ->searchable()
                     ->sortable()
                     ->wrap()
                     ->limit(50),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('requester.name')
+                TextColumn::make('requester.name')
                     ->label('Requested By')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('requested_date')
+                TextColumn::make('requested_date')
                     ->label('Requested')
                     ->date()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('effective_date')
+                TextColumn::make('effective_date')
                     ->label('Effective')
                     ->date()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('expiration_date')
+                TextColumn::make('expiration_date')
                     ->label('Expires')
                     ->date()
                     ->sortable()
                     ->toggleable()
                     ->placeholder('No expiration'),
-                Tables\Columns\TextColumn::make('approver.name')
+                TextColumn::make('approver.name')
                     ->label('Approved By')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(PolicyExceptionStatus::class),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Add Exception'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->hiddenLabel(),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->hiddenLabel(),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->hiddenLabel(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\BundleResource\Pages;
 
 use App\Filament\Admin\Resources\BundleResource;
+use App\Filament\Admin\Resources\BundleResource\Widgets\BundleHeader;
 use Filament\Resources\Pages\ListRecords;
 
 class ListBundles extends ListRecords
@@ -14,7 +15,7 @@ class ListBundles extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            BundleResource\Widgets\BundleHeader::class,
+            BundleHeader::class,
         ];
     }
 

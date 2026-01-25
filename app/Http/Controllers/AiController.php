@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuotaType;
 use App\Exceptions\QuotaExceededException;
+use App\Models\Application;
 use App\Services\AppLogger;
 use App\Services\QuotaService;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\HtmlString;
 
@@ -73,7 +75,7 @@ class AiController extends Controller
         PROMPT;
 
         $implementations = json_encode($record->implementations()->pluck('details')->join("\n") ?? 'None');
-        $applications = json_encode(\App\Models\Application::get()->pluck('name')->toArray());
+        $applications = json_encode(Application::get()->pluck('name')->toArray());
 
         $userPrompt = "User has the following implementations currently: {$implementations}.
             User also has the following applications currently: {$applications}.
@@ -145,7 +147,7 @@ class AiController extends Controller
         - Do not include headers, bullet points, or markdown formatting
         PROMPT;
 
-        $applications = json_encode(\App\Models\Application::get()->pluck('name')->toArray());
+        $applications = json_encode(Application::get()->pluck('name')->toArray());
 
         $userPrompt = "User has the following applications currently: {$applications}.
             Provide a sample implementation description for
@@ -169,7 +171,7 @@ class AiController extends Controller
      */
     protected static function chatCompletion(string $systemPrompt, string $userPrompt): array
     {
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         $key = Crypt::decryptString(setting('ai.openai_key'));
 
         $response = $client->request('POST', 'https://api.openai.com/v1/chat/completions', [
@@ -205,7 +207,7 @@ class AiController extends Controller
 
     protected static function ogChatCompletion(string $systemPrompt, string $userPrompt): array
     {
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         // $key = Crypt::decryptString(setting('ai.openai_key'));
         $key = env('AI_DO_KEY');
 

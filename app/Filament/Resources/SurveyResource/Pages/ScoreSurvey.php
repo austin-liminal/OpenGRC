@@ -9,22 +9,23 @@ use App\Filament\Resources\VendorResource;
 use App\Models\Survey;
 use App\Models\SurveyAnswer;
 use App\Services\VendorRiskScoringService;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Infolists\Components\Grid;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Concerns\InteractsWithInfolists;
 use Filament\Infolists\Contracts\HasInfolists;
-use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
-use Illuminate\Database\Eloquent\Model;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ScoreSurvey extends Page implements HasForms, HasInfolists
 {
@@ -34,7 +35,7 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
 
     protected static string $resource = SurveyResource::class;
 
-    protected static string $view = 'filament.pages.score-survey';
+    protected string $view = 'filament.pages.score-survey';
 
     public ?array $data = [];
 
@@ -70,11 +71,11 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
         $this->form->fill($data);
     }
 
-    public function surveyInfolist(Infolist $infolist): Infolist
+    public function surveyInfolist(Schema $schema): Schema
     {
-        return $infolist
+        return $schema
             ->record($this->record)
-            ->schema([
+            ->components([
                 Section::make('Survey Information')
                     ->columns(4)
                     ->schema([
@@ -102,13 +103,13 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
             ]);
     }
 
-    public function autoScoredInfolist(Infolist $infolist): Infolist
+    public function autoScoredInfolist(Schema $schema): Schema
     {
         $autoScoredAnswers = $this->getAutoScoredAnswers();
         $breakdown = $this->getSurveyScoreBreakdown();
 
         if ($autoScoredAnswers->isEmpty()) {
-            return $infolist->schema([]);
+            return $schema->components([]);
         }
 
         $entries = [];
@@ -121,7 +122,7 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
                 ->schema([
                     TextEntry::make("question_{$answer->id}")
                         ->label('Question')
-                        ->state(\Illuminate\Support\Str::limit($question->question_text, 60))
+                        ->state(Str::limit($question->question_text, 60))
                         ->columnSpan(2),
                     TextEntry::make("type_{$answer->id}")
                         ->label('Type')
@@ -139,21 +140,21 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
                 ]);
         }
 
-        return $infolist
+        return $schema
             ->state([])
-            ->schema([
+            ->components([
                 Section::make('Auto-Scored Questions')
                     ->description('These questions are automatically scored based on the answer type and risk impact settings.')
                     ->schema($entries),
             ]);
     }
 
-    public function breakdownInfolist(Infolist $infolist): Infolist
+    public function breakdownInfolist(Schema $schema): Schema
     {
         $breakdown = $this->getSurveyScoreBreakdown();
 
         if (empty($breakdown) || $this->record->risk_score === null) {
-            return $infolist->schema([]);
+            return $schema->components([]);
         }
 
         $entries = [];
@@ -165,7 +166,7 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
                 ->schema([
                     TextEntry::make("q_{$item['question_id']}")
                         ->label('Question')
-                        ->state(\Illuminate\Support\Str::limit($item['question_text'], 50))
+                        ->state(Str::limit($item['question_text'], 50))
                         ->columnSpan(2),
                     TextEntry::make("w_{$item['question_id']}")
                         ->label('Weight')
@@ -193,19 +194,19 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
                     ->color($this->getAssessmentColor($this->record->risk_score)),
             ]);
 
-        return $infolist
+        return $schema
             ->state([])
-            ->schema([
+            ->components([
                 Section::make('Score Breakdown')
                     ->description('Detailed breakdown of how the risk score was calculated.')
                     ->schema($entries),
             ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema($this->getFormSchema())
+        return $schema
+            ->components($this->getFormSchema())
             ->statePath('data');
     }
 
@@ -226,7 +227,7 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
             });
 
         if ($answers->isEmpty()) {
-            $schema[] = Forms\Components\Placeholder::make('no_manual_scoring')
+            $schema[] = Placeholder::make('no_manual_scoring')
                 ->label('')
                 ->content('This survey has no open-ended questions that require manual scoring. All questions can be automatically scored.')
                 ->columnSpanFull();
@@ -237,19 +238,19 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
         foreach ($answers as $answer) {
             $question = $answer->question;
 
-            $schema[] = Forms\Components\Section::make($question->question_text)
+            $schema[] = Section::make($question->question_text)
                 ->description("Weight: {$question->risk_weight}%")
                 ->schema([
-                    Forms\Components\Placeholder::make("answer_preview_{$answer->id}")
+                    Placeholder::make("answer_preview_{$answer->id}")
                         ->label('Answer')
                         ->content(fn () => $this->formatAnswerValue($answer->answer_value))
                         ->columnSpanFull(),
-                    Forms\Components\Placeholder::make("comment_preview_{$answer->id}")
+                    Placeholder::make("comment_preview_{$answer->id}")
                         ->label('Additional Comment')
                         ->content($answer->comment ?? 'No comment')
                         ->visible(fn () => ! empty($answer->comment))
                         ->columnSpanFull(),
-                    Forms\Components\ToggleButtons::make("score_{$answer->id}")
+                    ToggleButtons::make("score_{$answer->id}")
                         ->label('Assessment')
                         ->options([
                             0 => 'Pass',
@@ -373,13 +374,13 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('save_scores')
+            Action::make('save_scores')
                 ->label(__('Save Scores'))
                 ->icon('heroicon-o-bookmark')
                 ->color('gray')
                 ->action('saveScoresOnly')
                 ->visible(fn () => $this->record->status === SurveyStatus::PENDING_SCORING),
-            Actions\Action::make('complete_assessment')
+            Action::make('complete_assessment')
                 ->label(__('Complete Assessment'))
                 ->icon('heroicon-o-check-circle')
                 ->color('primary')
@@ -389,13 +390,13 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
                 ->modalSubmitActionLabel(__('Yes, complete assessment'))
                 ->action('completeAssessment')
                 ->visible(fn () => $this->record->status === SurveyStatus::PENDING_SCORING),
-            Actions\Action::make('recalculate')
+            Action::make('recalculate')
                 ->label(__('Recalculate Risk Score'))
                 ->icon('heroicon-o-calculator')
                 ->color('warning')
                 ->action('saveAndCalculate')
                 ->visible(fn () => $this->record->status === SurveyStatus::COMPLETED),
-            Actions\Action::make('back')
+            Action::make('back')
                 ->label(__('Back to Survey'))
                 ->icon('heroicon-o-arrow-left')
                 ->color('gray')
@@ -507,7 +508,7 @@ class ScoreSurvey extends Page implements HasForms, HasInfolists
         return $service->getScoreBreakdown($this->record);
     }
 
-    public function getAutoScoredAnswers(): \Illuminate\Support\Collection
+    public function getAutoScoredAnswers(): Collection
     {
         return $this->record->answers()
             ->with('question')

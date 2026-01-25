@@ -4,11 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Application;
 use App\Models\Audit;
-use App\Models\AuditItem;
 use App\Models\Control;
 use App\Models\DataRequest;
-use App\Models\DataRequestResponse;
-use App\Models\FileAttachment;
 use App\Models\Implementation;
 use App\Models\Program;
 use App\Models\Risk;
@@ -16,6 +13,7 @@ use App\Models\Standard;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -44,7 +42,7 @@ class RegularUserPermissionsTest extends TestCase
         $this->regularUser->assignRole($regularRole);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_standards_list(): void
     {
         $standard = Standard::factory()->create();
@@ -55,7 +53,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_standard_details(): void
     {
         $standard = Standard::factory()->create();
@@ -66,7 +64,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_standards(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -75,7 +73,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_edit_standards(): void
     {
         $standard = Standard::factory()->create();
@@ -86,7 +84,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_delete_standards(): void
     {
         $standard = Standard::factory()->create();
@@ -96,7 +94,7 @@ class RegularUserPermissionsTest extends TestCase
         $this->assertDatabaseHas('standards', ['id' => $standard->id]);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_controls_list(): void
     {
         $control = Control::factory()->create();
@@ -107,7 +105,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_control_details(): void
     {
         $control = Control::factory()->create();
@@ -118,7 +116,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_controls(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -127,7 +125,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_implementations_list(): void
     {
         $implementation = Implementation::factory()->create();
@@ -138,7 +136,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_implementation_details(): void
     {
         $implementation = Implementation::factory()->create();
@@ -149,7 +147,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_implementations(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -158,7 +156,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_edit_implementations(): void
     {
         $implementation = Implementation::factory()->create();
@@ -169,7 +167,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_audits_list(): void
     {
         // Create a standard first for audit factory dependency
@@ -182,7 +180,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_audit_details(): void
     {
         // Create a standard first for audit factory dependency
@@ -195,7 +193,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_audits(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -204,7 +202,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_delete_audits(): void
     {
         // Create a standard first for audit factory dependency
@@ -216,7 +214,7 @@ class RegularUserPermissionsTest extends TestCase
         $this->assertDatabaseHas('audits', ['id' => $audit->id]);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_programs_list(): void
     {
         $program = Program::factory()->create();
@@ -227,7 +225,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_program_details(): void
     {
         $program = Program::factory()->create();
@@ -238,7 +236,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_programs(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -247,7 +245,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_vendors_list(): void
     {
         $vendor = Vendor::create([
@@ -261,7 +259,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_vendor_details(): void
     {
         $vendor = Vendor::create([
@@ -275,7 +273,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_vendors(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -284,7 +282,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_applications_list(): void
     {
         $vendor = Vendor::create([
@@ -304,7 +302,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_application_in_list(): void
     {
         $vendor = Vendor::create([
@@ -324,7 +322,7 @@ class RegularUserPermissionsTest extends TestCase
         $this->assertDatabaseHas('applications', ['id' => $application->id]);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_applications(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -333,7 +331,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_risks_list(): void
     {
         $risk = Risk::factory()->create();
@@ -344,7 +342,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_risk_details(): void
     {
         $risk = Risk::factory()->create();
@@ -355,7 +353,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_risks(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -364,7 +362,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_data_requests_list(): void
     {
         $standard = Standard::factory()->create();
@@ -383,7 +381,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_can_view_data_request_details(): void
     {
         $standard = Standard::factory()->create();
@@ -402,7 +400,7 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_create_data_requests(): void
     {
         $response = $this->actingAs($this->regularUser)
@@ -411,43 +409,43 @@ class RegularUserPermissionsTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_manage_users(): void
     {
         $this->assertFalse($this->regularUser->can('Manage Users'));
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_configure_authentication(): void
     {
         $this->assertFalse($this->regularUser->can('Configure Authentication'));
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_view_audit_log(): void
     {
         $this->assertFalse($this->regularUser->can('View Audit Log'));
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_manage_preferences(): void
     {
         $this->assertFalse($this->regularUser->can('Manage Preferences'));
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_manage_bundles(): void
     {
         $this->assertFalse($this->regularUser->can('Manage Bundles'));
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_cannot_view_bundles(): void
     {
         $this->assertFalse($this->regularUser->can('View Bundles'));
     }
 
-    /** @test */
+    #[Test]
     public function regular_user_has_list_and_read_permissions_only(): void
     {
         $entities = ['Standards', 'Controls', 'Implementations', 'Audits', 'AuditItems', 'Programs', 'Vendors', 'Applications', 'Risks', 'DataRequests', 'DataRequestResponses', 'FileAttachments'];

@@ -168,12 +168,12 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         // App\Providers\DigitalOceanStorageServiceProvider::class, // Replaced with direct env file writing in settings
         App\Providers\EventServiceProvider::class,
+        App\Providers\SocialiteServiceProvider::class, // Must be before Filament panels for SSO config
         App\Providers\Filament\AppPanelProvider::class,
         App\Providers\Filament\AdminPanelProvider::class,
         App\Providers\Filament\VendorPanelProvider::class,
         App\Providers\Filament\TrustCenterPanelProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\SocialiteServiceProvider::class,
     ])->toArray(),
 
     /*

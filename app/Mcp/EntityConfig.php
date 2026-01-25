@@ -2,6 +2,7 @@
 
 namespace App\Mcp;
 
+use App\Mcp\Traits\HasMcpSupport;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -83,7 +84,7 @@ class EntityConfig
             }
 
             // Check if model uses the HasMcpSupport trait
-            if (! in_array(Traits\HasMcpSupport::class, class_uses_recursive($className))) {
+            if (! in_array(HasMcpSupport::class, class_uses_recursive($className))) {
                 continue;
             }
 

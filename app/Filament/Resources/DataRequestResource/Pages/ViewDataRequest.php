@@ -6,8 +6,8 @@ use App\Filament\Resources\DataRequestResource;
 use App\Models\DataRequest;
 use App\Models\DataRequestResponse;
 use Filament\Actions\Action;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
 
 class ViewDataRequest extends ViewRecord
 {
@@ -15,9 +15,9 @@ class ViewDataRequest extends ViewRecord
 
     protected static ?string $title = 'Data Request Viewer';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return DataRequestResource::getEditForm($form);
+        return DataRequestResource::getEditForm($schema);
     }
 
     /**

@@ -5,8 +5,17 @@ namespace App\Filament\Widgets\TrustCenter;
 use App\Enums\TrustLevel;
 use App\Filament\Resources\TrustCenterDocumentResource;
 use App\Models\TrustCenterDocument;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
-use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,7 +23,7 @@ use Illuminate\Database\Eloquent\Collection;
 class TrustCenterDocumentsWidget extends BaseWidget
 {
     protected static bool $isLazy = false;
-    
+
     protected int|string|array $columnSpan = 'full';
 
     protected static ?string $heading = 'Documents';
@@ -27,52 +36,52 @@ class TrustCenterDocumentsWidget extends BaseWidget
                     ->orderBy('sort_order', 'asc')
             )
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label(__('Description'))
                     ->html()
                     ->limit(50)
                     ->wrap(),
-                Tables\Columns\TextColumn::make('trust_level')
+                TextColumn::make('trust_level')
                     ->label(__('Trust Level'))
                     ->badge()
                     ->color(fn (TrustCenterDocument $record) => $record->trust_level->getColor()),
-                Tables\Columns\TextColumn::make('certifications.name')
+                TextColumn::make('certifications.name')
                     ->label(__('Certifications'))
                     ->badge()
                     ->separator(', ')
                     ->wrap(),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label(__('Active'))
                     ->boolean(),
-                Tables\Columns\TextColumn::make('valid_until')
+                TextColumn::make('valid_until')
                     ->label(__('Expires'))
                     ->date()
                     ->placeholder(__('Never'))
                     ->color(fn (?TrustCenterDocument $record): string => $record?->isExpired() ? 'danger' : ($record?->isExpiringSoon() ? 'warning' : 'gray')),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('trust_level')
+                SelectFilter::make('trust_level')
                     ->label(__('Trust Level'))
                     ->options(collect(TrustLevel::cases())->mapWithKeys(fn ($case) => [$case->value => $case->getLabel()])),
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label(__('Status'))
                     ->placeholder(__('All'))
                     ->trueLabel(__('Active'))
                     ->falseLabel(__('Inactive')),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn (TrustCenterDocument $record) => TrustCenterDocumentResource::getUrl('view', ['record' => $record])),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->url(fn (TrustCenterDocument $record) => TrustCenterDocumentResource::getUrl('edit', ['record' => $record])),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('activate')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('activate')
                         ->label(__('Activate'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -84,7 +93,7 @@ class TrustCenterDocumentsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('deactivate')
+                    BulkAction::make('deactivate')
                         ->label(__('Deactivate'))
                         ->icon('heroicon-o-x-circle')
                         ->color('warning')
@@ -96,7 +105,7 @@ class TrustCenterDocumentsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('set_public')
+                    BulkAction::make('set_public')
                         ->label(__('Set to Public'))
                         ->icon('heroicon-o-globe-alt')
                         ->color('info')
@@ -108,7 +117,7 @@ class TrustCenterDocumentsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('set_protected')
+                    BulkAction::make('set_protected')
                         ->label(__('Set to Protected'))
                         ->icon('heroicon-o-lock-closed')
                         ->color('danger')
@@ -120,7 +129,7 @@ class TrustCenterDocumentsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('require_nda')
+                    BulkAction::make('require_nda')
                         ->label(__('Require NDA'))
                         ->icon('heroicon-o-document-check')
                         ->requiresConfirmation()
@@ -131,7 +140,7 @@ class TrustCenterDocumentsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('remove_nda')
+                    BulkAction::make('remove_nda')
                         ->label(__('Remove NDA Requirement'))
                         ->icon('heroicon-o-document-minus')
                         ->requiresConfirmation()
@@ -142,11 +151,11 @@ class TrustCenterDocumentsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('create')
+                Action::make('create')
                     ->label(__('Add Document'))
                     ->icon('heroicon-o-plus')
                     ->url(TrustCenterDocumentResource::getUrl('create'))
@@ -156,7 +165,7 @@ class TrustCenterDocumentsWidget extends BaseWidget
             ->emptyStateDescription(__('Upload your first document to get started.'))
             ->emptyStateIcon('heroicon-o-document-text')
             ->emptyStateActions([
-                Tables\Actions\Action::make('create')
+                Action::make('create')
                     ->label(__('Add Document'))
                     ->icon('heroicon-o-plus')
                     ->url(TrustCenterDocumentResource::getUrl('create'))

@@ -2,13 +2,13 @@
 
 namespace App\Filament\Admin\Pages\Settings;
 
-use Closure;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class Settings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 1;
 
@@ -31,31 +31,33 @@ class Settings extends BaseSettings
         return __('navigation.settings.general_settings');
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Section::make('General Configuration')
-                ->schema([
-                    TextInput::make('general.name')
-                        ->default('ets')
-                        ->minLength(2)
-                        ->maxLength(16)
-                        ->label('Application Name')
-                        ->helperText('The name of your application')
-                        ->required(),
-                    TextInput::make('general.url')
-                        ->default('http://localhost')
-                        ->url()
-                        ->label('Application URL')
-                        ->helperText('The URL of your application')
-                        ->required(),
-                    TextInput::make('general.repo')
-                        ->default('https://repo.opengrc.com')
-                        ->url()
-                        ->label('Update Repository URL')
-                        ->helperText('The URL of the repository to check for content updates')
-                        ->required(),
-                ]),
-        ];
+        return $schema
+            ->components([
+                Section::make('General Configuration')
+                    ->columnSpanFull()
+                    ->schema([
+                        TextInput::make('general.name')
+                            ->default('ets')
+                            ->minLength(2)
+                            ->maxLength(16)
+                            ->label('Application Name')
+                            ->helperText('The name of your application')
+                            ->required(),
+                        TextInput::make('general.url')
+                            ->default('http://localhost')
+                            ->url()
+                            ->label('Application URL')
+                            ->helperText('The URL of your application')
+                            ->required(),
+                        TextInput::make('general.repo')
+                            ->default('https://repo.opengrc.com')
+                            ->url()
+                            ->label('Update Repository URL')
+                            ->helperText('The URL of the repository to check for content updates')
+                            ->required(),
+                    ]),
+            ]);
     }
 }

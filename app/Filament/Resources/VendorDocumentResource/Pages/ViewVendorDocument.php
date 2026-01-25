@@ -4,8 +4,9 @@ namespace App\Filament\Resources\VendorDocumentResource\Pages;
 
 use App\Enums\VendorDocumentStatus;
 use App\Filament\Resources\VendorDocumentResource;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,7 @@ class ViewVendorDocument extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('download')
+            Action::make('download')
                 ->label('Download')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
@@ -26,13 +27,13 @@ class ViewVendorDocument extends ViewRecord
                     return Storage::disk(config('filesystems.default'))
                         ->download($this->record->file_path, $this->record->file_name);
                 }),
-            Actions\Action::make('approve')
+            Action::make('approve')
                 ->label('Approve')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->form([
-                    Forms\Components\Textarea::make('review_notes')
+                ->schema([
+                    Textarea::make('review_notes')
                         ->label('Review Notes')
                         ->placeholder('Optional notes about the approval...')
                         ->rows(3),
@@ -54,13 +55,13 @@ class ViewVendorDocument extends ViewRecord
                     VendorDocumentStatus::PENDING,
                     VendorDocumentStatus::UNDER_REVIEW,
                 ])),
-            Actions\Action::make('reject')
+            Action::make('reject')
                 ->label('Reject')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->form([
-                    Forms\Components\Textarea::make('review_notes')
+                ->schema([
+                    Textarea::make('review_notes')
                         ->label('Rejection Reason')
                         ->placeholder('Please explain why this document is being rejected...')
                         ->required()
@@ -83,7 +84,7 @@ class ViewVendorDocument extends ViewRecord
                     VendorDocumentStatus::PENDING,
                     VendorDocumentStatus::UNDER_REVIEW,
                 ])),
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

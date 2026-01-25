@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\TrustCenterDocumentResource\Pages;
 
 use App\Filament\Resources\TrustCenterDocumentResource;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListTrustCenterDocuments extends ListRecords
@@ -13,7 +13,7 @@ class ListTrustCenterDocuments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

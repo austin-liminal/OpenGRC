@@ -2,11 +2,17 @@
 
 namespace App\Filament\Resources\ProgramResource\RelationManagers;
 
+use App\Filament\Resources\ControlResource;
 use App\Models\Control;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -16,11 +22,11 @@ class ControlsRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'title';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('title')
+        return $schema
+            ->components([
+                TextInput::make('title')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -43,44 +49,43 @@ class ControlsRelationManager extends RelationManager
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryUsing($query))
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label('Code')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('standard.name')
+                TextColumn::make('standard.name')
                     ->label('Standard')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('applicability')
+                TextColumn::make('applicability')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('effectiveness')
+                TextColumn::make('effectiveness')
                     ->badge()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('standard')
+                SelectFilter::make('standard')
                     ->relationship('standard', 'name')
                     ->preload(),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Relate to Control')
                     ->preloadRecordSelect(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn ($record): string =>
-                        \App\Filament\Resources\ControlResource::getUrl('view', ['record' => $record])
+            ->recordActions([
+                ViewAction::make()
+                    ->url(fn ($record): string => ControlResource::getUrl('view', ['record' => $record])
                     ),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

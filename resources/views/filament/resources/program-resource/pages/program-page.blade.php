@@ -5,19 +5,5 @@
         'fi-resource-record-' . $record->getKey(),
     ])
 >
-    @php
-        $relationManagers = $this->getRelationManagers();
-    @endphp
-
-    {{ $this->infolist }}
-
-    @if (count($relationManagers))
-        <x-filament-panels::resources.relation-managers
-            :active-locale="isset($activeLocale) ? $activeLocale : null"
-            :active-manager="$this->activeRelationManager ?? array_key_first($relationManagers)"
-            :managers="$relationManagers"
-            :owner-record="$record"
-            :page-class="static::class"
-        />
-    @endif
+    {{ $this->content }}
 </x-filament-panels::page>

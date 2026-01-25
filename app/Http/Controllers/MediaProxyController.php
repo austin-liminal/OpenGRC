@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -34,7 +35,7 @@ class MediaProxyController extends Controller
         try {
             $mimeType = $disk->mimeType($filePath);
             $size = $disk->size($filePath);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             abort(500, 'Unable to retrieve file metadata');
         }
 

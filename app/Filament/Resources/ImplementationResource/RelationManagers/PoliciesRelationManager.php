@@ -2,8 +2,13 @@
 
 namespace App\Filament\Resources\ImplementationResource\RelationManagers;
 
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -16,20 +21,20 @@ class PoliciesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->sortable()
                     ->searchable()
                     ->badge()
                     ->color('primary')
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->sortable()
                     ->searchable()
                     ->limit(50)
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('status.name')
+                TextColumn::make('status.name')
                     ->label('Status')
                     ->badge()
                     ->sortable()
@@ -44,7 +49,7 @@ class PoliciesRelationManager extends RelationManager
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('department.name')
+                TextColumn::make('department.name')
                     ->label('Department')
                     ->sortable(),
             ])
@@ -52,7 +57,7 @@ class PoliciesRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('Relate to Policy')
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(function (Builder $query) {
@@ -63,14 +68,14 @@ class PoliciesRelationManager extends RelationManager
                     })
                     ->recordSelectSearchColumns(['code', 'name']),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn ($record) => route('filament.app.resources.policies.view', $record)),
-                Tables\Actions\DetachAction::make(),
+                DetachAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()->label('Detach from Implementation'),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()->label('Detach from Implementation'),
                 ]),
             ]);
     }

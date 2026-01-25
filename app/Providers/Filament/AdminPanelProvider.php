@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\RolePermissionMatrix;
+use DB;
+use Exception;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,7 +14,8 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -19,7 +23,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Rmsramos\Activitylog\ActivitylogPlugin;
+use MangoldSecurity\FilamentSettings\SettingsPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -27,10 +31,10 @@ class AdminPanelProvider extends PanelProvider
     {
         try {
             // Check if database is connected
-            \DB::connection()->getPdo();
+            DB::connection()->getPdo();
 
             return setting('security.session_timeout', 15);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Return default value if database is not available
             return 15;
         }
@@ -48,15 +52,16 @@ class AdminPanelProvider extends PanelProvider
             ->brandName(name: 'OpenGRC Admin')
             ->viteTheme('resources/css/filament/app/theme.css')
             ->brandLogo(fn () => view('filament.admin.logo'))
+            ->spa()
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->pages([
-                \App\Filament\Admin\Pages\RolePermissionMatrix::class,
+                RolePermissionMatrix::class,
             ])
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                AccountWidget::class,
+                FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -73,7 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
-                \Outerweb\FilamentSettings\Filament\Plugins\FilamentSettingsPlugin::make()
+                SettingsPlugin::make()
                     ->pages([
                         \App\Filament\Admin\Pages\Settings\Settings::class,
                         \App\Filament\Admin\Pages\Settings\StorageSettings::class,
@@ -85,12 +90,6 @@ class AdminPanelProvider extends PanelProvider
                         \App\Filament\Admin\Pages\Settings\VendorPortalSettings::class,
                         \App\Filament\Admin\Pages\Settings\TrustCenterSettings::class,
                     ]),
-                ActivitylogPlugin::make([
-                    'enable_cleanup_command' => true,
-                    'default_sort_column' => 'created_at',
-                ])
-                    ->isResourceActionHidden(true)
-                    ->authorize(fn () => auth()->check() && auth()->user()->can('View Audit Log')),
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,

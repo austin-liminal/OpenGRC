@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\PolicyResource\Pages;
 
 use App\Filament\Resources\PolicyResource;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewPolicyDetails extends ViewRecord
@@ -13,13 +15,13 @@ class ViewPolicyDetails extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('view_document')
+            Action::make('view_document')
                 ->label('View Document')
                 ->url(fn ($record) => route('filament.app.resources.policies.view', $record))
                 ->icon('heroicon-o-document-text')
                 ->color('gray'),
-            Actions\EditAction::make(),
-            Actions\DeleteAction::make(),
+            EditAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

@@ -3,16 +3,21 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Exports\FileAttachmentExporter;
-use App\Filament\Resources\FileAttachmentResource\Pages;
+use App\Filament\Resources\FileAttachmentResource\Pages\CreateFileAttachment;
+use App\Filament\Resources\FileAttachmentResource\Pages\EditFileAttachment;
+use App\Filament\Resources\FileAttachmentResource\Pages\ListFileAttachments;
 use App\Models\FileAttachment;
 use Carbon\Carbon;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Form;
+use Filament\Forms\Components\RichEditor;
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
@@ -20,15 +25,15 @@ class FileAttachmentResource extends Resource
 {
     protected static ?string $model = FileAttachment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\RichEditor::make('description')
+        return $schema
+            ->components([
+                RichEditor::make('description')
                     ->disableToolbarButtons([
                         'image',
                         'attachFiles',
@@ -58,22 +63,22 @@ class FileAttachmentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->searchable()
                     ->sortable()
                     ->html()
                     ->limit()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('file_path')
+                TextColumn::make('file_path')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('file_size')
+                TextColumn::make('file_size')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('uploaded_by')
+                TextColumn::make('uploaded_by')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->searchable()
                     ->sortable(),
             ])
@@ -85,16 +90,16 @@ class FileAttachmentResource extends Resource
                     ->exporter(FileAttachmentExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(FileAttachmentExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -109,9 +114,9 @@ class FileAttachmentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFileAttachments::route('/'),
-            'create' => Pages\CreateFileAttachment::route('/create'),
-            'edit' => Pages\EditFileAttachment::route('/{record}/edit'),
+            'index' => ListFileAttachments::route('/'),
+            'create' => CreateFileAttachment::route('/create'),
+            'edit' => EditFileAttachment::route('/{record}/edit'),
         ];
     }
 }

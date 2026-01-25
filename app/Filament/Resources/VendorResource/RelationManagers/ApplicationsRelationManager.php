@@ -2,47 +2,48 @@
 
 namespace App\Filament\Resources\VendorResource\RelationManagers;
 
-use App\Enums\ApplicationStatus;
-use App\Enums\ApplicationType;
-use App\Models\Application;
-use Filament\Forms;
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
-use Filament\Tables\Table;
 use App\Filament\Resources\ApplicationResource;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class ApplicationsRelationManager extends RelationManager
 {
     protected static string $relationship = 'applications';
 
-    public function form(Forms\Form $form): Forms\Form
+    public function form(Schema $schema): Schema
     {
-        return ApplicationResource::form($form);
+        return ApplicationResource::form($schema);
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable(),
-                Tables\Columns\TextColumn::make('owner.name')->label('Owner')->searchable(),
-                Tables\Columns\TextColumn::make('type')->badge()->color(fn ($record) => $record->type->getColor()),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn ($record) => $record->status->getColor()),
-                Tables\Columns\TextColumn::make('url')->url(fn ($record) => $record->url, true),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('name')->searchable(),
+                TextColumn::make('owner.name')->label('Owner')->searchable(),
+                TextColumn::make('type')->badge()->color(fn ($record) => $record->type->getColor()),
+                TextColumn::make('status')->badge()->color(fn ($record) => $record->status->getColor()),
+                TextColumn::make('url')->url(fn ($record) => $record->url, true),
+                TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

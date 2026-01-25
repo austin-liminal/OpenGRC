@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\AuditItemResource\Pages;
 
 use App\Filament\Resources\AuditItemResource;
-use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewAuditItem extends ViewRecord
@@ -13,7 +13,7 @@ class ViewAuditItem extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

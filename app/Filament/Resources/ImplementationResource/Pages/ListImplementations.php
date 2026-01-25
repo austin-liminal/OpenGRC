@@ -4,7 +4,7 @@ namespace App\Filament\Resources\ImplementationResource\Pages;
 
 use App\Filament\Resources\ImplementationResource;
 use App\Filament\Widgets\TableDescriptionWidget;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListImplementations extends ListRecords
@@ -14,7 +14,7 @@ class ListImplementations extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->label(__('implementation.actions.create')),
         ];
     }

@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\CertificationResource\Pages;
 
 use App\Filament\Resources\CertificationResource;
-use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewCertification extends ViewRecord
@@ -13,7 +13,7 @@ class ViewCertification extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

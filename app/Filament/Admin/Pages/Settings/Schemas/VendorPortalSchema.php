@@ -3,10 +3,10 @@
 namespace App\Filament\Admin\Pages\Settings\Schemas;
 
 use App\Models\SurveyTemplate;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
 
 class VendorPortalSchema
 {

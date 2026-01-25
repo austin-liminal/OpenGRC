@@ -11,12 +11,13 @@ use Filament\Actions\Concerns\HasWizard;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Wizard;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Pages\Page;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use League\Csv\Reader;
 use Notification;
@@ -25,9 +26,9 @@ class Import extends Page
 {
     use HasWizard, InteractsWithForms; // , InteractsWithRecord;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-up-tray';
 
-    protected static ?string $navigationGroup = 'Tools';
+    protected static string|\UnitEnum|null $navigationGroup = 'Tools';
 
     protected static ?string $navigationLabel = 'Import';
 
@@ -35,7 +36,7 @@ class Import extends Page
 
     protected static ?string $label = 'Import';
 
-    protected static string $view = 'filament.pages.import';
+    protected string $view = 'filament.pages.import';
 
     // Hide this page from the navigation
     protected static bool $shouldRegisterNavigation = false;
@@ -56,12 +57,12 @@ class Import extends Page
 
     public $currentItems;
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('Setup Import')
+                    Step::make('Setup Import')
                         ->id('data-file')
                         ->icon('heroicon-m-document')
                         ->schema([
@@ -101,7 +102,7 @@ class Import extends Page
                                 }),
 
                         ]),
-                    Wizard\Step::make('Confirm Import')
+                    Step::make('Confirm Import')
                         ->label('Confirm Import')
                         ->schema([
                             Placeholder::make('Changes to be made')
@@ -230,9 +231,9 @@ class Import extends Page
                     $standard = null;
                     if ($standardCode) {
                         $standard = Standard::where('code', $standardCode)->first();
-                        if (!$standard) {
+                        if (! $standard) {
                             $has_errors = true;
-                            $error_array[] = "Row ".($index + 1).": Standard code '{$standardCode}' not found";
+                            $error_array[] = 'Row '.($index + 1).": Standard code '{$standardCode}' not found";
                         }
                     }
 

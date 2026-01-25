@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use finfo;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PdfHelper extends Controller
 {
@@ -63,7 +66,7 @@ class PdfHelper extends Controller
         }
 
         // Use the default storage disk if none specified
-        $storageDisk = $disk ?? \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'));
+        $storageDisk = $disk ?? Storage::disk(config('filesystems.default'));
 
         // Pattern to match img tags with src attributes
         $pattern = '/<img([^>]*?)src=["\']([^"\']+)["\']([^>]*?)>/i';
@@ -150,7 +153,7 @@ class PdfHelper extends Controller
                             file_put_contents($tempFile, $imageContent);
 
                             // Get mime type
-                            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                            $finfo = new finfo(FILEINFO_MIME_TYPE);
                             $mimeType = $finfo->file($tempFile);
 
                             // Convert to base64
@@ -209,7 +212,7 @@ class PdfHelper extends Controller
                     // If not found in storage, try as absolute file path
                     if (! $base64Image && file_exists($src)) {
                         $imageContent = file_get_contents($src);
-                        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                        $finfo = new finfo(FILEINFO_MIME_TYPE);
                         $mimeType = $finfo->file($src);
                         $base64Image = 'data:'.$mimeType.';base64,'.base64_encode($imageContent);
                     }
@@ -219,14 +222,14 @@ class PdfHelper extends Controller
                         $publicPath = public_path($cleanSrc);
                         if (file_exists($publicPath)) {
                             $imageContent = file_get_contents($publicPath);
-                            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                            $finfo = new finfo(FILEINFO_MIME_TYPE);
                             $mimeType = $finfo->file($publicPath);
                             $base64Image = 'data:'.$mimeType.';base64,'.base64_encode($imageContent);
                         }
                     }
                 }
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::warning('[PdfHelper] Failed to convert image to base64', [
                     'src' => $src,
                     'storage_path' => $storagePath ?? 'not found',
@@ -266,7 +269,7 @@ class PdfHelper extends Controller
 
             // Add each PDF attachment
             if ($disk !== null) {
-                $storage = \Illuminate\Support\Facades\Storage::disk($disk);
+                $storage = Storage::disk($disk);
 
                 foreach ($pdfAttachments as $attachment) {
                     if ($storage->exists($attachment->file_path)) {
@@ -315,7 +318,7 @@ class PdfHelper extends Controller
                         'command' => $command,
                         'output' => implode("\n", $output),
                     ]);
-                    throw new \Exception('Ghostscript command failed: '.implode("\n", $output));
+                    throw new Exception('Ghostscript command failed: '.implode("\n", $output));
                 }
 
                 // Verify the output file was created
@@ -323,7 +326,7 @@ class PdfHelper extends Controller
                     Log::error('[PdfHelper] Ghostscript failed to create output file', [
                         'output_path' => $outputPath,
                     ]);
-                    throw new \Exception('Ghostscript failed to create output file');
+                    throw new Exception('Ghostscript failed to create output file');
                 }
             } else {
                 // If only main PDF exists, just copy it
@@ -339,7 +342,7 @@ class PdfHelper extends Controller
 
             return true;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('[PdfHelper] PDF merging with Ghostscript failed', [
                 'main_pdf' => $mainPdfPath,
                 'output_path' => $outputPath,

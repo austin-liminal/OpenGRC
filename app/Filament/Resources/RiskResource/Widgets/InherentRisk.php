@@ -11,7 +11,7 @@ class InherentRisk extends Widget
 {
     protected static bool $isLazy = false;
 
-    protected static string $view = 'filament.widgets.risk-map';
+    protected string $view = 'filament.widgets.risk-map';
 
     public array $grid;
 

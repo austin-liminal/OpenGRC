@@ -3,7 +3,7 @@
 namespace App\Filament\Admin\Resources\BundleResource\Pages;
 
 use App\Filament\Admin\Resources\BundleResource;
-use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewBundle extends ViewRecord
@@ -13,7 +13,7 @@ class ViewBundle extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 

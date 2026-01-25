@@ -5,11 +5,22 @@ namespace App\Filament\Resources\VendorResource\RelationManagers;
 use App\Enums\VendorDocumentStatus;
 use App\Enums\VendorDocumentType;
 use App\Models\VendorDocument;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -20,30 +31,30 @@ class VendorDocumentsRelationManager extends RelationManager
 
     protected static ?string $title = 'Documents';
 
-    protected static ?string $icon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $icon = 'heroicon-o-document-text';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('document_type')
+        return $schema
+            ->components([
+                Select::make('document_type')
                     ->label('Document Type')
                     ->options(VendorDocumentType::class)
                     ->required()
                     ->native(false),
 
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->label('Document Name')
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->label('Description')
                     ->rows(3)
                     ->maxLength(1000)
                     ->columnSpanFull(),
 
-                Forms\Components\FileUpload::make('file_path')
+                FileUpload::make('file_path')
                     ->label('Document File')
                     ->required()
                     ->disk(config('filesystems.default'))
@@ -53,18 +64,18 @@ class VendorDocumentsRelationManager extends RelationManager
                     ->storeFileNamesIn('file_name')
                     ->columnSpanFull(),
 
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->label('Status')
                     ->options(VendorDocumentStatus::class)
                     ->required()
                     ->native(false)
                     ->default(VendorDocumentStatus::PENDING),
 
-                Forms\Components\DatePicker::make('issue_date')
+                DatePicker::make('issue_date')
                     ->label('Issue Date')
                     ->native(false),
 
-                Forms\Components\DatePicker::make('expiration_date')
+                DatePicker::make('expiration_date')
                     ->label('Expiration Date')
                     ->native(false),
             ])
@@ -76,22 +87,22 @@ class VendorDocumentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('document_type')
+                TextColumn::make('document_type')
                     ->label('Type')
                     ->badge()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
                     ->sortable()
                     ->limit(30),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('expiration_date')
+                TextColumn::make('expiration_date')
                     ->label('Expires')
                     ->date()
                     ->sortable()
@@ -101,27 +112,27 @@ class VendorDocumentsRelationManager extends RelationManager
                         default => null,
                     }),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Uploaded')
                     ->date()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(VendorDocumentStatus::class),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Add Document'),
             ])
-            ->actions([
-                Tables\Actions\Action::make('download')
+            ->recordActions([
+                Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('gray')
                     ->action(fn (VendorDocument $record) => Storage::disk(config('filesystems.default'))
                         ->download($record->file_path, $record->file_name)),
-                Tables\Actions\Action::make('approve')
+                Action::make('approve')
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
@@ -139,13 +150,13 @@ class VendorDocumentsRelationManager extends RelationManager
                             ->send();
                     })
                     ->visible(fn (VendorDocument $record) => $record->status === VendorDocumentStatus::PENDING),
-                Tables\Actions\Action::make('reject')
+                Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->form([
-                        Forms\Components\Textarea::make('review_notes')
+                    ->schema([
+                        Textarea::make('review_notes')
                             ->label('Rejection Reason')
                             ->required()
                             ->rows(3),
@@ -164,12 +175,12 @@ class VendorDocumentsRelationManager extends RelationManager
                             ->send();
                     })
                     ->visible(fn (VendorDocument $record) => $record->status === VendorDocumentStatus::PENDING),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

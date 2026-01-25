@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\PolicyExceptionStatus;
+use Database\Factories\PolicyExceptionFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class PolicyException extends Model
 {
-    /** @use HasFactory<\Database\Factories\PolicyExceptionFactory> */
+    /** @use HasFactory<PolicyExceptionFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -148,8 +150,8 @@ class PolicyException extends Model
     /**
      * Scope a query to only include active exceptions.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -167,8 +169,8 @@ class PolicyException extends Model
     /**
      * Scope a query to only include pending exceptions.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopePending($query)
     {
@@ -178,8 +180,8 @@ class PolicyException extends Model
     /**
      * Scope a query to only include expired exceptions.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeExpired($query)
     {

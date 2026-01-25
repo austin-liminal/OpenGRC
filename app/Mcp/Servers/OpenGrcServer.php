@@ -20,6 +20,8 @@ use App\Mcp\Tools\ManageStandardTool;
 use App\Mcp\Tools\ManageTaxonomyTool;
 use App\Mcp\Tools\ManageVendorTool;
 use Laravel\Mcp\Server;
+use Laravel\Mcp\Server\Prompt;
+use Laravel\Mcp\Server\Tool;
 
 class OpenGrcServer extends Server
 {
@@ -194,7 +196,7 @@ class OpenGrcServer extends Server
     /**
      * The tools registered with this MCP server.
      *
-     * @var array<int, class-string<\Laravel\Mcp\Server\Tool>>
+     * @var array<int, class-string<Tool>>
      */
     protected array $tools = [
         ManageApplicationTool::class,
@@ -214,7 +216,7 @@ class OpenGrcServer extends Server
     /**
      * The prompts registered with this MCP server.
      *
-     * @var array<int, class-string<\Laravel\Mcp\Server\Prompt>>
+     * @var array<int, class-string<Prompt>>
      */
     protected array $prompts = [
         GapAnalysisPrompt::class,

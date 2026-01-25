@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\ProgramResource\Pages;
 
 use App\Filament\Resources\ProgramResource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewProgram extends ViewRecord
@@ -26,8 +28,8 @@ class ViewProgram extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Pages\Actions\EditAction::make(),
-            \Filament\Pages\Actions\DeleteAction::make(),
+            EditAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

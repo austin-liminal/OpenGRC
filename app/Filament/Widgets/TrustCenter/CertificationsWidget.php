@@ -4,8 +4,16 @@ namespace App\Filament\Widgets\TrustCenter;
 
 use App\Filament\Resources\CertificationResource;
 use App\Models\Certification;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
-use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,52 +32,52 @@ class CertificationsWidget extends BaseWidget
                     ->orderBy('sort_order', 'asc')
             )
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('Name'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label(__('Code'))
                     ->badge()
                     ->color('gray')
                     ->searchable(),
-                Tables\Columns\IconColumn::make('is_predefined')
+                IconColumn::make('is_predefined')
                     ->label(__('Predefined'))
                     ->boolean()
                     ->trueIcon('heroicon-o-lock-closed')
                     ->falseIcon('heroicon-o-pencil')
                     ->trueColor('gray')
                     ->falseColor('primary'),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label(__('Active'))
                     ->boolean(),
-                Tables\Columns\TextColumn::make('documents_count')
+                TextColumn::make('documents_count')
                     ->label(__('Documents'))
                     ->counts('documents')
                     ->badge()
                     ->color('gray'),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_predefined')
+                TernaryFilter::make('is_predefined')
                     ->label(__('Type'))
                     ->placeholder(__('All'))
                     ->trueLabel(__('Predefined'))
                     ->falseLabel(__('Custom')),
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label(__('Status'))
                     ->placeholder(__('All'))
                     ->trueLabel(__('Active'))
                     ->falseLabel(__('Inactive')),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->url(fn (Certification $record) => CertificationResource::getUrl('view', ['record' => $record])),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->url(fn (Certification $record) => CertificationResource::getUrl('edit', ['record' => $record])),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('activate')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('activate')
                         ->label(__('Activate'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -81,7 +89,7 @@ class CertificationsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\BulkAction::make('deactivate')
+                    BulkAction::make('deactivate')
                         ->label(__('Deactivate'))
                         ->icon('heroicon-o-x-circle')
                         ->color('warning')
@@ -93,7 +101,7 @@ class CertificationsWidget extends BaseWidget
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\DeleteBulkAction::make()
+                    DeleteBulkAction::make()
                         ->action(function (Collection $records) {
                             // Only delete non-predefined certifications
                             $deletable = $records->filter(fn ($r) => ! $r->is_predefined);
@@ -119,7 +127,7 @@ class CertificationsWidget extends BaseWidget
                 ]),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('create')
+                Action::make('create')
                     ->label(__('Add Custom Certification'))
                     ->icon('heroicon-o-plus')
                     ->url(CertificationResource::getUrl('create'))

@@ -2,17 +2,34 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\UserResource\Pages;
-use App\Filament\Admin\Resources\UserResource\RelationManagers;
+use App\Filament\Admin\Resources\UserResource\Pages\CreateUser;
+use App\Filament\Admin\Resources\UserResource\Pages\EditUser;
+use App\Filament\Admin\Resources\UserResource\Pages\ListUsers;
+use App\Filament\Admin\Resources\UserResource\Pages\ViewUser;
+use App\Filament\Admin\Resources\UserResource\RelationManagers\RolesRelationManager;
 use App\Mail\UserCreatedMail;
 use App\Mail\UserForceResetMail;
 use App\Models\User;
 use Exception;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -24,11 +41,11 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = "System";
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
 
     protected static ?int $navigationSort = 10;
 
@@ -42,25 +59,25 @@ class UserResource extends Resource
         return __('navigation.groups.system');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->unique('users', 'email')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('email')
+                TextInput::make('email')
                     ->email()
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('roles')
+                Select::make('roles')
                     ->relationship('roles', 'name')
                     ->multiple()
                     ->preload()
                     ->searchable()
                     ->label('Roles'),
-                Forms\Components\Placeholder::make('last_activity')
+                Placeholder::make('last_activity')
                     ->content(
                         function (Model $record) {
                             return $record->last_activity ? $record->last_activity->format('Y-m-d H:i:s') : null;
@@ -78,47 +95,47 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('last_activity')
+                TextColumn::make('last_activity')
                     ->dateTime()
                     ->sortable(),
                 // Roles
-                Tables\Columns\TextColumn::make('roles')
+                TextColumn::make('roles')
                     ->searchable()
                     ->label('Roles')
                     ->badge()
                     ->sortable()
                     ->state(fn ($record) => $record->roles->pluck('name')->join(', ')),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
-                    Tables\Actions\ForceDeleteAction::make(),
-                    Tables\Actions\Action::make('reset_password')
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                ActionGroup::make([
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                    ForceDeleteAction::make(),
+                    Action::make('reset_password')
                         ->label('Force Password Reset')
                         ->hidden(fn (User $record) => $record->last_activity == null)
                         ->action(fn (User $record) => UserResource::resetPasswordAction($record))
                         ->requiresConfirmation()
                         ->icon('heroicon-o-key')
                         ->color('warning'),
-                    Tables\Actions\Action::make('reinvite')
+                    Action::make('reinvite')
                         ->label('Re-invite User')
                         ->hidden(fn (User $record) => $record->last_activity !== null)
                         ->action(fn (User $record) => UserResource::reinviteUserAction($record))
@@ -127,11 +144,11 @@ class UserResource extends Resource
                         ->color('primary'),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -139,17 +156,17 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            'roles' => RelationManagers\RolesRelationManager::class,
+            'roles' => RolesRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'view' => Pages\ViewUser::route('/{record}'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => ListUsers::route('/'),
+            'create' => CreateUser::route('/create'),
+            'view' => ViewUser::route('/{record}'),
+            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 
@@ -164,6 +181,7 @@ class UserResource extends Resource
     public static function createDefaultPassword(): string
     {
         $words = collect(range(1, 4))->map(fn () => Str::random(6))->implode('-');
+
         return $words;
     }
 

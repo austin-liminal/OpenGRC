@@ -5,11 +5,14 @@ namespace App\Filament\Resources\SurveyResource\RelationManagers;
 use App\Enums\QuestionType;
 use App\Models\SurveyAnswer;
 use App\Services\VendorRiskScoringService;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
@@ -20,10 +23,10 @@ class AnswersRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 // Answers are typically view-only in the admin panel
             ]);
     }
@@ -33,14 +36,14 @@ class AnswersRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                Tables\Columns\TextColumn::make('question.question_text')
+                TextColumn::make('question.question_text')
                     ->label(__('survey.survey.answers.columns.question'))
                     ->wrap()
                     ->limit(100),
-                Tables\Columns\TextColumn::make('question.question_type')
+                TextColumn::make('question.question_type')
                     ->label(__('survey.survey.answers.columns.type'))
                     ->badge(),
-                Tables\Columns\TextColumn::make('display_value')
+                TextColumn::make('display_value')
                     ->label(__('survey.survey.answers.columns.answer'))
                     ->wrap()
                     ->formatStateUsing(function ($state, $record) {
@@ -74,13 +77,13 @@ class AnswersRelationManager extends RelationManager
 
                         return (string) $value;
                     }),
-                Tables\Columns\TextColumn::make('comment')
+                TextColumn::make('comment')
                     ->label(__('survey.survey.answers.columns.comment'))
                     ->wrap()
                     ->limit(50)
                     ->placeholder('-')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('calculated_score')
+                TextColumn::make('calculated_score')
                     ->label(__('Assessment'))
                     ->badge()
                     ->state(function (SurveyAnswer $record): ?int {
@@ -101,7 +104,7 @@ class AnswersRelationManager extends RelationManager
                         default => __('Fail'),
                     })
                     ->visible(fn ($livewire) => in_array($livewire->getOwnerRecord()->status->value, ['completed', 'pending_scoring'])),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label(__('survey.survey.answers.columns.answered_at'))
                     ->dateTime()
                     ->sortable(),
@@ -112,18 +115,18 @@ class AnswersRelationManager extends RelationManager
             ->headerActions([
                 //
             ])
-            ->actions([
-                Tables\Actions\Action::make('score_answer')
+            ->recordActions([
+                Action::make('score_answer')
                     ->label('Score')
                     ->icon('heroicon-o-calculator')
                     ->color('warning')
-                    ->form([
-                        Forms\Components\Placeholder::make('answer_preview')
+                    ->schema([
+                        Placeholder::make('answer_preview')
                             ->label('Answer')
                             ->content(fn (SurveyAnswer $record): string => is_array($record->answer_value)
                                 ? implode(', ', array_filter($record->answer_value, fn ($v) => ! is_array($v)))
                                 : (string) ($record->answer_value ?? 'No answer')),
-                        Forms\Components\TextInput::make('manual_score')
+                        TextInput::make('manual_score')
                             ->label('Risk Score (0-100)')
                             ->numeric()
                             ->minValue(0)
@@ -148,7 +151,7 @@ class AnswersRelationManager extends RelationManager
                     ->visible(fn (SurveyAnswer $record): bool => in_array($record->question?->question_type, [QuestionType::TEXT, QuestionType::LONG_TEXT])
                         && $record->question?->risk_weight > 0
                     ),
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->modalHeading(fn ($record) => 'Answer Details')
                     ->modalContent(function ($record) {
                         $question = $record->question;
@@ -220,7 +223,7 @@ class AnswersRelationManager extends RelationManager
                         return new HtmlString($html);
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 //
             ])
             ->emptyStateHeading('No answers yet')

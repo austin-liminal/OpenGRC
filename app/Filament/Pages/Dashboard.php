@@ -10,7 +10,7 @@ use App\Filament\Widgets\ToDoListWidget;
 
 class Dashboard extends TabbedPage
 {
-    protected static ?string $navigationIcon = 'heroicon-o-home';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home';
 
     protected static ?string $navigationLabel = 'Dashboard';
 

@@ -11,13 +11,19 @@ use App\Models\SurveyAttachment;
 use App\Models\SurveyQuestion;
 use App\Notifications\DropdownNotification;
 use App\Services\VendorRiskScoringService;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -28,7 +34,7 @@ class RespondToSurvey extends Page implements HasForms
 
     protected static string $resource = SurveyResource::class;
 
-    protected static string $view = 'filament.vendor.pages.respond-to-survey';
+    protected string $view = 'filament.vendor.pages.respond-to-survey';
 
     public Survey|Model|int|string|null $record = null;
 
@@ -99,7 +105,7 @@ class RespondToSurvey extends Page implements HasForms
         $this->form->fill($this->data);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $form): Schema
     {
         $questions = $this->record->template->questions()->orderBy('sort_order')->get();
 
@@ -110,15 +116,15 @@ class RespondToSurvey extends Page implements HasForms
         }
 
         return $form
-            ->schema([
-                Forms\Components\Section::make($this->record->template->title)
+            ->components([
+                Section::make($this->record->template->title)
                     ->description($this->record->template->description)
                     ->schema($schema),
             ])
             ->statePath('data');
     }
 
-    protected function buildQuestionField(SurveyQuestion $question, int $number): Forms\Components\Fieldset
+    protected function buildQuestionField(SurveyQuestion $question, int $number): Fieldset
     {
         $fieldName = "question_{$question->id}";
         $commentName = "comment_{$question->id}";
@@ -127,20 +133,20 @@ class RespondToSurvey extends Page implements HasForms
 
         // Main question field based on type
         $field = match ($question->question_type) {
-            QuestionType::TEXT => Forms\Components\TextInput::make($fieldName)
+            QuestionType::TEXT => TextInput::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required)
                 ->maxLength(1000),
 
-            QuestionType::LONG_TEXT => Forms\Components\Textarea::make($fieldName)
+            QuestionType::LONG_TEXT => Textarea::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required)
                 ->rows(4)
                 ->maxLength(10000),
 
-            QuestionType::BOOLEAN => Forms\Components\Radio::make($fieldName)
+            QuestionType::BOOLEAN => Radio::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required)
@@ -150,19 +156,19 @@ class RespondToSurvey extends Page implements HasForms
                 ])
                 ->inline(),
 
-            QuestionType::SINGLE_CHOICE => Forms\Components\Radio::make($fieldName)
+            QuestionType::SINGLE_CHOICE => Radio::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required)
                 ->options($this->getOptionsFromQuestion($question)),
 
-            QuestionType::MULTIPLE_CHOICE => Forms\Components\CheckboxList::make($fieldName)
+            QuestionType::MULTIPLE_CHOICE => CheckboxList::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required)
                 ->options($this->getOptionsFromQuestion($question)),
 
-            QuestionType::FILE => Forms\Components\FileUpload::make($fieldName)
+            QuestionType::FILE => FileUpload::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required)
@@ -171,7 +177,7 @@ class RespondToSurvey extends Page implements HasForms
                 ->visibility('private')
                 ->maxSize(10240), // 10MB
 
-            default => Forms\Components\TextInput::make($fieldName)
+            default => TextInput::make($fieldName)
                 ->label("Q{$number}: {$question->question_text}")
                 ->helperText($question->help_text)
                 ->required($question->is_required),
@@ -181,7 +187,7 @@ class RespondToSurvey extends Page implements HasForms
 
         // Add comment field if allowed
         if ($question->allow_comments) {
-            $fields[] = Forms\Components\Textarea::make($commentName)
+            $fields[] = Textarea::make($commentName)
                 ->label('Additional Comments')
                 ->placeholder('Add any additional context or notes...')
                 ->rows(2)
@@ -189,7 +195,7 @@ class RespondToSurvey extends Page implements HasForms
                 ->columnSpanFull();
         }
 
-        return Forms\Components\Fieldset::make("Question {$number}")
+        return Fieldset::make("Question {$number}")
             ->schema($fields)
             ->columnSpanFull();
     }
@@ -427,7 +433,7 @@ class RespondToSurvey extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('back')
+            Action::make('back')
                 ->label('Back to Surveys')
                 ->icon('heroicon-o-arrow-left')
                 ->color('gray')
@@ -438,12 +444,12 @@ class RespondToSurvey extends Page implements HasForms
     protected function getFormActions(): array
     {
         return [
-            Actions\Action::make('save')
+            Action::make('save')
                 ->label('Save Progress')
                 ->icon('heroicon-o-bookmark')
                 ->color('gray')
                 ->action('save'),
-            Actions\Action::make('submit')
+            Action::make('submit')
                 ->label('Submit Survey')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('primary')

@@ -4,14 +4,17 @@ namespace App\Filament\Resources\AuditResource\RelationManagers;
 
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,10 +22,10 @@ class AttachmentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'attachments';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextArea::make('description')
                     ->label('Description')
                     ->columnSpanFull()
@@ -71,18 +74,18 @@ class AttachmentsRelationManager extends RelationManager
                     ->orderBy('updated_at', 'desc');
             })
             ->columns([
-                Tables\Columns\TextColumn::make('file_name')
+                TextColumn::make('file_name')
                     ->label('File Name')
                     ->searchable()
                     ->sortable()
                     ->wrap()
                     ->description(fn ($record) => $record->description),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label('Uploaded At')
                     ->searchable()
                     ->sortable()
                     ->dateTime(),
-                Tables\Columns\TextColumn::make('uploaded_by')
+                TextColumn::make('uploaded_by')
                     ->label('Uploaded By')
                     ->getStateUsing(function ($record) {
                         if (in_array($record->description, ['Exported audit evidence ZIP', 'Partial audit evidence export ZIP'])) {
@@ -100,8 +103,8 @@ class AttachmentsRelationManager extends RelationManager
             })
             ->filters([])
             ->headerActions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('DownloadDraftReport')
+                ActionGroup::make([
+                    Action::make('DownloadDraftReport')
                         ->label('Download Draft Report')
                         ->icon('heroicon-o-document')
                         ->action(function ($record) {
@@ -118,7 +121,7 @@ class AttachmentsRelationManager extends RelationManager
                                 "DRAFT-AuditReport-{$audit->id}.pdf"
                             );
                         }),
-                    Tables\Actions\Action::make('DownloadFinalReport')
+                    Action::make('DownloadFinalReport')
                         ->label('Download Final Report')
                         ->icon('heroicon-o-document')
                         ->action(function ($record) {
@@ -141,8 +144,8 @@ class AttachmentsRelationManager extends RelationManager
                         }),
                 ])->label('Report Downloads'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->label('View')
                     ->icon('heroicon-o-eye'),
             ]);

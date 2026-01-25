@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\ImplementationResource\RelationManagers;
 
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class AuditItemRelationManager extends RelationManager
 {
@@ -15,7 +17,7 @@ class AuditItemRelationManager extends RelationManager
     // set table name as Audit Results
     public static ?string $title = 'Audit History';
 
-    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return auth()->check() && auth()->user()->can('Read Audits');
     }
@@ -25,12 +27,12 @@ class AuditItemRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('effectiveness')
             ->columns([
-                Tables\Columns\TextColumn::make('audit.title')
+                TextColumn::make('audit.title')
                     ->label('Audit Name'),
-                Tables\Columns\TextColumn::make('effectiveness'),
-                Tables\Columns\TextColumn::make('audit.updated_at')
+                TextColumn::make('effectiveness'),
+                TextColumn::make('audit.updated_at')
                     ->label('Date Assessed'),
-                Tables\Columns\TextColumn::make('auditor_notes')
+                TextColumn::make('auditor_notes')
                     ->label('Auditor Notes')
                     ->words(100)
                     ->html(),
@@ -41,13 +43,13 @@ class AuditItemRelationManager extends RelationManager
             ->headerActions([
                 //                Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 //                Tables\Actions\EditAction::make(),
                 //                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

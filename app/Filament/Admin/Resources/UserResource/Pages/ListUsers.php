@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\UserResource\Pages;
 use App\Filament\Admin\Resources\UserResource;
 use App\Mail\UserCreatedMail;
 use App\Models\User;
+use Exception;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -22,7 +23,7 @@ class ListUsers extends ListRecords
         return [
             Action::make('create')
                 ->label('Invite New User')
-                ->form([
+                ->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required(),
@@ -54,7 +55,7 @@ class ListUsers extends ListRecords
                     // Send the email with the password to the user
                     try {
                         Mail::to($data['email'])->send(new UserCreatedMail($data['email'], $data['name'], $password));
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         Notification::make()
                             ->title('Failed to send invitation email. User still created.'.$e->getMessage())
                             ->warning()

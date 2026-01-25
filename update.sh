@@ -69,5 +69,8 @@ else
 fi
 
 # Build the Frontend
-echo "Building the frontend dependencies..."
+echo "Installing npm dependencies..."
+npm install
+
+echo "Building the frontend..."
 npm run build

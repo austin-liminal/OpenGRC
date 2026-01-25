@@ -12,7 +12,7 @@ use Filament\Actions\Action;
 
 class VendorManager extends TabbedPage
 {
-    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
     protected static ?string $navigationLabel = 'Vendor Management';
 

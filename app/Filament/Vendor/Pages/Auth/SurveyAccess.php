@@ -11,9 +11,9 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\SimplePage;
+use Filament\Schemas\Schema;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +25,7 @@ class SurveyAccess extends SimplePage implements HasForms
     use InteractsWithForms;
     use WithRateLimiting;
 
-    protected static string $view = 'filament.vendor.pages.auth.survey-access';
+    protected string $view = 'filament.vendor.pages.auth.survey-access';
 
     protected static string $layout = 'filament-panels::components.layout.simple';
 
@@ -126,10 +126,10 @@ class SurveyAccess extends SimplePage implements HasForms
         ];
     }
 
-    public function loginForm(Form $form): Form
+    public function loginForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Placeholder::make('vendor_info')
                     ->label('')
                     ->content(fn () => 'Sign in with your vendor portal credentials to access this survey.'),
@@ -147,10 +147,10 @@ class SurveyAccess extends SimplePage implements HasForms
             ->statePath('loginData');
     }
 
-    public function registerForm(Form $form): Form
+    public function registerForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Placeholder::make('vendor_info')
                     ->label('')
                     ->content(fn () => "Creating an account for {$this->surveyRecord->vendor->name}"),
@@ -185,10 +185,10 @@ class SurveyAccess extends SimplePage implements HasForms
             ->statePath('registerData');
     }
 
-    public function setPasswordForm(Form $form): Form
+    public function setPasswordForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Placeholder::make('welcome')
                     ->label('')
                     ->content(fn () => 'Welcome! Please set a password for your account to continue.'),

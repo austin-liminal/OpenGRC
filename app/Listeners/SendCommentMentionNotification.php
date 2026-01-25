@@ -3,9 +3,10 @@
 namespace App\Listeners;
 
 use App\Mail\CommentMentionMail;
+use App\Models\DataRequestResponse;
+use App\Notifications\DropdownNotification;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
 use Kirschbaum\Commentions\Events\UserWasMentionedEvent;
 
@@ -29,7 +30,7 @@ class SendCommentMentionNotification // implements ShouldQueue
         $commentUrl = $this->getCommentUrl($commentable);
 
         // Send database notification
-        $mentionedUser->notify(new \App\Notifications\DropdownNotification(
+        $mentionedUser->notify(new DropdownNotification(
             title: 'You were mentioned in a comment',
             body: "{$commenter->name} mentioned you in a comment on {$commentableTitle}",
             icon: 'heroicon-o-chat-bubble-left-ellipsis',
@@ -77,7 +78,7 @@ class SendCommentMentionNotification // implements ShouldQueue
     protected function getCommentUrl($commentable): ?string
     {
         // For DataRequestResponse, generate the view URL (not edit, since followers may not have edit access)
-        if ($commentable instanceof \App\Models\DataRequestResponse) {
+        if ($commentable instanceof DataRequestResponse) {
             return route('filament.app.resources.data-request-responses.view', ['record' => $commentable->id]);
         }
 

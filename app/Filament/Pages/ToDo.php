@@ -4,20 +4,21 @@ namespace App\Filament\Pages;
 
 use App\Enums\ResponseStatus;
 use App\Models\DataRequestResponse;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
-use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 
-class ToDo extends Page implements Tables\Contracts\HasTable
+class ToDo extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-check-circle';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-check-circle';
 
-    protected static string $view = 'filament.pages.to-do';
+    protected string $view = 'filament.pages.to-do';
 
     public static function getNavigationLabel(): string
     {
@@ -64,7 +65,7 @@ class ToDo extends Page implements Tables\Contracts\HasTable
     protected function getTableFilters(): array
     {
         return [
-            Tables\Filters\SelectFilter::make('status')
+            SelectFilter::make('status')
                 ->label('Show Responded')
                 ->multiple()
                 ->options(ResponseStatus::class)

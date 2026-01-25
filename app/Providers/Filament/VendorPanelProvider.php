@@ -2,8 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Vendor\Pages\Auth\Login;
 use App\Filament\Vendor\Resources\SurveyResource;
 use App\Http\Middleware\RequireVendorPassword;
+use DB;
+use Exception;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,13 +14,13 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\View\PanelsRenderHook;
 
 class VendorPanelProvider extends PanelProvider
 {
@@ -28,7 +31,7 @@ class VendorPanelProvider extends PanelProvider
             ->path('portal')
             ->authGuard('vendor')
             ->authPasswordBroker('vendor_users')
-            ->login(\App\Filament\Vendor\Pages\Auth\Login::class)
+            ->login(Login::class)
             ->passwordReset()
             ->emailVerification()
             ->profile()
@@ -36,6 +39,7 @@ class VendorPanelProvider extends PanelProvider
                 'primary' => Color::Teal,
             ])
             ->brandName($this->getPortalName())
+            ->spa()
             ->discoverResources(in: app_path('Filament/Vendor/Resources'), for: 'App\\Filament\\Vendor\\Resources')
             ->discoverPages(in: app_path('Filament/Vendor/Pages'), for: 'App\\Filament\\Vendor\\Pages')
             ->discoverWidgets(in: app_path('Filament/Vendor/Widgets'), for: 'App\\Filament\\Vendor\\Widgets')
@@ -65,10 +69,10 @@ class VendorPanelProvider extends PanelProvider
     private function getPortalName(): string
     {
         try {
-            \DB::connection()->getPdo();
+            DB::connection()->getPdo();
 
             return setting('vendor_portal.name', 'Vendor Portal');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return 'Vendor Portal';
         }
     }

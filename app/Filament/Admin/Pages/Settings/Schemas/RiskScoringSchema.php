@@ -2,8 +2,8 @@
 
 namespace App\Filament\Admin\Pages\Settings\Schemas;
 
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 
 class RiskScoringSchema
 {

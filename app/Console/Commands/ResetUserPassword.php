@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Str;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 #[AsCommand(name: 'opengrc:reset-password')]
@@ -39,7 +40,7 @@ class ResetUserPassword extends Command
         }
 
         if ($this->option('generate')) {
-            $password = \Str::random(12);
+            $password = Str::random(12);
         } else {
             $password = $this->secret('Enter new password');
             $confirmation = $this->secret('Confirm new password');

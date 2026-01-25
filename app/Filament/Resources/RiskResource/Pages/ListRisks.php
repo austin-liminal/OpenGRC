@@ -3,10 +3,14 @@
 namespace App\Filament\Resources\RiskResource\Pages;
 
 use App\Filament\Resources\RiskResource;
+use App\Filament\Resources\RiskResource\Widgets\InherentRisk;
+use App\Filament\Resources\RiskResource\Widgets\ResidualRisk;
+use App\Models\Risk;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Support\Enums\ActionSize;
+use Filament\Support\Enums\Size;
 use Livewire\Attributes\On;
 
 class ListRisks extends ListRecords
@@ -20,8 +24,8 @@ class ListRisks extends ListRecords
     #[On('filter-risks')]
     public function filterRisks(string $type, int $likelihood, int $impact): void
     {
-        $this->tableFilters[$type . '_likelihood']['value'] = (string) $likelihood;
-        $this->tableFilters[$type . '_impact']['value'] = (string) $impact;
+        $this->tableFilters[$type.'_likelihood']['value'] = (string) $likelihood;
+        $this->tableFilters[$type.'_impact']['value'] = (string) $impact;
         $this->hasActiveRiskFilters = true;
         $this->resetPage();
     }
@@ -36,15 +40,15 @@ class ListRisks extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('Track New Risk'),
-            Actions\Action::make('download_risk_report')
+            CreateAction::make()->label('Track New Risk'),
+            Action::make('download_risk_report')
                 ->label('Download Risk Report')
                 ->icon('heroicon-o-document-arrow-down')
-                ->size(ActionSize::Small)
+                ->size(Size::Small)
                 ->color('primary')
                 ->action(function () {
                     // Get active risks (or null status) with their implementations, sorted by residual risk
-                    $risks = \App\Models\Risk::with(['implementations'])
+                    $risks = Risk::with(['implementations'])
                         ->where(function ($query) {
                             $query->where('is_active', true)
                                 ->orWhereNull('is_active');
@@ -75,8 +79,8 @@ class ListRisks extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            RiskResource\Widgets\InherentRisk::class,
-            RiskResource\Widgets\ResidualRisk::class,
+            InherentRisk::class,
+            ResidualRisk::class,
         ];
     }
 }

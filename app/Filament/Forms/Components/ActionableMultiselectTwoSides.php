@@ -2,9 +2,10 @@
 
 namespace App\Filament\Forms\Components;
 
+use BackedEnum;
 use Closure;
-use Filament\Forms\Components\Component;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Component;
 
 /**
  * A two-sided multiselect component with customizable action buttons.
@@ -416,7 +417,7 @@ class ActionableMultiselectTwoSides extends Select
                 }
                 $effectiveness = $metadata[$id]['effectiveness'];
                 // Handle both enum objects and string values
-                if ($effectiveness instanceof \BackedEnum) {
+                if ($effectiveness instanceof BackedEnum) {
                     $effectivenessValue = $effectiveness->value;
                 } elseif (is_object($effectiveness) && property_exists($effectiveness, 'value')) {
                     $effectivenessValue = $effectiveness->value;
@@ -457,7 +458,7 @@ class ActionableMultiselectTwoSides extends Select
                 $fieldValue = $metadata[$id][$field];
 
                 // Handle enum objects
-                if ($fieldValue instanceof \BackedEnum) {
+                if ($fieldValue instanceof BackedEnum) {
                     $fieldValue = $fieldValue->value;
                 } elseif (is_object($fieldValue) && property_exists($fieldValue, 'value')) {
                     $fieldValue = $fieldValue->value;

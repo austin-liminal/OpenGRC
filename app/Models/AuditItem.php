@@ -6,6 +6,7 @@ use App\Enums\Applicability;
 use App\Enums\Effectiveness;
 use App\Enums\WorkflowStatus;
 use App\Mcp\Traits\HasMcpSupport;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,9 +16,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class AuditItem extends Model
 {
-    use HasMcpSupport, LogsActivity;
+    use HasFactory, HasMcpSupport, LogsActivity;
 
-    protected $fillable = ['audit_id', 'user_id', 'control_id', 'auditor_notes', 'status', 'effectiveness', 'applicability'];
+    protected $fillable = ['audit_id', 'user_id', 'auditable_id', 'auditable_type', 'auditor_notes', 'status', 'effectiveness', 'applicability'];
 
     /**
      * The attributes that should be cast.
@@ -64,7 +65,7 @@ class AuditItem extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['audit_id', 'user_id', 'control_id', 'status', 'effectiveness', 'applicability'])
+            ->logOnly(['audit_id', 'user_id', 'auditable_id', 'auditable_type', 'status', 'effectiveness', 'applicability'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

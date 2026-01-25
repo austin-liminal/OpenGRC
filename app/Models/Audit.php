@@ -64,9 +64,11 @@ class Audit extends Model
         'title',
         'description',
         'status',
+        'audit_type',
         'start_date',
         'end_date',
         'program_id',
+        'manager_id',
     ];
 
     /**

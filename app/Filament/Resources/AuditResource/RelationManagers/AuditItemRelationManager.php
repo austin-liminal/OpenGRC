@@ -8,15 +8,20 @@ use App\Enums\WorkflowStatus;
 use App\Models\AuditItem;
 use App\Models\Control;
 use App\Models\Implementation;
-use Filament\Forms;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -26,11 +31,11 @@ class AuditItemRelationManager extends RelationManager
 {
     protected static string $relationship = 'AuditItems';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Control Information')
+        return $schema
+            ->components([
+                Section::make('Control Information')
                     ->schema([
                         Placeholder::make('control_code')
                             ->label('Control Code')
@@ -49,7 +54,7 @@ class AuditItemRelationManager extends RelationManager
 
                     ])->columns(2)->collapsible(true),
 
-                Forms\Components\Section::make('Evaluation')
+                Section::make('Evaluation')
                     ->schema([
                         ToggleButtons::make('status')
                             ->label('Status')
@@ -75,7 +80,7 @@ class AuditItemRelationManager extends RelationManager
                             ->label('Auditor Notes'),
                     ]),
 
-                Forms\Components\Section::make('Audit Evidence')
+                Section::make('Audit Evidence')
                     ->schema([
 
                         // Todo: This can be replaced with a Repeater component when nested relationships are
@@ -178,11 +183,11 @@ class AuditItemRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('auditable.type')
+                TextColumn::make('auditable.type')
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable);
                     }),
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable->code);
                     })
@@ -192,7 +197,7 @@ class AuditItemRelationManager extends RelationManager
                             $query->where('code', 'like', "%{$search}%");
                         });
                     }),
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->wrap()
                     ->getStateUsing(function ($record) {
                         return class_basename($record->auditable->title);
@@ -202,23 +207,23 @@ class AuditItemRelationManager extends RelationManager
                             $query->where('title', 'like', "%{$search}%");
                         });
                     }),
-                Tables\Columns\TextColumn::make('status')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('applicability')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('effectiveness')->sortable()->searchable(),
+                TextColumn::make('status')->sortable()->searchable(),
+                TextColumn::make('applicability')->sortable()->searchable(),
+                TextColumn::make('effectiveness')->sortable()->searchable(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->label('Assess control')
                     ->visible(fn (AuditItem $record): bool => $record->audit->status === WorkflowStatus::INPROGRESS)
                     ->url(fn (AuditItem $record): string => route('filament.app.resources.audit-items.edit', ['record' => $record->id])),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Add More Items')
                     ->modalHeading('Associate Existing Control or Implementation')
                     ->modalSubmitActionLabel('Associate')
                     ->createAnother(false)
-                    ->form([
+                    ->schema([
                         Select::make('auditable_type')
                             ->label('Type')
                             ->options([
@@ -230,7 +235,7 @@ class AuditItemRelationManager extends RelationManager
                             ->default('control'),
                         Select::make('auditable_id')
                             ->label('Control/Implementation')
-                            ->options(function (Forms\Get $get, RelationManager $livewire) {
+                            ->options(function (Get $get, RelationManager $livewire) {
                                 $type = $get('auditable_type');
                                 $audit = $livewire->ownerRecord;
 
@@ -279,9 +284,9 @@ class AuditItemRelationManager extends RelationManager
                         $auditItem->save();
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('bulk_edit_status')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('bulk_edit_status')
                         ->label('Update Status')
                         ->icon('heroicon-o-pencil-square')
                         ->form([
@@ -296,7 +301,7 @@ class AuditItemRelationManager extends RelationManager
                                 $record->update(['status' => $data['status']]);
                             });
                         }),
-                    Tables\Actions\BulkAction::make('bulk_edit_applicability')
+                    BulkAction::make('bulk_edit_applicability')
                         ->label('Update Applicability')
                         ->icon('heroicon-o-check-circle')
                         ->form([
@@ -311,7 +316,7 @@ class AuditItemRelationManager extends RelationManager
                                 $record->update(['applicability' => $data['applicability']]);
                             });
                         }),
-                    Tables\Actions\BulkAction::make('bulk_edit_effectiveness')
+                    BulkAction::make('bulk_edit_effectiveness')
                         ->label('Update Effectiveness')
                         ->icon('heroicon-o-star')
                         ->form([
@@ -326,7 +331,7 @@ class AuditItemRelationManager extends RelationManager
                                 $record->update(['effectiveness' => $data['effectiveness']]);
                             });
                         }),
-                    Tables\Actions\BulkAction::make('bulk_delete')
+                    BulkAction::make('bulk_delete')
                         ->label('Delete')
                         ->icon('heroicon-o-trash')
                         ->color('danger')

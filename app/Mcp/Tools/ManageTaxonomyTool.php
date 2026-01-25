@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools;
 
 use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
+use Exception;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -292,7 +293,7 @@ class ManageTaxonomyTool extends Tool
                 'message' => "Taxonomy term '{$term->name}' created successfully in '{$parentType->name}'.",
                 'term' => $this->formatTerm($term),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->errorResponse('Failed to create taxonomy term: '.$e->getMessage());
         }
     }
@@ -367,7 +368,7 @@ class ManageTaxonomyTool extends Tool
                 'updated_fields' => array_keys($updateData),
                 'term' => $this->formatTerm($term),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->errorResponse('Failed to update taxonomy term: '.$e->getMessage());
         }
     }
@@ -426,7 +427,7 @@ class ManageTaxonomyTool extends Tool
                 'soft_deleted' => true,
                 'restorable' => true,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->errorResponse('Failed to delete taxonomy term: '.$e->getMessage());
         }
     }

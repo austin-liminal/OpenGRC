@@ -11,10 +11,12 @@ use App\Models\TrustCenterDocument;
 use App\Models\User;
 use App\Notifications\DropdownNotification;
 use App\Services\AppLogger;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Log;
 
 class TrustCenterController extends Controller
 {
@@ -279,9 +281,9 @@ class TrustCenterController extends Controller
             try {
                 // Send email notification
                 Mail::to($manager->email)->send(new TrustCenterAccessRequestMail($accessRequest));
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Log but don't fail
-                \Log::warning('Failed to send Trust Center access request email', [
+                Log::warning('Failed to send Trust Center access request email', [
                     'manager_id' => $manager->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -300,8 +302,8 @@ class TrustCenterController extends Controller
                     actionUrl: route('filament.app.resources.trust-center-access-requests.view', ['record' => $accessRequest->id]),
                     actionLabel: __('Review Request')
                 ));
-            } catch (\Exception $e) {
-                \Log::warning('Failed to send Trust Center access request notification', [
+            } catch (Exception $e) {
+                Log::warning('Failed to send Trust Center access request notification', [
                     'manager_id' => $manager->id,
                     'error' => $e->getMessage(),
                 ]);

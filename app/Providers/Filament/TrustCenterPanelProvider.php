@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use DB;
+use Exception;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
@@ -25,6 +27,7 @@ class TrustCenterPanelProvider extends PanelProvider
                 'primary' => Color::Blue,
             ])
             ->brandName($this->getTrustCenterName())
+            ->spa()
             ->discoverResources(in: app_path('Filament/TrustCenter/Resources'), for: 'App\\Filament\\TrustCenter\\Resources')
             ->discoverPages(in: app_path('Filament/TrustCenter/Pages'), for: 'App\\Filament\\TrustCenter\\Pages')
             ->discoverWidgets(in: app_path('Filament/TrustCenter/Widgets'), for: 'App\\Filament\\TrustCenter\\Widgets')
@@ -45,7 +48,7 @@ class TrustCenterPanelProvider extends PanelProvider
     private function getTrustCenterName(): string
     {
         try {
-            \DB::connection()->getPdo();
+            DB::connection()->getPdo();
 
             $companyName = setting('trust_center.company_name', '');
             $trustCenterName = setting('trust_center.name', 'Trust Center');
@@ -55,7 +58,7 @@ class TrustCenterPanelProvider extends PanelProvider
             }
 
             return $trustCenterName;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return 'Trust Center';
         }
     }

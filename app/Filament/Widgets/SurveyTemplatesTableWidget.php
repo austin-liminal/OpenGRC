@@ -6,7 +6,15 @@ use App\Enums\SurveyTemplateStatus;
 use App\Filament\Resources\SurveyResource;
 use App\Filament\Resources\SurveyTemplateResource;
 use App\Models\SurveyTemplate;
-use Filament\Tables;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
@@ -22,59 +30,59 @@ class SurveyTemplatesTableWidget extends BaseWidget
             ->query(SurveyTemplate::query()->withCount(['questions', 'surveys']))
             ->heading(__('survey.manager.tabs.templates'))
             ->columns([
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->label(__('survey.template.table.columns.title'))
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('survey.template.table.columns.status'))
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('questions_count')
+                TextColumn::make('questions_count')
                     ->label(__('survey.template.table.columns.questions_count'))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('surveys_count')
+                TextColumn::make('surveys_count')
                     ->label(__('survey.template.table.columns.surveys_count'))
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_public')
+                IconColumn::make('is_public')
                     ->label(__('survey.template.table.columns.is_public'))
                     ->boolean()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('createdBy.name')
+                TextColumn::make('createdBy.name')
                     ->label(__('survey.template.table.columns.created_by'))
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('survey.template.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(SurveyTemplateStatus::class)
                     ->label(__('survey.template.table.filters.status')),
-                Tables\Filters\TernaryFilter::make('is_public')
+                TernaryFilter::make('is_public')
                     ->label(__('survey.template.table.filters.is_public')),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('view')
+            ->recordActions([
+                ActionGroup::make([
+                    Action::make('view')
                         ->label('View')
                         ->icon('heroicon-o-eye')
                         ->url(fn (SurveyTemplate $record): string => SurveyTemplateResource::getUrl('view', ['record' => $record])),
-                    Tables\Actions\Action::make('edit')
+                    Action::make('edit')
                         ->label('Edit')
                         ->icon('heroicon-o-pencil')
                         ->url(fn (SurveyTemplate $record): string => SurveyTemplateResource::getUrl('edit', ['record' => $record])),
-                    Tables\Actions\Action::make('create_survey')
+                    Action::make('create_survey')
                         ->label(__('survey.template.actions.create_survey'))
                         ->icon('heroicon-o-paper-airplane')
                         ->color('success')
                         ->url(fn (SurveyTemplate $record): string => SurveyResource::getUrl('create', ['template' => $record->id]))
                         ->visible(fn (SurveyTemplate $record): bool => $record->status === SurveyTemplateStatus::ACTIVE),
-                    Tables\Actions\Action::make('duplicate')
+                    Action::make('duplicate')
                         ->label(__('survey.template.actions.duplicate'))
                         ->icon('heroicon-o-document-duplicate')
                         ->color('gray')
@@ -93,16 +101,16 @@ class SurveyTemplatesTableWidget extends BaseWidget
 
                             return redirect(SurveyTemplateResource::getUrl('edit', ['record' => $newTemplate]));
                         }),
-                    Tables\Actions\DeleteAction::make(),
+                    DeleteAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('create')
+                Action::make('create')
                     ->label('Create Template')
                     ->icon('heroicon-o-plus')
                     ->url(SurveyTemplateResource::getUrl('create')),

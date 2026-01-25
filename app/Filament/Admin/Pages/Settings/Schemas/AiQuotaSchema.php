@@ -5,7 +5,7 @@ namespace App\Filament\Admin\Pages\Settings\Schemas;
 use App\Enums\QuotaType;
 use App\Services\QuotaService;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Illuminate\Support\HtmlString;
 
 class AiQuotaSchema

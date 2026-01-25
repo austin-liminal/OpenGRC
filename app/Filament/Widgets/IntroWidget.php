@@ -6,7 +6,7 @@ use Filament\Widgets\Widget;
 
 class IntroWidget extends Widget
 {
-    protected static string $view = 'filament.widgets.intro-widget';
+    protected string $view = 'filament.widgets.intro-widget';
 
     protected static ?int $sort = 1;
 

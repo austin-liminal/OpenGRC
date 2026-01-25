@@ -3,16 +3,17 @@
 namespace App\Filament\Admin\Pages\Settings;
 
 use App\Filament\Admin\Pages\Settings\Schemas\MailTemplatesSchema;
-use Closure;
-use Filament\Forms\Components\Tabs;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
 
 class MailTemplateSettings extends BaseSettings
 {
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 4;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     public static function canAccess(): bool
     {
@@ -33,15 +34,16 @@ class MailTemplateSettings extends BaseSettings
         return __('navigation.settings.templates');
     }
 
-    public function schema(): array|Closure
+    public function form(Schema $schema): Schema
     {
-        return [
-            Tabs::make('MailTemplateSettings')
-                ->tabs([
-                    Tabs\Tab::make(__('navigation.settings.tabs.mail_templates'))
-                        ->icon('heroicon-o-envelope')
-                        ->schema(MailTemplatesSchema::schema()),
-                ]),
-        ];
+        return $schema
+            ->components([
+                Tabs::make('MailTemplateSettings')
+                    ->tabs([
+                        Tab::make(__('navigation.settings.tabs.mail_templates'))
+                            ->icon('heroicon-o-envelope')
+                            ->schema(MailTemplatesSchema::schema()),
+                    ]),
+            ]);
     }
 }

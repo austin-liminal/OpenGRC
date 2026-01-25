@@ -3,7 +3,7 @@
 namespace App\Filament\Vendor\Resources\DocumentResource\Pages;
 
 use App\Filament\Vendor\Resources\DocumentResource;
-use Filament\Actions;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditDocument extends EditRecord
@@ -13,7 +13,7 @@ class EditDocument extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(),
+            ViewAction::make(),
         ];
     }
 

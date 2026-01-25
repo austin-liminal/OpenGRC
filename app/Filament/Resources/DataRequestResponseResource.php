@@ -3,22 +3,30 @@
 namespace App\Filament\Resources;
 
 use App\Enums\ResponseStatus;
-use App\Filament\Resources\DataRequestResponseResource\Pages;
+use App\Filament\Resources\DataRequestResponseResource\Pages\CreateDataRequestResponse;
+use App\Filament\Resources\DataRequestResponseResource\Pages\EditDataRequestResponse;
+use App\Filament\Resources\DataRequestResponseResource\Pages\ListDataRequestResponses;
+use App\Filament\Resources\DataRequestResponseResource\Pages\ViewDataRequestResponse;
+use App\Models\Control;
 use App\Models\DataRequestResponse;
 use App\Models\Policy;
 use Exception;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -29,16 +37,17 @@ class DataRequestResponseResource extends Resource
 {
     protected static ?string $model = DataRequestResponse::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Evidence Requested')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->schema([
                         Placeholder::make('request.dataRequest.audit.name')
@@ -58,12 +67,12 @@ class DataRequestResponseResource extends Resource
                         Section::make(function ($record) {
                             // Check if any audit items are Controls
                             $hasControl = $record->dataRequest->auditItems->contains(function ($item) {
-                                return $item->auditable_type === \App\Models\Control::class;
+                                return $item->auditable_type === Control::class;
                             });
 
                             // Fallback to single relationship
                             if (! $hasControl && $record->dataRequest->auditItem) {
-                                $hasControl = $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class;
+                                $hasControl = $record->dataRequest->auditItem->auditable_type === Control::class;
                             }
 
                             return $hasControl ? 'Control Details' : 'Implementation Details';
@@ -73,11 +82,11 @@ class DataRequestResponseResource extends Resource
                             ->collapsed(function ($record) {
                                 // Only collapse for Controls, expand for Implementations
                                 $hasControl = $record->dataRequest->auditItems->contains(function ($item) {
-                                    return $item->auditable_type === \App\Models\Control::class;
+                                    return $item->auditable_type === Control::class;
                                 });
 
                                 if (! $hasControl && $record->dataRequest->auditItem) {
-                                    $hasControl = $record->dataRequest->auditItem->auditable_type === \App\Models\Control::class;
+                                    $hasControl = $record->dataRequest->auditItem->auditable_type === Control::class;
                                 }
 
                                 return $hasControl;
@@ -142,7 +151,7 @@ class DataRequestResponseResource extends Resource
                             ->visible(function ($record) {
                                 // Check if any audit items are Controls with implementations
                                 foreach ($record->dataRequest->auditItems as $item) {
-                                    if ($item->auditable_type === \App\Models\Control::class && $item->auditable?->implementations->isNotEmpty()) {
+                                    if ($item->auditable_type === Control::class && $item->auditable?->implementations->isNotEmpty()) {
                                         return true;
                                     }
                                 }
@@ -150,7 +159,7 @@ class DataRequestResponseResource extends Resource
                                 // Fallback to single relationship
                                 if ($record->dataRequest->auditItem) {
                                     $auditItem = $record->dataRequest->auditItem;
-                                    if ($auditItem->auditable_type === \App\Models\Control::class && $auditItem->auditable?->implementations->isNotEmpty()) {
+                                    if ($auditItem->auditable_type === Control::class && $auditItem->auditable?->implementations->isNotEmpty()) {
                                         return true;
                                     }
                                 }
@@ -164,7 +173,7 @@ class DataRequestResponseResource extends Resource
 
                                         // Gather implementations from all Control audit items
                                         foreach ($record->dataRequest->auditItems as $item) {
-                                            if ($item->auditable_type === \App\Models\Control::class && $item->auditable) {
+                                            if ($item->auditable_type === Control::class && $item->auditable) {
                                                 $implementations = $implementations->merge($item->auditable->implementations);
                                             }
                                         }
@@ -172,7 +181,7 @@ class DataRequestResponseResource extends Resource
                                         // Fallback to single relationship
                                         if ($implementations->isEmpty() && $record->dataRequest->auditItem) {
                                             $auditItem = $record->dataRequest->auditItem;
-                                            if ($auditItem->auditable_type === \App\Models\Control::class && $auditItem->auditable) {
+                                            if ($auditItem->auditable_type === Control::class && $auditItem->auditable) {
                                                 $implementations = $auditItem->auditable->implementations;
                                             }
                                         }
@@ -303,30 +312,30 @@ class DataRequestResponseResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('dataRequest.details')
+                TextColumn::make('dataRequest.details')
                     ->label('Data Request Details')
                     ->wrap()
                     ->html()
                     ->limit(200),
-                Tables\Columns\TextColumn::make('requester.name')
+                TextColumn::make('requester.name')
                     ->label('Requester'),
-                Tables\Columns\TextColumn::make('requestee.name')
+                TextColumn::make('requestee.name')
                     ->label('Requestee'),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->label('Status'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(ResponseStatus::class)
                     ->label('Status'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -334,10 +343,10 @@ class DataRequestResponseResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDataRequestResponses::route('/'),
-            'create' => Pages\CreateDataRequestResponse::route('/create'),
-            'edit' => Pages\EditDataRequestResponse::route('/{record}/edit'),
-            'view' => Pages\ViewDataRequestResponse::route('/{record}'),
+            'index' => ListDataRequestResponses::route('/'),
+            'create' => CreateDataRequestResponse::route('/create'),
+            'edit' => EditDataRequestResponse::route('/{record}/edit'),
+            'view' => ViewDataRequestResponse::route('/{record}'),
         ];
     }
 }

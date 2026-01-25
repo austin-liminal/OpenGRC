@@ -3,13 +3,18 @@
 namespace App\Filament\Vendor\Resources;
 
 use App\Enums\SurveyStatus;
-use App\Filament\Vendor\Resources\SurveyResource\Pages;
+use App\Filament\Vendor\Resources\SurveyResource\Pages\ListSurveys;
+use App\Filament\Vendor\Resources\SurveyResource\Pages\RespondToSurvey;
+use App\Filament\Vendor\Resources\SurveyResource\Pages\ViewSurvey;
 use App\Models\Survey;
-use Filament\Infolists\Components\Section;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +23,7 @@ class SurveyResource extends Resource
 {
     protected static ?string $model = Survey::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     protected static ?string $navigationLabel = 'Surveys';
 
@@ -50,34 +55,34 @@ class SurveyResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('template.title')
+                TextColumn::make('template.title')
                     ->label('Survey')
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('due_date')
+                TextColumn::make('due_date')
                     ->label('Due Date')
                     ->date()
                     ->sortable()
                     ->color(fn (?Survey $record) => $record?->due_date?->isPast() && $record?->status !== SurveyStatus::COMPLETED ? 'danger' : null),
-                Tables\Columns\TextColumn::make('progress')
+                TextColumn::make('progress')
                     ->label('Progress')
                     ->suffix('%')
                     ->sortable(false),
-                Tables\Columns\TextColumn::make('risk_score')
+                TextColumn::make('risk_score')
                     ->label('Risk Score')
                     ->placeholder('-')
                     ->visible(fn (?Survey $record) => $record?->status === SurveyStatus::COMPLETED),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Received')
                     ->date()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options([
                         SurveyStatus::SENT->value => 'Pending',
                         SurveyStatus::IN_PROGRESS->value => 'In Progress',
@@ -85,13 +90,13 @@ class SurveyResource extends Resource
                         SurveyStatus::PENDING_SCORING->value => 'Pending Review',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('respond')
+            ->recordActions([
+                ViewAction::make(),
+                Action::make('respond')
                     ->label('Respond')
                     ->icon('heroicon-o-pencil-square')
                     ->color('primary')
-                    ->url(fn (Survey $record): string => Pages\RespondToSurvey::getUrl(['record' => $record]))
+                    ->url(fn (Survey $record): string => RespondToSurvey::getUrl(['record' => $record]))
                     ->visible(fn (Survey $record): bool => in_array($record->status, [
                         SurveyStatus::SENT,
                         SurveyStatus::IN_PROGRESS,
@@ -103,11 +108,12 @@ class SurveyResource extends Resource
             ->emptyStateIcon('heroicon-o-clipboard-document-list');
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Survey Details')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextEntry::make('template.title')
@@ -130,6 +136,7 @@ class SurveyResource extends Resource
                     ]),
 
                 Section::make('Results')
+                    ->columnSpanFull()
                     ->visible(fn (?Survey $record) => $record?->status === SurveyStatus::COMPLETED)
                     ->columns(2)
                     ->schema([
@@ -159,9 +166,9 @@ class SurveyResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSurveys::route('/'),
-            'view' => Pages\ViewSurvey::route('/{record}'),
-            'respond' => Pages\RespondToSurvey::route('/{record}/respond'),
+            'index' => ListSurveys::route('/'),
+            'view' => ViewSurvey::route('/{record}'),
+            'respond' => RespondToSurvey::route('/{record}/respond'),
         ];
     }
 

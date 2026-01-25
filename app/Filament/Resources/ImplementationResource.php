@@ -2,33 +2,53 @@
 
 namespace App\Filament\Resources;
 
+use Aliziodev\LaravelTaxonomy\Models\Taxonomy;
 use App\Enums\Effectiveness;
 use App\Enums\ImplementationStatus;
 use App\Filament\Concerns\HasTaxonomyFields;
 use App\Filament\Exports\ImplementationExporter;
-use App\Filament\Resources\ImplementationResource\Pages;
-use App\Filament\Resources\ImplementationResource\RelationManagers;
+use App\Filament\Resources\ImplementationResource\Pages\CreateImplementation;
+use App\Filament\Resources\ImplementationResource\Pages\EditImplementation;
+use App\Filament\Resources\ImplementationResource\Pages\ListImplementations;
+use App\Filament\Resources\ImplementationResource\Pages\ViewImplementations;
+use App\Filament\Resources\ImplementationResource\RelationManagers\ApplicationsRelationManager;
+use App\Filament\Resources\ImplementationResource\RelationManagers\AssetsRelationManager;
+use App\Filament\Resources\ImplementationResource\RelationManagers\AuditItemRelationManager;
+use App\Filament\Resources\ImplementationResource\RelationManagers\ControlsRelationManager;
+use App\Filament\Resources\ImplementationResource\RelationManagers\PoliciesRelationManager;
+use App\Filament\Resources\ImplementationResource\RelationManagers\RisksRelationManager;
+use App\Filament\Resources\ImplementationResource\RelationManagers\VendorsRelationManager;
 use App\Models\Application;
 use App\Models\Control;
 use App\Models\Implementation;
 use App\Models\User;
 use App\Models\Vendor;
 use Exception;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists\Components\Section;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
+use Filament\Actions\ExportBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Tables\Actions\ExportAction;
-use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Livewire\Component;
 
 class ImplementationResource extends Resource
 {
@@ -36,13 +56,13 @@ class ImplementationResource extends Resource
 
     protected static ?string $model = Implementation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static ?string $recordTitleAttribute = 'title';
 
     protected static ?string $navigationLabel = null;
 
-    protected static ?string $navigationGroup = null;
+    protected static string|\UnitEnum|null $navigationGroup = null;
 
     protected static ?int $navigationSort = 30;
 
@@ -56,21 +76,21 @@ class ImplementationResource extends Resource
         return __('implementation.navigation.group');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(3)
-            ->schema([
-                Forms\Components\TextInput::make('code')
+            ->components([
+                TextInput::make('code')
                     ->maxLength(255)
                     ->required()
                     ->unique(Implementation::class, 'code', ignoreRecord: true)
                     ->live()
-                    ->afterStateUpdated(function (Forms\Contracts\HasForms $livewire, Forms\Components\TextInput $component) {
+                    ->afterStateUpdated(function (Component $livewire, TextInput $component) {
                         $livewire->validateOnly($component->getStatePath());
                     })
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter a unique code for this implementation. This code will be used to identify this implementation in the system.'),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->required()
                     ->label('Implementation Status')
                     ->enum(ImplementationStatus::class)
@@ -79,7 +99,7 @@ class ImplementationResource extends Resource
                     ->native(false)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select the the best implementation level for this implementation. This can be assessed and changed later.'),
 
-                Forms\Components\Select::make('controls')
+                Select::make('controls')
                     ->label('Related Controls')
                     ->relationship('controls', 'code')
                     ->options(
@@ -89,9 +109,9 @@ class ImplementationResource extends Resource
                     )
                     ->searchable()
                     ->multiple()
-                    ->default(function (Forms\Components\Select $component) {
+                    ->default(function (Select $component) {
                         $livewire = $component->getLivewire();
-                        if ($livewire instanceof \Filament\Resources\RelationManagers\RelationManager) {
+                        if ($livewire instanceof RelationManager) {
                             return [$livewire->getOwnerRecord()->getKey()];
                         }
 
@@ -99,7 +119,7 @@ class ImplementationResource extends Resource
                     })
                     ->placeholder('Select related controls')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: "All implementations should relate to a control. If you don't have a relevant control in place, consider creating a new one first."),
-                Forms\Components\Select::make('applications')
+                Select::make('applications')
                     ->label('Related Applications')
                     ->relationship('applications', 'name')
                     ->options(
@@ -111,7 +131,7 @@ class ImplementationResource extends Resource
                     ->multiple()
                     ->placeholder('Select related applications')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select applications that support or relate to this implementation.'),
-                Forms\Components\Select::make('vendors')
+                Select::make('vendors')
                     ->label('Related Vendors')
                     ->relationship('vendors', 'name')
                     ->options(
@@ -123,12 +143,12 @@ class ImplementationResource extends Resource
                     ->multiple()
                     ->placeholder('Select related vendors')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select vendors that support or relate to this implementation.'),
-                Forms\Components\TextInput::make('title')
+                TextInput::make('title')
                     ->maxLength(255)
                     ->required()
                     ->columnSpanFull()
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter a title for this implementation.'),
-                Forms\Components\Select::make('implementation_owner_id')
+                Select::make('implementation_owner_id')
                     ->label('Owner')
                     ->options(User::pluck('name', 'id')->toArray())
                     ->searchable()
@@ -140,7 +160,7 @@ class ImplementationResource extends Resource
                 self::taxonomySelect('Scope', 'scope')
                     ->nullable()
                     ->columnSpan(1),
-                Forms\Components\RichEditor::make('details')
+                RichEditor::make('details')
                     ->required()
                     ->disableToolbarButtons([
                         'image',
@@ -150,7 +170,7 @@ class ImplementationResource extends Resource
                     ->columnSpanFull()
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter a description for this implementation. This be an in-depth description of how this implementation is put in place.'),
 
-                Forms\Components\RichEditor::make('test_procedure')
+                RichEditor::make('test_procedure')
                     ->label('Test Procedure')
                     ->maxLength(65535)
                     ->disableToolbarButtons([
@@ -160,7 +180,7 @@ class ImplementationResource extends Resource
                     ->columnSpanFull()
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Enter the procedure for testing this implementation during audits.'),
 
-                Forms\Components\RichEditor::make('notes')
+                RichEditor::make('notes')
                     ->maxLength(65535)
                     ->disableToolbarButtons([
                         'image',
@@ -180,44 +200,44 @@ class ImplementationResource extends Resource
             ->emptyStateHeading(__('implementation.table.empty_state.heading'))
             ->emptyStateDescription(__('implementation.table.empty_state.description'))
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label(__('implementation.table.columns.code'))
                     ->toggleable()
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->label(__('implementation.table.columns.title'))
                     ->toggleable()
                     ->sortable()
                     ->wrap()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('effectiveness')
+                TextColumn::make('effectiveness')
                     ->label(__('implementation.table.columns.effectiveness'))
                     ->getStateUsing(fn ($record) => $record->getEffectiveness())
                     ->sortable()
                     ->badge(),
-                Tables\Columns\TextColumn::make('last_assessed')
+                TextColumn::make('last_assessed')
                     ->label(__('implementation.table.columns.last_assessed'))
                     ->getStateUsing(fn ($record) => $record->getEffectivenessDate() ? $record->getEffectivenessDate() : 'Not yet audited')
                     ->sortable()
                     ->badge(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label(__('implementation.table.columns.status'))
                     ->toggleable()
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('implementationOwner.name')
+                TextColumn::make('implementationOwner.name')
                     ->label('Owner')
                     ->sortable()
                     ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('taxonomy_department')
+                TextColumn::make('taxonomy_department')
                     ->label('Department')
                     ->getStateUsing(function (Implementation $record) {
                         return self::getTaxonomyTerm($record, 'department')?->name ?? 'Not assigned';
                     })
                     ->sortable(query: function ($query, string $direction): void {
-                        $departmentParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
+                        $departmentParent = Taxonomy::where('slug', 'department')->whereNull('parent_id')->first();
                         if (! $departmentParent) {
                             return;
                         }
@@ -234,13 +254,13 @@ class ImplementationResource extends Resource
                             ->select('implementations.*');
                     })
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('taxonomy_scope')
+                TextColumn::make('taxonomy_scope')
                     ->label('Scope')
                     ->getStateUsing(function (Implementation $record) {
                         return self::getTaxonomyTerm($record, 'scope')?->name ?? 'Not assigned';
                     })
                     ->sortable(query: function ($query, string $direction): void {
-                        $scopeParent = \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
+                        $scopeParent = Taxonomy::where('slug', 'scope')->whereNull('parent_id')->first();
                         if (! $scopeParent) {
                             return;
                         }
@@ -257,12 +277,12 @@ class ImplementationResource extends Resource
                             ->select('implementations.*');
                     })
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label(__('implementation.table.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->label(__('implementation.table.columns.updated_at'))
                     ->dateTime()
                     ->sortable()
@@ -281,10 +301,10 @@ class ImplementationResource extends Resource
                             $q->where('effectiveness', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('implementation_owner_id')
+                SelectFilter::make('implementation_owner_id')
                     ->label('Owner')
                     ->options(User::pluck('name', 'id')->toArray()),
-                Tables\Filters\SelectFilter::make('department')
+                SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('department');
@@ -293,7 +313,7 @@ class ImplementationResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -307,7 +327,7 @@ class ImplementationResource extends Resource
                             $query->where('taxonomy_id', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('scope')
+                SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('scope');
@@ -316,7 +336,7 @@ class ImplementationResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -336,28 +356,29 @@ class ImplementationResource extends Resource
                     ->exporter(ImplementationExporter::class)
                     ->icon('heroicon-o-arrow-down-tray'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                ViewAction::make(),
                 //                Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->exporter(ImplementationExporter::class)
                         ->label('Export Selected')
                         ->icon('heroicon-o-arrow-down-tray'),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Details')
+                    ->columnSpanFull()
                     ->schema([
                         TextEntry::make('code')
                             ->columnSpan(2)
@@ -395,23 +416,23 @@ class ImplementationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\ControlsRelationManager::class,
-            RelationManagers\AuditItemRelationManager::class,
-            RelationManagers\RisksRelationManager::class,
-            RelationManagers\AssetsRelationManager::class,
-            RelationManagers\ApplicationsRelationManager::class,
-            RelationManagers\VendorsRelationManager::class,
-            RelationManagers\PoliciesRelationManager::class,
+            ControlsRelationManager::class,
+            AuditItemRelationManager::class,
+            RisksRelationManager::class,
+            AssetsRelationManager::class,
+            ApplicationsRelationManager::class,
+            VendorsRelationManager::class,
+            PoliciesRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListImplementations::route('/'),
-            'create' => Pages\CreateImplementation::route('/create'),
-            'view' => Pages\ViewImplementations::route('/{record}'),
-            'edit' => Pages\EditImplementation::route('/{record}/edit'),
+            'index' => ListImplementations::route('/'),
+            'create' => CreateImplementation::route('/create'),
+            'view' => ViewImplementations::route('/{record}'),
+            'edit' => EditImplementation::route('/{record}/edit'),
         ];
     }
 
@@ -454,30 +475,30 @@ class ImplementationResource extends Resource
         return ['title', 'details', 'notes', 'code'];
     }
 
-    public static function getForm(Form $form): Form
+    public static function getForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('code')
+        return $schema
+            ->components([
+                TextInput::make('code')
                     ->required()
                     ->maxLength(255)
                     ->placeholder('e.g. ACME-123')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Give the implementation a unique ID or Code.'),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->required()
                     ->enum(ImplementationStatus::class)
                     ->options(ImplementationStatus::class)
                     ->default(ImplementationStatus::UNKNOWN)
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'Select an implementation status. This will also be assessed in audits.')
                     ->native(false),
-                Forms\Components\TextInput::make('title')
+                TextInput::make('title')
                     ->columnSpanFull()
                     ->required()
                     ->maxLength(255)
                     ->placeholder('e.g. Quarterly Access Reviews')
                     ->hint('Enter the title of the implementation.')
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'This should be a detailed description of this implementation in sufficient detail to both implement and test.'),
-                Forms\Components\RichEditor::make('details')
+                RichEditor::make('details')
                     ->columnSpanFull()
                     ->disableToolbarButtons([
                         'image',
@@ -486,7 +507,7 @@ class ImplementationResource extends Resource
                     ->label('Implementation Details')
                     ->required()
                     ->hintIcon('heroicon-m-question-mark-circle', tooltip: 'This should be a detailed description of this implementation in sufficient detail to both implement and test.'),
-                Forms\Components\RichEditor::make('notes')
+                RichEditor::make('notes')
                     ->columnSpanFull()
                     ->disableToolbarButtons([
                         'image',
@@ -503,37 +524,37 @@ class ImplementationResource extends Resource
         return $table
             ->recordTitleAttribute('details')
             ->columns([
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->toggleable()
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->toggleable()
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('effectiveness')
+                TextColumn::make('effectiveness')
                     ->getStateUsing(function ($record) {
                         return $record->getEffectiveness();
                     })
                     ->badge(),
-                Tables\Columns\TextColumn::make('last_assessed')
+                TextColumn::make('last_assessed')
                     ->label('Last Audit')
                     ->getStateUsing(fn ($record) => $record->getEffectivenessDate() ? $record->getEffectivenessDate() : 'Not yet audited')
                     ->badge(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->toggleable()
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('implementationOwner.name')
+                TextColumn::make('implementationOwner.name')
                     ->label('Owner')
                     ->sortable()
                     ->searchable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -551,10 +572,10 @@ class ImplementationResource extends Resource
                             $q->where('effectiveness', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('implementation_owner_id')
+                SelectFilter::make('implementation_owner_id')
                     ->label('Owner')
                     ->options(User::pluck('name', 'id')->toArray()),
-                Tables\Filters\SelectFilter::make('department')
+                SelectFilter::make('department')
                     ->label('Department')
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('department');
@@ -563,7 +584,7 @@ class ImplementationResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -577,7 +598,7 @@ class ImplementationResource extends Resource
                             $query->where('taxonomy_id', $data['value']);
                         });
                     }),
-                Tables\Filters\SelectFilter::make('scope')
+                SelectFilter::make('scope')
                     ->label('Scope')
                     ->options(function () {
                         $taxonomy = self::getParentTaxonomy('scope');
@@ -586,7 +607,7 @@ class ImplementationResource extends Resource
                             return [];
                         }
 
-                        return \Aliziodev\LaravelTaxonomy\Models\Taxonomy::where('parent_id', $taxonomy->id)
+                        return Taxonomy::where('parent_id', $taxonomy->id)
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -601,15 +622,15 @@ class ImplementationResource extends Resource
                         });
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }

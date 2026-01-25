@@ -1,6 +1,24 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 
-@config 'tailwind.config.js';
+@source '../../../../app/Filament/**/*';
+@source '../../../../app/Livewire/**/*';
+@source '../../../../resources/views/**/*.blade.php';
+@source '../../../../storage/framework/views/*.php';
+@source '../../../../vendor/filament/**/*.blade.php';
+
+/* Define custom grcblue color palette */
+@theme {
+    --color-grcblue-50: #eaf3f7;
+    --color-grcblue-100: #d4e7ef;
+    --color-grcblue-200: #d4e7ef;
+    --color-grcblue-300: #7eb7d1;
+    --color-grcblue-400: #1375a0;
+    --color-grcblue-500: #1375a0;
+    --color-grcblue-600: #0f5a7a;
+    --color-grcblue-700: #0c4a65;
+    --color-grcblue-800: #374151;
+    --color-grcblue-900: #212a3a;
+}
 
 
 @font-face {
@@ -10,77 +28,81 @@
     font-style: normal;
 }
 
-@layer components {
-
-    .text-grcblue-800 {
-        color: #374151 !important;
-    }
-
-    .text-grcblue-400 {
-        color: #1375a0 !important;
-    }
-
-    .bg-grcblue-200 {
-        background-color: #d4e7ef !important;
-    }
-
-    .bg-grcblue-400 {
-        background-color: #1375a0 !important;
-    }
-
-    .bg-grcblue-500 {
-        background-color: #1375a0 !important;
-    }
-
-    .bg-grcblue-600 {
-        background-color: #0f5a7a !important;
-    }
-
-    .bg-grcblue-700 {
-        background-color: #0c4a65 !important;
-    }
-
-
-    .bg-grcblue-800 {
-        background-color: #374151 !important;
-    }
-
-    .control-description-text ul {
-        /* Force bullet styling */
-        list-style-type: disc !important; /* or circle, square, etc. */
-        list-style-position: outside; /* or 'inside' depending on your preference */
-        margin-left: 1.5rem; /* ensures the bullet is visible and not clipped */
-        padding-left: 1.5rem;
-    }
-
-    .control-description-text ol {
-        /* Force numbering styling */
-        list-style-type: decimal !important; /* or lower-alpha, upper-roman, etc. */
-        list-style-position: outside; /* or 'inside' depending on your preference */
-        margin-left: 1.5rem; /* ensures the number is visible and not clipped */
-        padding-left: 1.5rem;
-    }
-
-    .control-description-text p {
-        margin-bottom: 1rem;
-    }
-
+/* GRC Blue color utilities - defined with !important for override */
+.text-grcblue-800 {
+    color: #374151 !important;
 }
 
+.text-grcblue-400 {
+    color: #1375a0 !important;
+}
 
+.bg-grcblue-200 {
+    background-color: #d4e7ef !important;
+}
 
+.bg-grcblue-400 {
+    background-color: #1375a0 !important;
+}
+
+.bg-grcblue-500 {
+    background-color: #1375a0 !important;
+}
+
+.bg-grcblue-600 {
+    background-color: #0f5a7a !important;
+}
+
+.bg-grcblue-700 {
+    background-color: #0c4a65 !important;
+}
+
+.bg-grcblue-800 {
+    background-color: #374151 !important;
+}
+
+.hover\:bg-grcblue-600:hover {
+    background-color: #0f5a7a !important;
+}
+
+.hover\:bg-grcblue-700:hover {
+    background-color: #0c4a65 !important;
+}
+
+/* Control description text formatting */
+.control-description-text ul {
+    list-style-type: disc !important;
+    list-style-position: outside;
+    margin-left: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.control-description-text ol {
+    list-style-type: decimal !important;
+    list-style-position: outside;
+    margin-left: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.control-description-text p {
+    margin-bottom: 1rem;
+}
 
 /* Sidebar Styles */
 .fi-sidebar {
-    @apply bg-grcblue-800 dark:bg-gray-900 !important;
+    background-color: #374151 !important;
+}
+
+.dark .fi-sidebar {
+    background-color: rgb(17 24 39) !important;
 }
 
 .fi-sidebar-item-label {
-    @apply text-gray-100 !important;
+    color: rgb(243 244 246) !important;
 }
 
 li.fi-sidebar-item.fi-active > a {
-    @apply bg-grcblue-400 !important;
+    background-color: #1375a0 !important;
 }
 
 .fi-sidebar-item > a:hover {
@@ -88,19 +110,22 @@ li.fi-sidebar-item.fi-active > a {
 }
 
 .fi-sidebar-group-label {
-    @apply text-gray-300 !important;
+    color: rgb(209 213 219) !important;
 }
 
 /* Form Label */
 div.flex.items-center.gap-x-3.justify-between > dt > span {
-    @apply text-grcblue-800 dark:text-grcblue-400 !important;
+    color: #374151 !important;
     font-weight: bold;
+}
+
+.dark div.flex.items-center.gap-x-3.justify-between > dt > span {
+    color: #1375a0 !important;
 }
 
 a.fi-logo {
     font-family: 'Bruno Ace SC', sans-serif;
 }
-
 
 /* Custom Risk Colors */
 .fi-color-bg-red-200 { @apply bg-red-200; }
@@ -112,69 +137,78 @@ a.fi-logo {
 .fi-color-bg-green-200 { @apply bg-green-200; }
 .fi-color-bg-green-400 { @apply bg-green-500; }
 
-
 .fi-btn-color-very-high { @apply bg-red-200 hover:bg-red-400; }
 .fi-btn-color-very-high-active { @apply bg-red-500; }
 
+/* Button color classes - using CSS directly for !important */
+.fi-btn-color-very-low {
+    background-color: rgb(187 247 208) !important;
+}
+.fi-btn-color-very-low:hover {
+    background-color: rgb(74 222 128) !important;
+}
 
-.fi-btn-color-very-low {@apply bg-green-200 hover:bg-green-400 !important; }
-.fi-btn-color-low {@apply bg-blue-200 hover:bg-blue-400 !important; }
-.fi-btn-color-medium {@apply bg-yellow-200 hover:bg-yellow-400 !important; }
-.fi-btn-color-high {@apply bg-orange-200 hover:bg-orange-400 !important; }
-.fi-btn-color-very-high {@apply bg-red-200 hover:bg-red-400 !important; }
+.fi-btn-color-low {
+    background-color: rgb(191 219 254) !important;
+}
+.fi-btn-color-low:hover {
+    background-color: rgb(96 165 250) !important;
+}
 
+.fi-btn-color-medium {
+    background-color: rgb(254 240 138) !important;
+}
+.fi-btn-color-medium:hover {
+    background-color: rgb(250 204 21) !important;
+}
 
+.fi-btn-color-high {
+    background-color: rgb(254 215 170) !important;
+}
+.fi-btn-color-high:hover {
+    background-color: rgb(251 146 60) !important;
+}
+
+.fi-btn-color-very-high {
+    background-color: rgb(254 202 202) !important;
+}
+.fi-btn-color-very-high:hover {
+    background-color: rgb(248 113 113) !important;
+}
 
 .fi-color-grcblue {
     background-color: #1375a0 !important;
     color: #ffffff;
 }
+
 .fi-color-grcblue:hover {
     background-color: #a8d4ea !important;
     color: #ffffff;
 }
+
 .fi-color-bg-grcblue-200 {
     background-color: #d4e7ef !important;
     color: #000000;
 }
 
-
 /* Custom sidebar scrollbar */
 .fi-sidebar-nav {
     scrollbar-width: thin;
-    scrollbar-color: #374151 #232e3c; /* thumb color, track color */
+    scrollbar-color: #374151 #232e3c;
 }
 
-/* For Webkit browsers (Chrome, Edge, Safari) */
 .fi-sidebar-nav::-webkit-scrollbar {
     width: 8px;
-    background: #232e3c; /* track color */
+    background: #232e3c;
 }
 
 .fi-sidebar-nav::-webkit-scrollbar-thumb {
-    background: #374151; /* thumb color */
+    background: #374151;
     border-radius: 6px;
 }
 
 .fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
-    background: #1375a0; /* thumb color on hover */
-}
-
-/* Ensure these classes always persist after npm run build - outside @layer */
-.bg-grcblue-600 {
-    background-color: #0f5a7a !important;
-}
-
-.bg-grcblue-700 {
-    background-color: #0c4a65 !important;
-}
-
-.hover\:bg-grcblue-600:hover {
-    background-color: #0f5a7a !important;
-}
-
-.hover\:bg-grcblue-700:hover {
-    background-color: #0c4a65 !important;
+    background: #1375a0;
 }
 
 /* Prevent inactivity guard wrapper from taking up space when modal is inactive */
@@ -182,7 +216,13 @@ a.fi-logo {
     line-height: 0;
     font-size: 0;
 }
-/* Make page transition instant (removes fade but keeps FOUC prevention) */
-.fi-main-ctn.transition-all {
+
+/* Use white for active sidebar icons for better contrast (austin-liminal) */
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: white !important;
+}
+
+/* Make page transition instant (F4 no longer has transition-all class) */
+.fi-main-ctn {
     transition-duration: 0s !important;
 }

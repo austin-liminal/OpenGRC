@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\ImplementationResource\Pages;
 
 use App\Filament\Resources\ImplementationResource;
-use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewImplementations extends ViewRecord
@@ -27,7 +27,7 @@ class ViewImplementations extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make('Update Implementation')
+            EditAction::make('Update Implementation')
                 ->slideOver(),
         ];
     }

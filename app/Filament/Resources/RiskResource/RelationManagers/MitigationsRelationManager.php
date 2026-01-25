@@ -3,10 +3,18 @@
 namespace App\Filament\Resources\RiskResource\RelationManagers;
 
 use App\Enums\MitigationType;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Livewire\Attributes\On;
 
@@ -22,18 +30,18 @@ class MitigationsRelationManager extends RelationManager
         }
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Textarea::make('description')
+        return $schema
+            ->components([
+                Textarea::make('description')
                     ->label('Description')
                     ->required()
                     ->columnSpanFull(),
-                Forms\Components\DatePicker::make('date_implemented')
+                DatePicker::make('date_implemented')
                     ->label('Date Implemented')
                     ->native(false),
-                Forms\Components\Select::make('strategy')
+                Select::make('strategy')
                     ->label('Mitigation Strategy')
                     ->enum(MitigationType::class)
                     ->options(MitigationType::class)
@@ -48,39 +56,39 @@ class MitigationsRelationManager extends RelationManager
             ->recordTitleAttribute('description')
             ->defaultSort('date_implemented', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label('Description')
                     ->wrap()
                     ->limit(100)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('date_implemented')
+                TextColumn::make('date_implemented')
                     ->label('Date Implemented')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('strategy')
+                TextColumn::make('strategy')
                     ->label('Strategy')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('strategy')
+                SelectFilter::make('strategy')
                     ->options(MitigationType::class),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

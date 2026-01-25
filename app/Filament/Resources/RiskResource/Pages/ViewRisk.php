@@ -4,9 +4,12 @@ namespace App\Filament\Resources\RiskResource\Pages;
 
 use App\Enums\MitigationType;
 use App\Filament\Resources\RiskResource;
-use App\Models\Mitigation;
-use Filament\Actions;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewRisk extends ViewRecord
@@ -16,20 +19,20 @@ class ViewRisk extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('applyMitigation')
+            Action::make('applyMitigation')
                 ->label('Apply Mitigation')
                 ->icon('heroicon-o-shield-check')
                 ->color('success')
-                ->form([
-                    Forms\Components\Textarea::make('description')
+                ->schema([
+                    Textarea::make('description')
                         ->label('Description')
                         ->required()
                         ->columnSpanFull(),
-                    Forms\Components\DatePicker::make('date_implemented')
+                    DatePicker::make('date_implemented')
                         ->label('Date Implemented')
                         ->native(false)
                         ->default(now()),
-                    Forms\Components\Select::make('strategy')
+                    Select::make('strategy')
                         ->label('Mitigation Strategy')
                         ->enum(MitigationType::class)
                         ->options(MitigationType::class)
@@ -42,9 +45,9 @@ class ViewRisk extends ViewRecord
                     $this->dispatch('refreshRelationManager', manager: 'mitigations');
                 })
                 ->successNotificationTitle('Mitigation applied successfully'),
-            Actions\EditAction::make('Update Risk')
+            EditAction::make('Update Risk')
                 ->slideOver()
-                ->using(function (Actions\EditAction $action, array $data, $record) {
+                ->using(function (EditAction $action, array $data, $record) {
                     // Calculate risk scores before saving
                     $data['inherent_risk'] = $data['inherent_likelihood'] * $data['inherent_impact'];
                     $data['residual_risk'] = $data['residual_likelihood'] * $data['residual_impact'];
@@ -60,7 +63,7 @@ class ViewRisk extends ViewRecord
                     $this->fillForm();
                 })
                 ->extraModalFooterActions([
-                    Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->requiresConfirmation(),
                 ]),
         ];

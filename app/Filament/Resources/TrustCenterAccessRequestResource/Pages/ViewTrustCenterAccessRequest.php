@@ -5,8 +5,10 @@ namespace App\Filament\Resources\TrustCenterAccessRequestResource\Pages;
 use App\Filament\Resources\TrustCenterAccessRequestResource;
 use App\Mail\TrustCenterAccessApprovedMail;
 use App\Mail\TrustCenterAccessRejectedMail;
-use Filament\Actions;
-use Filament\Forms;
+use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Mail;
@@ -18,13 +20,13 @@ class ViewTrustCenterAccessRequest extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('approve')
+            Action::make('approve')
                 ->label(__('Approve'))
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->form([
-                    Forms\Components\Textarea::make('review_notes')
+                ->schema([
+                    Textarea::make('review_notes')
                         ->label(__('Notes (Optional)'))
                         ->rows(3),
                 ])
@@ -39,7 +41,7 @@ class ViewTrustCenterAccessRequest extends ViewRecord
                             ->body(__('Access approved and email sent to :email', ['email' => $this->record->requester_email]))
                             ->success()
                             ->send();
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         Notification::make()
                             ->title(__('Access Approved'))
                             ->body(__('Access approved but email failed to send: :error', ['error' => $e->getMessage()]))
@@ -50,13 +52,13 @@ class ViewTrustCenterAccessRequest extends ViewRecord
                     return redirect(TrustCenterAccessRequestResource::getUrl('view', ['record' => $this->record]));
                 })
                 ->visible(fn () => $this->record->isPending()),
-            Actions\Action::make('reject')
+            Action::make('reject')
                 ->label(__('Reject'))
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->form([
-                    Forms\Components\Textarea::make('review_notes')
+                ->schema([
+                    Textarea::make('review_notes')
                         ->label(__('Reason for Rejection'))
                         ->rows(3),
                 ])
@@ -71,7 +73,7 @@ class ViewTrustCenterAccessRequest extends ViewRecord
                             ->body(__('Request rejected and email sent to :email', ['email' => $this->record->requester_email]))
                             ->success()
                             ->send();
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         Notification::make()
                             ->title(__('Access Rejected'))
                             ->body(__('Request rejected but email failed to send: :error', ['error' => $e->getMessage()]))
@@ -82,15 +84,15 @@ class ViewTrustCenterAccessRequest extends ViewRecord
                     return redirect(TrustCenterAccessRequestResource::getUrl('view', ['record' => $this->record]));
                 })
                 ->visible(fn () => $this->record->isPending()),
-            Actions\Action::make('revoke')
+            Action::make('revoke')
                 ->label(__('Revoke Access'))
                 ->icon('heroicon-o-no-symbol')
                 ->color('danger')
                 ->requiresConfirmation()
                 ->modalHeading(__('Revoke Access'))
                 ->modalDescription(__('Are you sure you want to revoke this user\'s access? Their magic link will be invalidated immediately.'))
-                ->form([
-                    Forms\Components\Textarea::make('review_notes')
+                ->schema([
+                    Textarea::make('review_notes')
                         ->label(__('Reason for Revocation (Optional)'))
                         ->rows(3),
                 ])
@@ -106,7 +108,7 @@ class ViewTrustCenterAccessRequest extends ViewRecord
                     return redirect(TrustCenterAccessRequestResource::getUrl('view', ['record' => $this->record]));
                 })
                 ->visible(fn () => $this->record->isApproved()),
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

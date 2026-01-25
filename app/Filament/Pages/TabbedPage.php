@@ -18,7 +18,7 @@ use Livewire\Attributes\Url;
  */
 abstract class TabbedPage extends Page
 {
-    protected static string $view = 'filament.pages.tabbed-page';
+    protected string $view = 'filament.pages.tabbed-page';
 
     #[Url]
     public string $activeTab = '';
