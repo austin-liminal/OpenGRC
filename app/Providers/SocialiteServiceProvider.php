@@ -8,30 +8,12 @@ use Illuminate\Support\ServiceProvider;
 
 class SocialiteServiceProvider extends ServiceProvider
 {
-    private bool $configured = false;
-
-    /**
-     * Register SSO config early so it's available when Filament panels boot.
-     */
-    public function register(): void
-    {
-        $this->configureSsoProviders();
-    }
-
     public function boot(): void
     {
-        // Re-run in boot to ensure config is set for any late initialization
-        $this->configureSsoProviders();
-    }
-
-    private function configureSsoProviders(): void
-    {
-        // Only configure once and skip if running in console or settings table doesn't exist
-        if ($this->configured || app()->runningInConsole() || ! Schema::hasTable('settings')) {
+        if (app()->runningInConsole() || ! Schema::hasTable('settings')) {
             return;
         }
 
-        $this->configured = true;
         $baseUrl = config('app.url');
 
         // Configure Okta
