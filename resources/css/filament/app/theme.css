@@ -225,4 +225,5 @@ a.fi-logo {
 /* Make page transition instant (F4 no longer has transition-all class) */
 .fi-main-ctn {
     transition-duration: 0s !important;
+    opacity: 1 !important;
 }
